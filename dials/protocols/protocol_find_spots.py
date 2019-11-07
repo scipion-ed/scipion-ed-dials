@@ -38,14 +38,14 @@ class DialsProtFindSpots(EdProtFindSpots):
     """ Base class to all EM protocols.
     It will contains some common functionalities.
     """
-    _base = True
+    _label = 'find spots'
 
     # -------------------------- DEFINE param functions -----------------------
     def _defineParams(self, form):
         form.addSection(label='Input')
 
         form.addParam('inputImages', pwprot.PointerParam,
-                      pointerCllass='SetOfDiffractionImages',
+                      pointerClass='SetOfDiffractionImages',
                       label="Input diffraction images",
                       help="")
 
