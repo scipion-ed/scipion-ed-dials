@@ -35,6 +35,7 @@ from .constants import *
 
 
 __version__ = '0.0.0'
+_logo = "logo.jpeg"
 
 
 class Plugin(pwplugin.Plugin):
