@@ -1,3 +1,6 @@
+""" Functions for writing required json files (*.expt) for use with DIALS.
+Might be more suitable to perform with dials or dxtbx as a module. """
+
 import json
 
 
