@@ -32,6 +32,7 @@ import pyworkflow.protocol as pwprot
 
 from pwed.objects import DiffractionImage, SetOfDiffractionImages
 from pwed.protocols import EdProtFindSpots
+from dials.convert import writeJson
 
 
 class DialsProtFindSpots(EdProtFindSpots):
@@ -42,12 +43,14 @@ class DialsProtFindSpots(EdProtFindSpots):
 
     # -------------------------- DEFINE param functions -----------------------
     def _defineParams(self, form):
+        #EdProtFindSpots._defineParams(self, form)
         form.addSection(label='Input')
 
         form.addParam('inputImages', pwprot.PointerParam,
                       pointerClass='SetOfDiffractionImages',
                       label="Input diffraction images",
                       help="")
+        # TODO: make form.addParam('new parameter',...) for filters
 
         # form.addParam('filesPattern', pwprot.StringParam,
         #               label='Pattern',
@@ -80,7 +83,7 @@ class DialsProtFindSpots(EdProtFindSpots):
 
     # -------------------------- STEPS functions -------------------------------
     def convertInputStep(self, inputId):
-        pass
+        writeJson(self.inputImages)
 
     def findSpotsStep(self):
         pass
@@ -94,5 +97,3 @@ class DialsProtFindSpots(EdProtFindSpots):
         return errors
 
     # -------------------------- UTILS functions ------------------------------
-
-
