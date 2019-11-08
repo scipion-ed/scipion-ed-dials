@@ -50,6 +50,43 @@ class DialsProtFindSpots(EdProtFindSpots):
                       pointerClass='SetOfDiffractionImages',
                       label="Input diffraction images",
                       help="")
+
+        # Help messages are copied from the DIALS documentation at
+        # https://dials.github.io/documentation/programs/dials_find_spots.html
+        form.addParam('d_min', pwprot.FloatParam,
+                      default=None,
+                      label="High resolution limit",
+                      help="The high resolution limit in Angstrom for a pixel "
+                      "to be accepted by the filtering algorithm.")
+
+        form.addParam('d_max', pwprot.FloatParam,
+                      default=None,
+                      label="Low resolution limit",
+                      help="The low resolution limit in Angstrom for a pixel to"
+                      " be accepted by the filtering algorithm.")
+
+        form.addSection(label='Filtering')
+
+        form.addParam('kernel_size', pwprot.IntParam,
+                      default=None,
+                      label="Kernel size",
+                      help="The size of the local area around the spot in which to"
+                      "calculate the mean and variance. The kernel is given as a box"
+                      "of size (2 * nx + 1, 2 * ny + 1) centred at the pixel.")
+
+        form.addParam('sigma_background', pwprot.FloatParam,
+                      default=None,
+                      label='sigma background',
+                      help="The number of standard deviations of the index of dispersion"
+                      "(variance / mean) in the local area below which the pixel"
+                      "will be classified as background.")
+
+        form.addParam('sigma_strong', pwprot.FloatParam,
+                      default=None,
+                      label="sigma strong",
+                      help="The number of standard deviations above the mean in the local"
+                      "area above which the pixel will be classified as strong.")
+
         # TODO: make form.addParam('new parameter',...) for filters
 
         # form.addParam('filesPattern', pwprot.StringParam,
@@ -75,6 +112,7 @@ class DialsProtFindSpots(EdProtFindSpots):
         #               help="By default ...")
 
     # -------------------------- INSERT functions ------------------------------
+
     def _insertAllSteps(self):
         self.loadPatterns()
         self._insertFunctionStep('convertInputStep', inputId)
