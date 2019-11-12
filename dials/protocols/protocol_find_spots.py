@@ -99,13 +99,13 @@ class DialsProtFindSpots(EdProtFindSpots):
                       expertLevel=pwprot.LEVEL_ADVANCED)
 
         form.addParam('untrustedCircle', pwprot.StringParam,
-                      condition='untrustedAreas', default=None, help="An untrusted circle (xc, yc, r)")
+                      condition='untrustedAreas', default='', help="An untrusted circle (xc, yc, r)")
 
         form.addParam('untrustedRectangle_1', pwprot.StringParam,
-                      condition='untrustedAreas', default=None, help="An untrusted rectangle (x0, x1, y0, y1)")
+                      condition='untrustedAreas', default='', help="An untrusted rectangle (x0, x1, y0, y1)")
 
         form.addParam('untrustedRectangle_2', pwprot.StringParam,
-                      condition='untrustedAreas', default=None, help="A second untrusted rectangle (x0, x1, y0, y1)")
+                      condition='untrustedAreas', default='', help="A second untrusted rectangle (x0, x1, y0, y1)")
         form.addParam('minSpotSize', pwprot.IntParam,
                       default=None, label="Minimum spot size (pixels)", help="The minimum "
                       "number of contiguous pixels for a spot to be accepted by the filtering algorithm.",
@@ -128,30 +128,6 @@ class DialsProtFindSpots(EdProtFindSpots):
                       help='All pixels with a lower value will be considered part of the background',
                       expertLevel=pwprot.LEVEL_ADVANCED)
 
-        # TODO: make form.addParam('new parameter',...) for filters
-
-        # form.addParam('filesPattern', pwprot.StringParam,
-        #               label='Pattern',
-        #               help="Pattern of the tilt series\n\n"
-        #                    "The pattern can contain standard wildcards such as\n"
-        #                    "*, ?, etc.\n\n"
-        #                    "It should also contains the following special tags:"
-        #                    "   {TS}: tilt series identifier "
-        #                    "         (can be any UNIQUE part of the path).\n"
-        #                    "   {TI}: image identifier "
-        #                    "         (an integer value, unique within a tilt-series).\n"
-        #                    "Examples:\n"
-        #                    "")
-        # form.addParam('importAction', pwprot.EnumParam,
-        #               default=self.IMPORT_LINK_REL,
-        #               choices=['Copy files',
-        #                        'Absolute symlink',
-        #                        'Relative symlink'],
-        #               display=pwprot.EnumParam.DISPLAY_HLIST,
-        #               expertLevel=pwprot.LEVELADVANCED,
-        #               label="Import action on files",
-        #               help="By default ...")
-
     # -------------------------- INSERT functions ------------------------------
 
     def _insertAllSteps(self):
@@ -162,7 +138,7 @@ class DialsProtFindSpots(EdProtFindSpots):
 
     # -------------------------- STEPS functions -------------------------------
     def convertInputStep(self, inputId):
-        writeJson(self.inputImages)
+        self.model = writeJson(self.inputImages)
 
     def findSpotsStep(self):
         pass
@@ -176,3 +152,46 @@ class DialsProtFindSpots(EdProtFindSpots):
         return errors
 
     # -------------------------- UTILS functions ------------------------------
+    def _prepCommandline(self):
+        "Create the command line input to run dials programs"
+        params = f" {self.model}"
+
+        if self.dMin:
+            params += f" filter.d_min={self.dMin}"
+
+        if self.dMax:
+            params += f" filter.d_max={self.dMax}"
+
+        if self.iceRings:
+            params += f" filter.ice_rings.filter={self.iceRings}"
+
+        if self.minSpotSize:
+            params += f" filter.min_spot_size={self.minSpotSize}"
+
+        if self.maxSpotSize:
+            params += f" filter.min_spot_size={self.maxSpotSize}"
+
+        if self.maxStrongPixelFraction:
+            params += f" filter.max_strong_pixel_fraction={self.maxStrongPixelFraction}"
+
+        if self.untrustedAreas:
+            params += f" filter.untrusted.circle={self.untrustedCircle}"
+            params += f" filter.untrusted.rectangle={self.untrustedRectangle_1}"
+            params += f" filter.untrusted.rectangle={self.untrustedRectangle_2}"
+
+        if self.thresholdIntensity:
+            params += f" threshold.global_threshold={self.thresholdIntensity}"
+
+        if self.gain:
+            params += f" threshold.gain={self.gain}"
+
+        if self.sigmaBackground:
+            params += f" threshold.sigma_background={self.sigmaBackground}"
+
+        if self.sigmaStrong:
+            params += f" threshold.sigma_strong={self.sigmaStrong}"
+
+        if self.kernelSize:
+            params += f" threshold.kernel_size={self.kernelSize},{self.kernelSize}"
+
+        return params
