@@ -55,12 +55,14 @@ class DialsProtFindSpots(EdProtFindSpots):
         # https://dials.github.io/documentation/programs/dials_find_spots.html
         form.addParam('dMin', pwprot.FloatParam,
                       default=None,
+                      allowsNull=True,
                       label="High resolution limit",
                       help="The high resolution limit in Angstrom for a pixel "
                       "to be accepted by the filtering algorithm.")
 
         form.addParam('dMax', pwprot.FloatParam,
                       default=None,
+                      allowsNull=True,
                       label="Low resolution limit",
                       help="The low resolution limit in Angstrom for a pixel to"
                       " be accepted by the filtering algorithm.")
@@ -69,24 +71,25 @@ class DialsProtFindSpots(EdProtFindSpots):
 
         form.addParam('gain', pwprot.FloatParam,
                       default=None,
+                      allowsNull=True,
                       label="Gain")
 
         form.addParam('kernelSize', pwprot.IntParam,
-                      default=None,
+                      default=3,
                       label="Kernel size",
                       help="The size of the local area around the spot in which to"
                       "calculate the mean and variance. The kernel is given as a box"
                       "of size (2 * nx + 1, 2 * ny + 1) centred at the pixel.")
 
         form.addParam('sigmaBackground', pwprot.FloatParam,
-                      default=None,
+                      default=6,
                       label='sigma background',
                       help="The number of standard deviations of the index of dispersion"
                       "(variance / mean) in the local area below which the pixel"
                       "will be classified as background.")
 
         form.addParam('sigmaStrong', pwprot.FloatParam,
-                      default=None,
+                      default=3,
                       label="sigma strong",
                       help="The number of standard deviations above the mean in the local"
                       "area above which the pixel will be classified as strong.")
@@ -107,23 +110,27 @@ class DialsProtFindSpots(EdProtFindSpots):
         form.addParam('untrustedRectangle_2', pwprot.StringParam,
                       condition='untrustedAreas', default='', help="A second untrusted rectangle (x0, x1, y0, y1)")
         form.addParam('minSpotSize', pwprot.IntParam,
-                      default=None, label="Minimum spot size (pixels)", help="The minimum "
+                      default=None,
+                      allowsNull=True,
+                      label="Minimum spot size (pixels)", help="The minimum "
                       "number of contiguous pixels for a spot to be accepted by the filtering algorithm.",
                       expertLevel=pwprot.LEVEL_ADVANCED)
 
         form.addParam('maxSpotSize', pwprot.IntParam,
-                      default=None, label="Maximum spot size (pixels)", help="The maximum "
+                      default=1000,
+                      label="Maximum spot size (pixels)", help="The maximum "
                       "number of contiguous pixels for a spot to be accepted by the filtering algorithm.",
                       expertLevel=pwprot.LEVEL_ADVANCED)
 
         form.addParam('maxStrongPixelFraction', pwprot.FloatParam,
+                      default=0.25,
                       label='Max fraction strong pixels',
                       help="If the fraction of pixels in an image marked as strong is"
                       "greater than this value, throw an exception",
                       expertLevel=pwprot.LEVEL_ADVANCED)
 
         form.addParam('thresholdIntensity', pwprot.FloatParam,
-                      default=None,
+                      default=0,
                       label='Minimum pixel intensity',
                       help='All pixels with a lower value will be considered part of the background',
                       expertLevel=pwprot.LEVEL_ADVANCED)
