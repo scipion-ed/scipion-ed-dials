@@ -131,14 +131,17 @@ class DialsProtFindSpots(EdProtFindSpots):
     # -------------------------- INSERT functions ------------------------------
 
     def _insertAllSteps(self):
-        self.loadPatterns()
-        self._insertFunctionStep('convertInputStep', inputId)
+        # self.loadPatterns()
+        self._insertFunctionStep(
+            'convertInputStep', self.inputImages.getObjId())
         self._insertFunctionStep('findSpotsStep')
         self._insertFunctionStep('createOutputStep')
 
     # -------------------------- STEPS functions -------------------------------
     def convertInputStep(self, inputId):
-        self.model = writeJson(self.inputImages)
+        inputImages = self.inputImages.get()
+        self.info("Number of images: %s" % inputImages.getSize())
+        self.model = writeJson(inputImages)
 
     def findSpotsStep(self):
         pass

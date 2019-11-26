@@ -4,7 +4,206 @@ Might be more suitable to perform with dials or dxtbx as a module. """
 import json
 
 
-def writeJson(fn='model.expt', **kwargs):
+def writeJson(inputImages, fn='model.expt'):
+    print("In writeJson: Number of images: %s" % inputImages.getSize())
+    for img in inputImages:
+        print("In for loop")
+        print("img: %s" % img.getObjId())
+    imageList = [img.clone() for img in inputImages]
+    firstimage = imageList[0]
+    lastimage = imageList[-1]
+    beam = [{
+        "direction": [
+            0.0,
+            0.0,
+            1.0
+        ],
+        "transmission": 1.0,
+        "polarization_normal": [
+            0.0,
+            1.0,
+            0.0
+        ],
+        "divergence": 0.0,
+        "polarization_fraction": 0.5,
+        "flux": 0.0,
+        "sigma_divergence": 0.0,
+        "wavelength": inputImages.getWavelength
+    }]
+    detector = [
+        {
+            "hierarchy": {
+                "origin": [
+                    0.0,
+                    0.0,
+                    0.0
+                ],
+                "fast_axis": [
+                    1.0,
+                    0.0,
+                    0.0
+                ],
+                "name": "",
+                        "raw_image_offset": [
+                            0,
+                            0
+                ],
+                "slow_axis": [
+                            0.0,
+                            1.0,
+                            0.0
+                ],
+                "material": "",
+                "mask": [],
+                "thickness": 0.0,
+                "mu": 0.0,
+                "gain": 1.0,
+                "trusted_range": [
+                            0.0,
+                            0.0
+                ],
+                "image_size": [
+                            0,
+                            0
+                ],
+                "px_mm_strategy": {
+                    "type": "SimplePxMmStrategy"
+                },
+                "pedestal": 0.0,
+                "identifier": "",
+                "type": "",
+                "children": [
+                    {
+                        "panel": 0
+                    }
+                ],
+                "pixel_size": [
+                            0.0,
+                            0.0
+                ]
+            },
+            "panels": [
+                {
+                    "origin": [
+                        firstimage.getBeamCenter(),
+                        -firstimage.getDistance()
+                    ],
+                    "fast_axis": [
+                        1.0,
+                        0.0,
+                        0.0
+                    ],
+                    "name": "Panel",
+                    "raw_image_offset": [
+                        0,
+                        0
+                    ],
+                    "slow_axis": [
+                        0.0,
+                        -1.0,
+                        0.0
+                    ],
+                    "material": "Si",
+                    "mask": [],
+                    "thickness": 0.3,
+                    "mu": 0.0,
+                    "gain": 1.0,
+                    "trusted_range": [
+                        -1.0,
+                        65535.0
+                    ],
+                    "image_size": [
+                        inputImages.getSizeX(),
+                        inputImages.getSizeY()
+                    ],
+                    "px_mm_strategy": {
+                        "type": "SimplePxMmStrategy"
+                    },
+                    "pedestal": 0.0,
+                    "identifier": "",
+                    "type": "SENSOR_PAD",
+                    "pixel_size": [
+                        inputImages.getPixelSize(),
+                        inputImages.getPixelSize()
+                    ]
+                }
+            ]
+        }
+    ]
+    goniometer = [
+        {
+            "setting_rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0
+            ],
+            "fixed_rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0
+            ],
+            "rotation_axis": [
+                -0.6203929740893525,
+                -0.7842911179533836,
+                0.0
+            ]
+        }
+    ],
+    scan = [
+        {
+            "exposure_time": [],
+            "batch_offset": 0,
+            "oscillation": [
+                firstimage.getOscillation()
+            ],
+            "valid_image_ranges": {},
+            "epochs": [],
+            "image_range": [
+                firstimage.getIndex(),
+                lastimage.getIndex()
+            ],
+        }
+    ]
+
+    output = [
+        {
+            "__id__": "DataBlock",
+            "imageset": [{
+                "__id__": "ImageSweep",
+                "template": inputImages.getFiles(),
+                "mask": None,
+                "gain": None,
+                "pedestal": None,
+                "dx": None,
+                "dy": None,
+                "beam": 0,
+                "detector": 0,
+                "goniometer": 0,
+                "scan": 0,
+                "params": {
+                    "dynamic_shadowing": "Auto",
+                    "multi_panel": false
+                },
+            }],
+            "beam": beam,
+            "detector": detector,
+            "goniometer": goniometer,
+            "scan": scan,
+        }
+    ]
+
     with open(fn, 'w') as f:
-        f.write(json.dumps(kwargs, indent=4))
+        f.write(json.dumps(output, indent=4))
     return fn
