@@ -5,13 +5,10 @@ import json
 
 
 def writeJson(inputImages, fn='model.expt'):
-    print("In writeJson: Number of images: %s" % inputImages.getSize())
-    for img in inputImages:
-        print("In for loop")
-        print("img: %s" % img.getObjId())
     imageList = [img.clone() for img in inputImages]
     firstimage = imageList[0]
     lastimage = imageList[-1]
+    templatepath = f"{firstimage.getDirName()}/#####{firstimage.getExtension()}"
     beam = [{
         "direction": [
             0.0,
@@ -28,7 +25,7 @@ def writeJson(inputImages, fn='model.expt'):
         "polarization_fraction": 0.5,
         "flux": 0.0,
         "sigma_divergence": 0.0,
-        "wavelength": inputImages.getWavelength
+        "wavelength": inputImages.getWavelength()
     }]
     detector = [
         {
@@ -44,14 +41,14 @@ def writeJson(inputImages, fn='model.expt'):
                     0.0
                 ],
                 "name": "",
-                        "raw_image_offset": [
-                            0,
-                            0
+                "raw_image_offset": [
+                    0,
+                    0
                 ],
                 "slow_axis": [
-                            0.0,
-                            1.0,
-                            0.0
+                    0.0,
+                    1.0,
+                    0.0
                 ],
                 "material": "",
                 "mask": [],
@@ -59,12 +56,12 @@ def writeJson(inputImages, fn='model.expt'):
                 "mu": 0.0,
                 "gain": 1.0,
                 "trusted_range": [
-                            0.0,
-                            0.0
+                    0.0,
+                    0.0
                 ],
                 "image_size": [
-                            0,
-                            0
+                    0,
+                    0
                 ],
                 "px_mm_strategy": {
                     "type": "SimplePxMmStrategy"
@@ -78,14 +75,15 @@ def writeJson(inputImages, fn='model.expt'):
                     }
                 ],
                 "pixel_size": [
-                            0.0,
-                            0.0
+                    0.0,
+                    0.0
                 ]
             },
             "panels": [
                 {
                     "origin": [
-                        firstimage.getBeamCenter(),
+                        firstimage.getBeamCenter()[0],
+                        firstimage.getBeamCenter()[1],
                         -firstimage.getDistance()
                     ],
                     "fast_axis": [
@@ -113,8 +111,8 @@ def writeJson(inputImages, fn='model.expt'):
                         65535.0
                     ],
                     "image_size": [
-                        inputImages.getSizeX(),
-                        inputImages.getSizeY()
+                        0,
+                        0
                     ],
                     "px_mm_strategy": {
                         "type": "SimplePxMmStrategy"
@@ -182,7 +180,7 @@ def writeJson(inputImages, fn='model.expt'):
             "__id__": "DataBlock",
             "imageset": [{
                 "__id__": "ImageSweep",
-                "template": inputImages.getFiles(),
+                "template": templatepath,
                 "mask": None,
                 "gain": None,
                 "pedestal": None,
@@ -194,7 +192,7 @@ def writeJson(inputImages, fn='model.expt'):
                 "scan": 0,
                 "params": {
                     "dynamic_shadowing": "Auto",
-                    "multi_panel": false
+                    "multi_panel": False
                 },
             }],
             "beam": beam,
