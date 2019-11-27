@@ -138,7 +138,6 @@ class DialsProtFindSpots(EdProtFindSpots):
     # -------------------------- INSERT functions ------------------------------
 
     def _insertAllSteps(self):
-        # self.loadPatterns()
         self._insertFunctionStep(
             'convertInputStep', self.inputImages.getObjId())
         self._insertFunctionStep('findSpotsStep')
