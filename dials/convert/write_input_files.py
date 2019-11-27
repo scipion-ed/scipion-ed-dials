@@ -8,6 +8,16 @@ def writeJson(inputImages, fn='model.expt'):
     firstimage = imageList[0]
     lastimage = imageList[-1]
     templatepath = f"{firstimage.getDirName()}/#####{firstimage.getExtension()}"
+    try:
+        origin = [firstimage.getBeamCenter()[0], firstimage.getBeamCenter()[
+            1], -firstimage.getDistance()]
+    except Exception as e:
+        print(e)
+    exposure_time = []
+    epoch = []
+    for i in imageList:
+        exposure_time.append(i.getExposureTime())
+        epoch.append(i.getTwoTheta())
     beam = [{
         "direction": [
             0.0,
@@ -24,7 +34,7 @@ def writeJson(inputImages, fn='model.expt'):
         "polarization_fraction": 0.5,
         "flux": 0.0,
         "sigma_divergence": 0.0,
-        "wavelength": inputImages.getWavelength()
+        "wavelength": firstimage.getWavelength()
     }]
     detector = [
         {
@@ -80,11 +90,7 @@ def writeJson(inputImages, fn='model.expt'):
             },
             "panels": [
                 {
-                    "origin": [
-                        firstimage.getBeamCenter()[0],
-                        firstimage.getBeamCenter()[1],
-                        -firstimage.getDistance()
-                    ],
+                    "origin": origin,
                     "fast_axis": [
                         1.0,
                         0.0,
@@ -120,8 +126,8 @@ def writeJson(inputImages, fn='model.expt'):
                     "identifier": "",
                     "type": "SENSOR_PAD",
                     "pixel_size": [
-                        inputImages.getPixelSize(),
-                        inputImages.getPixelSize()
+                        firstimage.getPixelSize(),
+                        firstimage.getPixelSize()
                     ]
                 }
             ]
@@ -160,13 +166,13 @@ def writeJson(inputImages, fn='model.expt'):
     ],
     scan = [
         {
-            "exposure_time": [],
+            "exposure_time": exposure_time,
             "batch_offset": 0,
             "oscillation": [
                 firstimage.getOscillation()
             ],
             "valid_image_ranges": {},
-            "epochs": [],
+            "epochs": epoch,
             "image_range": [
                 firstimage.getIndex(),
                 lastimage.getIndex()
