@@ -163,8 +163,10 @@ class DialsProtFindSpots(EdProtFindSpots):
     # -------------------------- UTILS functions ------------------------------
     def _prepCommandline(self):
         "Create the command line input to run dials programs"
+        # Input experiment model file
         params = f" {self.model}"
 
+        # Update the command line with additional parameters
         if self.dMin:
             params += f" filter.d_min={self.dMin}"
 
