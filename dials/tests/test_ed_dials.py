@@ -94,7 +94,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                                       '/data/work_software/scipion-ed/')
 
         if not os.path.exists(cls.dataPath):
-            raise Exception("Can not run tomo tests, "
+            raise Exception("Can not run ED tests, "
                             "SCIPION_TEST_ED variable not defined. ")
 
     def _runImportImages(self, filesPattern):
