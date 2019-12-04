@@ -60,12 +60,9 @@ class TestEdDialsProtocols(pwtests.BaseTest):
 
     def test_find_spots(self):
 
-        protImport2 = self._runImportImages('{TS}/SMV/data/{TI}.img')
-        output = getattr(protImport2, 'outputDiffractionImages', None)
-        self.assertFalse(output is None)
+        protImport = self._runImportImages('{TS}/SMV/data/{TI}.img')
 
-        findSpotsProt = self.newProtocol(
-            DialsProtFindSpots)
+        findSpotsProt = self.newProtocol(DialsProtFindSpots)
 
-        findSpotsProt.inputImages.set(protImport2.outputDiffractionImages)
+        findSpotsProt.inputImages.set(protImport.outputDiffractionImages)
         self.launchProtocol(findSpotsProt)
