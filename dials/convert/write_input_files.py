@@ -8,11 +8,8 @@ def writeJson(inputImages, fn='model.expt'):
     firstimage = imageList[0]
     lastimage = imageList[-1]
     templatepath = f"{firstimage.getDirName()}/#####{firstimage.getExtension()}"
-    try:
-        origin = [firstimage.getBeamCenter()[0], firstimage.getBeamCenter()[
-            1], -firstimage.getDistance()]
-    except Exception as e:
-        print(e)
+    origin = [firstimage.getBeamCenter()[0], firstimage.getBeamCenter()[1],
+              -firstimage.getDistance()]
     exposure_time = []
     epoch = []
     for i in imageList:
