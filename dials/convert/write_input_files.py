@@ -3,7 +3,7 @@
 import json
 
 
-def writeJson(inputImages, fn='model.expt'):
+def writeJson(inputImages, fn='model.expt', idname="ExperimentList"):
     imageList = [img.clone() for img in inputImages]
     firstimage = imageList[0]
     lastimage = imageList[-1]
@@ -15,24 +15,26 @@ def writeJson(inputImages, fn='model.expt'):
     for i in imageList:
         exposure_time.append(i.getExposureTime())
         epoch.append(i.getTwoTheta())
-    beam = [{
-        "direction": [
-            0.0,
-            0.0,
-            1.0
-        ],
-        "transmission": 1.0,
-        "polarization_normal": [
-            0.0,
-            1.0,
-            0.0
-        ],
-        "divergence": 0.0,
-        "polarization_fraction": 0.5,
-        "flux": 0.0,
-        "sigma_divergence": 0.0,
-        "wavelength": firstimage.getWavelength()
-    }]
+    beam = [
+        {
+            "direction": [
+                0.0,
+                0.0,
+                1.0
+            ],
+            "wavelength": firstimage.getWavelength(),
+            "divergence": 0.0,
+            "sigma_divergence": 0.0,
+            "polarization_normal": [
+                0.0,
+                1.0,
+                0.0
+            ],
+            "polarization_fraction": 0.5,
+            "flux": 0.0,
+            "transmission": 1.0
+        }
+    ]
     detector = [
         {
             "hierarchy": {
@@ -179,24 +181,33 @@ def writeJson(inputImages, fn='model.expt'):
 
     output = [
         {
-            "__id__": "DataBlock",
-            "imageset": [{
-                "__id__": "ImageSweep",
-                "template": templatepath,
-                "mask": None,
-                "gain": None,
-                "pedestal": None,
-                "dx": None,
-                "dy": None,
-                "beam": 0,
-                "detector": 0,
-                "goniometer": 0,
-                "scan": 0,
-                "params": {
-                    "dynamic_shadowing": "Auto",
-                    "multi_panel": False
-                },
-            }],
+            "__id__": f"{idname}",
+            "experiment": [
+                {
+                    "__id__": "Experiment",
+                    "identifier": "",
+                    "beam": 0,
+                    "detector": 0,
+                    "goniometer": 0,
+                    "scan": 0,
+                    "imageset": 0
+                }
+            ],
+            "imageset": [
+                {
+                    "__id__": "ImageSequence",
+                    "template": templatepath,
+                    "mask": "",
+                    "gain": "",
+                    "pedestal": "",
+                    "dx": "",
+                    "dy": "",
+                    "params": {
+                        "dynamic_shadowing": "Auto",
+                        "multi_panel": False
+                    },
+                }
+            ],
             "beam": beam,
             "detector": detector,
             "goniometer": goniometer,
