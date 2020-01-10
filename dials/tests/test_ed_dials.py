@@ -34,6 +34,7 @@ from pwed.objects import DiffractionImage, SetOfDiffractionImages
 from pwed.protocols import ProtImportDiffractionImages
 
 from dials.protocols import DialsProtFindSpots
+from dials.convert import writeJson
 
 
 pw.Config.setDomain(pwed)
@@ -66,3 +67,38 @@ class TestEdDialsProtocols(pwtests.BaseTest):
 
         findSpotsProt.inputImages.set(protImport.outputDiffractionImages)
         self.launchProtocol(findSpotsProt)
+
+        outputset=getattr(findSpotsProt,'SetOfSpots',None)
+        outputstats=getattr(findSpotsProt,'Statistics',None)
+        self.assertIsNotNone(outputset)
+        self.assertIsNotNone(outputstats)
+        # TODO: Add confirmation step that SetOfSpots format and values are correct (after defining the set)
+        # TODO: Add confirmation step that Statistics format and values are correct (after defining them)
+
+    def test_writeJson(self):
+        import json
+        template = os.path.join(self.dataPath,'IO-test','imported.expt')
+        self.assertIsNotNone(template)
+        protImport = self._runImportImages('{TS}/SMV/data/{TI}.img')
+        inputImages = protImport.outputDiffractionImages
+        modelPath = os.path.join(self.dataPath,'IO-test','testoutput','model.expt')
+        if os.path.exists(modelPath):
+            os.remove(modelPath)
+        model = writeJson(inputImages,fn=modelPath)
+        self.assertIsNotNone(model)
+        with open(template) as tf:
+            t = json.load(tf)
+        with open(model) as mf:
+            m = json.load(mf)
+        self.assertEqual(type(t), type(m))
+        if type(t) == dict:
+            self.assertEqual(len(t),len(m))
+            for key in t:
+                self.assertIn(key,m)
+                self.assertEqual(t[key],m[key])
+        elif type(t) == list:
+            self.assertEqual(len(t),len(m))
+            for itemA, itemB in zip(t, m):
+                self.assertEqual(itemA,itemB)
+        else:
+            self.assertEqual(t,m)
