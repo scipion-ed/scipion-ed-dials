@@ -8,7 +8,7 @@ def writeJson(inputImages, fn='model.expt', idname="ExperimentList"):
     firstimage = imageList[0]
     lastimage = imageList[-1]
     templatepath = f"{firstimage.getDirName()}/#####{firstimage.getExtension()}"
-    origin = [firstimage.getBeamCenter()[0], firstimage.getBeamCenter()[1],
+    origin = [-firstimage.getBeamCenterMm()[0], firstimage.getBeamCenterMm()[1],
               -firstimage.getDistance()]
     exposure_time = []
     epoch = []
@@ -37,150 +37,142 @@ def writeJson(inputImages, fn='model.expt', idname="ExperimentList"):
     ]
     detector = [
         {
-            "hierarchy": {
-                "origin": [
-                    0.0,
-                    0.0,
-                    0.0
-                ],
-                "fast_axis": [
-                    1.0,
-                    0.0,
-                    0.0
-                ],
-                "name": "",
-                "raw_image_offset": [
-                    0,
-                    0
-                ],
-                "slow_axis": [
-                    0.0,
-                    1.0,
-                    0.0
-                ],
-                "material": "",
-                "mask": [],
-                "thickness": 0.0,
-                "mu": 0.0,
-                "gain": 1.0,
-                "trusted_range": [
-                    0.0,
-                    0.0
-                ],
-                "image_size": [
-                    0,
-                    0
-                ],
-                "px_mm_strategy": {
-                    "type": "SimplePxMmStrategy"
-                },
-                "pedestal": 0.0,
-                "identifier": "",
-                "type": "",
-                "children": [
-                    {
-                        "panel": 0
-                    }
-                ],
-                "pixel_size": [
-                    0.0,
-                    0.0
-                ]
-            },
             "panels": [
                 {
-                    "origin": origin,
+                    "name": "Panel",
+                    "type": "SENSOR_PAD",
                     "fast_axis": [
                         1.0,
                         0.0,
                         0.0
-                    ],
-                    "name": "Panel",
-                    "raw_image_offset": [
-                        0,
-                        0
                     ],
                     "slow_axis": [
                         0.0,
                         -1.0,
                         0.0
                     ],
-                    "material": "Si",
-                    "mask": [],
-                    "thickness": 0.3,
-                    "mu": 0.0,
-                    "gain": 1.0,
+                    "origin": origin,
+                    "raw_image_offset": [
+                        0,
+                        0
+                    ],
+                    "image_size": 
+                        firstimage.getDim(),
+                    "pixel_size": [
+                        firstimage.getPixelSize(),
+                        firstimage.getPixelSize()
+                    ],
                     "trusted_range": [
                         -1.0,
                         65535.0
                     ],
-                    "image_size": [
-                        0,
-                        0
-                    ],
+                    "thickness": 0.3,
+                    "material": "Si",
+                    "mu": 0.0,
+                    "identifier": "",
+                    "mask": [],
+                    "gain": 1.0,
+                    "pedestal": 0.0,
                     "px_mm_strategy": {
                         "type": "SimplePxMmStrategy"
-                    },
-                    "pedestal": 0.0,
-                    "identifier": "",
-                    "type": "SENSOR_PAD",
-                    "pixel_size": [
-                        firstimage.getPixelSize(),
-                        firstimage.getPixelSize()
-                    ]
+                    }
                 }
-            ]
-        }
-    ]
-    goniometer = [
-        {
-            "setting_rotation": [
-                1.0,
-                0.0,
-                0.0,
-                0.0,
-                1.0,
-                0.0,
-                0.0,
-                0.0,
-                1.0
             ],
-            "fixed_rotation": [
-                1.0,
-                0.0,
-                0.0,
-                0.0,
-                1.0,
-                0.0,
-                0.0,
-                0.0,
-                1.0
-            ],
-            "rotation_axis": [
-                -0.6203929740893525,
-                -0.7842911179533836,
-                0.0
-            ]
-        }
-    ],
-    scan = [
-        {
-            "exposure_time": exposure_time,
-            "batch_offset": 0,
-            "oscillation": [
-                firstimage.getOscillation()
-            ],
-            "valid_image_ranges": {},
-            "epochs": epoch,
-            "image_range": [
-                firstimage.getIndex(),
-                lastimage.getIndex()
-            ],
+            "hierarchy": {
+                "name": "",
+                "type": "",
+                "fast_axis": [
+                    1.0,
+                    0.0,
+                    0.0
+                ],
+                "slow_axis": [
+                    0.0,
+                    1.0,
+                    0.0
+                ],
+                "origin": [
+                    0.0,
+                    0.0,
+                    0.0
+                ],
+                "raw_image_offset": [
+                    0,
+                    0
+                ],
+                "image_size": [
+                    0,
+                    0
+                ],
+                "pixel_size": [
+                    0.0,
+                    0.0
+                ],
+                "trusted_range": [
+                    0.0,
+                    0.0
+                ],
+                "thickness": 0.0,
+                "material": "",
+                "mu": 0.0,
+                "identifier": "",
+                "mask": [],
+                "gain": 1.0,
+                "pedestal": 0.0,
+                "px_mm_strategy": {
+                    "type": "SimplePxMmStrategy"
+                },
+                "children": [
+                    {
+                        "panel": 0
+                        }
+                ]
+            }
         }
     ]
 
-    output = [
+    goniometer = {
+        "rotation_axis": firstimage.getRotationAxis(),
+        "fixed_rotation": [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+        ],
+        "setting_rotation": [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+        ],
+    },
+    scan = [
         {
+            "image_range": [
+                firstimage.getObjId(),
+                lastimage.getObjId()
+            ],
+            "batch_offset": 0,
+            "oscillation":
+                firstimage.getOscillation()
+            ,
+            "exposure_time": exposure_time,
+            "epochs": epoch,
+            "valid_image_ranges": {},
+        }
+    ]
+
+    output = {
             "__id__": f"{idname}",
             "experiment": [
                 {
@@ -212,8 +204,10 @@ def writeJson(inputImages, fn='model.expt', idname="ExperimentList"):
             "detector": detector,
             "goniometer": goniometer,
             "scan": scan,
+            "crystal": [],
+            "profile": [],
+            "scaling_model": []
         }
-    ]
 
     with open(fn, 'w') as f:
         f.write(json.dumps(output, indent=4))
