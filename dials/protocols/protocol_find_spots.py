@@ -32,6 +32,7 @@ import pyworkflow.protocol as pwprot
 
 from pwed.objects import DiffractionImage, SetOfDiffractionImages
 from pwed.protocols import EdProtFindSpots
+from pwed.convert import find_subranges
 from dials.convert import writeJson
 
 
@@ -147,10 +148,13 @@ class DialsProtFindSpots(EdProtFindSpots):
     def convertInputStep(self, inputId):
         inputImages = self.inputImages.get()
         self.info("Number of images: %s" % inputImages.getSize())
-        self.model = writeJson(inputImages)
+        jsonName = os.path.join(self._getExtraPath(),'imported.expt')
+        self.model = writeJson(inputImages,fn=jsonName)
 
     def findSpotsStep(self):
-        pass
+        self.program='dials.find_spots'
+        arguments = self._prepCommandline()
+        self.runJob(self.program,arguments)
 
     def createOutputStep(self):
         pass
@@ -163,46 +167,55 @@ class DialsProtFindSpots(EdProtFindSpots):
     # -------------------------- UTILS functions ------------------------------
     def _prepCommandline(self):
         "Create the command line input to run dials programs"
-        # Input experiment model file
-        params = f" {self.model}"
+        # Input basic parameters
+        logPath = f"{self._getLogsPath()}/{self.program}.log"
+        reflectionsPath = f"{self._getExtraPath()}/strong.refl"
+        params = f"{self.model} output.log={logPath} output.reflections={reflectionsPath} {self._createScanRanges()}"
 
         # Update the command line with additional parameters
-        if self.dMin:
-            params += f" filter.d_min={self.dMin}"
+        if self.dMin.get():
+            params += f" spotfinder.filter.d_min={self.dMin.get()}"
 
-        if self.dMax:
-            params += f" filter.d_max={self.dMax}"
+        if self.dMax.get():
+            params += f" spotfinder.filter.d_max={self.dMax.get()}"
 
-        if self.iceRings:
-            params += f" filter.ice_rings.filter={self.iceRings}"
+        if self.iceRings.get():
+            params += f" spotfinder.filter.ice_rings.filter={self.iceRings.get()}"
 
-        if self.minSpotSize:
-            params += f" filter.min_spot_size={self.minSpotSize}"
+        if self.minSpotSize.get():
+            params += f" spotfinder.filter.min_spot_size={self.minSpotSize.get()}"
 
-        if self.maxSpotSize:
-            params += f" filter.min_spot_size={self.maxSpotSize}"
+        if self.maxSpotSize.get():
+            params += f" spotfinder.filter.max_spot_size={self.maxSpotSize.get()}"
 
-        if self.maxStrongPixelFraction:
-            params += f" filter.max_strong_pixel_fraction={self.maxStrongPixelFraction}"
+        if self.maxStrongPixelFraction.get():
+            params += f" spotfinder.filter.max_strong_pixel_fraction={self.maxStrongPixelFraction.get()}"
 
-        if self.untrustedAreas:
-            params += f" filter.untrusted.circle={self.untrustedCircle}"
-            params += f" filter.untrusted.rectangle={self.untrustedRectangle_1}"
-            params += f" filter.untrusted.rectangle={self.untrustedRectangle_2}"
+        if self.untrustedAreas.get():
+            params += f" spotfinder.filter.untrusted.circle={self.untrustedCircle.get()}"
+            params += f" spotfinder.filter.untrusted.rectangle={self.untrustedRectangle_1.get()}"
+            params += f" spotfinder.filter.untrusted.rectangle={self.untrustedRectangle_2.get()}"
 
-        if self.thresholdIntensity:
-            params += f" threshold.global_threshold={self.thresholdIntensity}"
+        if self.thresholdIntensity.get():
+            params += f" spotfinder.threshold.dispersion.global_threshold={self.thresholdIntensity.get()}"
 
-        if self.gain:
-            params += f" threshold.gain={self.gain}"
+        if self.gain.get():
+            params += f" spotfinder.threshold.dispersion.gain={self.gain.get()}"
 
-        if self.sigmaBackground:
-            params += f" threshold.sigma_background={self.sigmaBackground}"
+        if self.sigmaBackground.get():
+            params += f" spotfinder.threshold.dispersion.sigma_background={self.sigmaBackground.get()}"
 
-        if self.sigmaStrong:
-            params += f" threshold.sigma_strong={self.sigmaStrong}"
+        if self.sigmaStrong.get():
+            params += f" spotfinder.threshold.dispersion.sigma_strong={self.sigmaStrong.get()}"
 
-        if self.kernelSize:
-            params += f" threshold.kernel_size={self.kernelSize},{self.kernelSize}"
+        if self.kernelSize.get():
+            params += f" spotfinder.threshold.dispersion.kernel_size={self.kernelSize.get()},{self.kernelSize.get()}"
 
         return params
+
+    def _createScanRanges(self):
+        # Go through the 
+        images=[image.getObjId() for image in self.inputImages.get() if image.getIgnore() is not True]
+        scanranges = find_subranges(images)
+        scanrange = ' '.join(f'spotfinder.scan_range={i},{j}' for i, j in scanranges)
+        return scanrange
