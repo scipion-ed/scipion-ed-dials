@@ -34,7 +34,7 @@ from pwed.objects import DiffractionImage, SetOfDiffractionImages
 from pwed.protocols import ProtImportDiffractionImages
 
 from dials.protocols import DialsProtFindSpots
-from dials.convert import writeJson
+from dials.convert import writeJson, readRefl
 
 
 pw.Config.setDomain(pwed)
@@ -59,36 +59,39 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             **kwargs)
         self.launchProtocol(protImport)
         return protImport
-    
-    def _runFindSpots(self, inputImages,**kwargs):
+
+    def _runFindSpots(self, inputImages, **kwargs):
         protFindSpots = self.newProtocol(DialsProtFindSpots,
-            inputImages=inputImages,
-            **kwargs)
+                                         inputImages=inputImages,
+                                         **kwargs)
         self.launchProtocol(protFindSpots)
         return protFindSpots
 
     def test_find_spots(self):
 
-        protImport = self._runImportImages('{TS}/SMV/data/{TI}.img',skipImages=10)
+        protImport = self._runImportImages(
+            '{TS}/SMV/data/{TI}.img', skipImages=10)
         protFindSpots = self._runFindSpots(protImport.outputDiffractionImages)
 
-        outputset=getattr(protFindSpots,'SetOfSpots',None)
-        outputstats=getattr(protFindSpots,'Statistics',None)
-        #self.assertIsNotNone(outputset)
-        #self.assertIsNotNone(outputstats)
+        outputset = getattr(protFindSpots, 'SetOfSpots', None)
+        outputstats = getattr(protFindSpots, 'Statistics', None)
+        # self.assertIsNotNone(outputset)
+        # self.assertIsNotNone(outputstats)
         # TODO: Add confirmation step that SetOfSpots format and values are correct (after defining the set)
         # TODO: Add confirmation step that Statistics format and values are correct (after defining them)
 
     def test_writeJson(self):
         import json
-        template = os.path.join(self.dataPath,'IO-test','imported.expt')
+        template = os.path.join(self.dataPath, 'IO-test', 'imported.expt')
         self.assertIsNotNone(template)
-        protImport = self._runImportImages('{TS}/SMV/data/{TI}.img')
+        protImport = self._runImportImages('{TS}/SMV/data/{TI}.img',
+                                           rotationAxis='-0.6204,-0.7843,0')
         inputImages = protImport.outputDiffractionImages
-        modelPath = os.path.join(self.dataPath,'IO-test','testoutput','model.expt')
+        modelPath = os.path.join(
+            self.dataPath, 'IO-test', 'testoutput', 'model.expt')
         if os.path.exists(modelPath):
             os.remove(modelPath)
-        model = writeJson(inputImages,fn=modelPath)
+        model = writeJson(inputImages, fn=modelPath)
         self.assertIsNotNone(model)
         with open(template) as tf:
             t = json.load(tf)
@@ -96,13 +99,20 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             m = json.load(mf)
         self.assertEqual(type(t), type(m))
         if type(t) == dict:
-            self.assertEqual(len(t),len(m))
+            self.assertEqual(len(t), len(m))
             for key in t:
-                self.assertIn(key,m)
-                self.assertEqual(t[key],m[key])
+                self.assertIn(key, m)
+                self.assertEqual(t[key], m[key])
         elif type(t) == list:
-            self.assertEqual(len(t),len(m))
+            self.assertEqual(len(t), len(m))
             for itemA, itemB in zip(t, m):
-                self.assertEqual(itemA,itemB)
+                self.assertEqual(itemA, itemB)
         else:
-            self.assertEqual(t,m)
+            self.assertEqual(t, m)
+
+    def test_readRefl(self):
+        spotfile = os.path.join(self.dataPath, 'IO-test', 'strong.refl')
+        outputFile = os.path.join(
+            self.dataPath, 'IO-test', 'testoutput', 'strong.out')
+        result = readRefl(spotfile, fn=outputFile)
+        self.assertIsNotNone(result)

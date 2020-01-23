@@ -1,6 +1,7 @@
 """ Functions for writing required json files (*.expt) for use with DIALS. """
 
 import json
+import msgpack
 
 
 def writeJson(inputImages, fn='model.expt', idname="ExperimentList"):
@@ -56,7 +57,7 @@ def writeJson(inputImages, fn='model.expt', idname="ExperimentList"):
                         0,
                         0
                     ],
-                    "image_size": 
+                    "image_size":
                         firstimage.getDim(),
                     "pixel_size": [
                         firstimage.getPixelSize(),
@@ -125,7 +126,7 @@ def writeJson(inputImages, fn='model.expt', idname="ExperimentList"):
                 "children": [
                     {
                         "panel": 0
-                        }
+                    }
                 ]
             }
         }
@@ -164,8 +165,7 @@ def writeJson(inputImages, fn='model.expt', idname="ExperimentList"):
             ],
             "batch_offset": 0,
             "oscillation":
-                firstimage.getOscillation()
-            ,
+                firstimage.getOscillation(),
             "exposure_time": exposure_time,
             "epochs": epoch,
             "valid_image_ranges": {},
@@ -173,42 +173,53 @@ def writeJson(inputImages, fn='model.expt', idname="ExperimentList"):
     ]
 
     output = {
-            "__id__": f"{idname}",
-            "experiment": [
-                {
-                    "__id__": "Experiment",
-                    "identifier": "",
-                    "beam": 0,
-                    "detector": 0,
-                    "goniometer": 0,
-                    "scan": 0,
-                    "imageset": 0
-                }
-            ],
-            "imageset": [
-                {
-                    "__id__": "ImageSequence",
-                    "template": templatepath,
-                    "mask": "",
-                    "gain": "",
-                    "pedestal": "",
-                    "dx": "",
-                    "dy": "",
-                    "params": {
+        "__id__": f"{idname}",
+        "experiment": [
+            {
+                "__id__": "Experiment",
+                "identifier": "",
+                "beam": 0,
+                "detector": 0,
+                "goniometer": 0,
+                "scan": 0,
+                "imageset": 0
+            }
+        ],
+        "imageset": [
+            {
+                "__id__": "ImageSequence",
+                "template": templatepath,
+                "mask": "",
+                "gain": "",
+                "pedestal": "",
+                "dx": "",
+                "dy": "",
+                "params": {
                         "dynamic_shadowing": "Auto",
                         "multi_panel": False
-                    },
-                }
-            ],
-            "beam": beam,
-            "detector": detector,
-            "goniometer": goniometer,
-            "scan": scan,
-            "crystal": [],
-            "profile": [],
-            "scaling_model": []
-        }
+                },
+            }
+        ],
+        "beam": beam,
+        "detector": detector,
+        "goniometer": goniometer,
+        "scan": scan,
+        "crystal": [],
+        "profile": [],
+        "scaling_model": []
+    }
 
     with open(fn, 'w') as f:
         f.write(json.dumps(output, indent=4))
     return fn
+
+
+def readRefl(reflFile, fn='reflections.txt', **kwargs):
+    with open(reflFile, 'rb') as rf:
+        contentsList = msgpack.unpackb(rf, use_bin_type=False, raw=True)
+        for i in contentsList:
+            print(type(i))
+    # with open(fn, 'w') as f:
+    #    f.write(contents)
+    # print(contents)
+    # return fn
