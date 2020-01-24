@@ -8,7 +8,7 @@ def writeJson(inputImages, fn='model.expt', idname="ExperimentList"):
     imageList = [img.clone() for img in inputImages]
     firstimage = imageList[0]
     lastimage = imageList[-1]
-    templatepath = f"{firstimage.getDirName()}/#####{firstimage.getExtension()}"
+    templatepath = "{}/#####{}".format(firstimage.getDirName(),firstimage.getExtension())
     origin = [-firstimage.getBeamCenterMm()[0], firstimage.getBeamCenterMm()[1],
               -firstimage.getDistance()]
     exposure_time = []
@@ -173,28 +173,28 @@ def writeJson(inputImages, fn='model.expt', idname="ExperimentList"):
     ]
 
     output = {
-        "__id__": f"{idname}",
-        "experiment": [
-            {
-                "__id__": "Experiment",
-                "identifier": "",
-                "beam": 0,
-                "detector": 0,
-                "goniometer": 0,
-                "scan": 0,
-                "imageset": 0
-            }
-        ],
-        "imageset": [
-            {
-                "__id__": "ImageSequence",
-                "template": templatepath,
-                "mask": "",
-                "gain": "",
-                "pedestal": "",
-                "dx": "",
-                "dy": "",
-                "params": {
+            "__id__": "{}".format(idname),
+            "experiment": [
+                {
+                    "__id__": "Experiment",
+                    "identifier": "",
+                    "beam": 0,
+                    "detector": 0,
+                    "goniometer": 0,
+                    "scan": 0,
+                    "imageset": 0
+                }
+            ],
+            "imageset": [
+                {
+                    "__id__": "ImageSequence",
+                    "template": templatepath,
+                    "mask": "",
+                    "gain": "",
+                    "pedestal": "",
+                    "dx": "",
+                    "dy": "",
+                    "params": {
                         "dynamic_shadowing": "Auto",
                         "multi_panel": False
                 },

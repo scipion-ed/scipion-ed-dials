@@ -168,48 +168,48 @@ class DialsProtFindSpots(EdProtFindSpots):
     def _prepCommandline(self):
         "Create the command line input to run dials programs"
         # Input basic parameters
-        logPath = f"{self._getLogsPath()}/{self.program}.log"
-        reflectionsPath = f"{self._getExtraPath()}/strong.refl"
-        params = f"{self.model} output.log={logPath} output.reflections={reflectionsPath} {self._createScanRanges()}"
+        logPath = "{}/{}.log".format(self._getLogsPath(),self.program)
+        reflectionsPath = "{}/strong.refl".format(self._getExtraPath())
+        params = "{} output.log={} output.reflections={} {}".format(self.model,logPath,reflectionsPath,self._createScanRanges())
 
         # Update the command line with additional parameters
         if self.dMin.get():
-            params += f" spotfinder.filter.d_min={self.dMin.get()}"
+            params += " spotfinder.filter.d_min={}".format(self.dMin.get())
 
         if self.dMax.get():
-            params += f" spotfinder.filter.d_max={self.dMax.get()}"
+            params += " spotfinder.filter.d_max={}".format(self.dMax.get())
 
         if self.iceRings.get():
-            params += f" spotfinder.filter.ice_rings.filter={self.iceRings.get()}"
+            params += " spotfinder.filter.ice_rings.filter={}".format(self.iceRings.get())
 
         if self.minSpotSize.get():
-            params += f" spotfinder.filter.min_spot_size={self.minSpotSize.get()}"
+            params += " spotfinder.filter.min_spot_size={}".format(self.minSpotSize.get())
 
         if self.maxSpotSize.get():
-            params += f" spotfinder.filter.max_spot_size={self.maxSpotSize.get()}"
+            params += " spotfinder.filter.max_spot_size={}".format(self.maxSpotSize.get())
 
         if self.maxStrongPixelFraction.get():
-            params += f" spotfinder.filter.max_strong_pixel_fraction={self.maxStrongPixelFraction.get()}"
+            params += " spotfinder.filter.max_strong_pixel_fraction={}".format(self.maxStrongPixelFraction.get())
 
         if self.untrustedAreas.get():
-            params += f" spotfinder.filter.untrusted.circle={self.untrustedCircle.get()}"
-            params += f" spotfinder.filter.untrusted.rectangle={self.untrustedRectangle_1.get()}"
-            params += f" spotfinder.filter.untrusted.rectangle={self.untrustedRectangle_2.get()}"
+            params += " spotfinder.filter.untrusted.circle={}".format(self.untrustedCircle.get())
+            params += " spotfinder.filter.untrusted.rectangle={}".format(self.untrustedRectangle_1.get())
+            params += " spotfinder.filter.untrusted.rectangle={}".format(self.untrustedRectangle_2.get())
 
         if self.thresholdIntensity.get():
-            params += f" spotfinder.threshold.dispersion.global_threshold={self.thresholdIntensity.get()}"
+            params += " spotfinder.threshold.dispersion.global_threshold={}".format(self.thresholdIntensity.get())
 
         if self.gain.get():
-            params += f" spotfinder.threshold.dispersion.gain={self.gain.get()}"
+            params += " spotfinder.threshold.dispersion.gain={}".format(self.gain.get())
 
         if self.sigmaBackground.get():
-            params += f" spotfinder.threshold.dispersion.sigma_background={self.sigmaBackground.get()}"
+            params += " spotfinder.threshold.dispersion.sigma_background={}".format(self.sigmaBackground.get())
 
         if self.sigmaStrong.get():
-            params += f" spotfinder.threshold.dispersion.sigma_strong={self.sigmaStrong.get()}"
+            params += " spotfinder.threshold.dispersion.sigma_strong={}".format(self.sigmaStrong.get())
 
         if self.kernelSize.get():
-            params += f" spotfinder.threshold.dispersion.kernel_size={self.kernelSize.get()},{self.kernelSize.get()}"
+            params += " spotfinder.threshold.dispersion.kernel_size={},{}".format(self.kernelSize.get(),self.kernelSize.get())
 
         return params
 
@@ -217,5 +217,5 @@ class DialsProtFindSpots(EdProtFindSpots):
         # Go through the 
         images=[image.getObjId() for image in self.inputImages.get() if image.getIgnore() is not True]
         scanranges = find_subranges(images)
-        scanrange = ' '.join(f'spotfinder.scan_range={i},{j}' for i, j in scanranges)
+        scanrange = ' '.join('spotfinder.scan_range={},{}'.format(i,j) for i, j in scanranges)
         return scanrange
