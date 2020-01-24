@@ -215,10 +215,11 @@ def writeJson(inputImages, fn='model.expt', idname="ExperimentList"):
 
 
 def readRefl(reflFile, fn='reflections.txt', **kwargs):
-    with open(reflFile, 'rb') as rf:
-        contentsList = msgpack.unpackb(rf, use_bin_type=False, raw=True)
-        for i in contentsList:
-            print(type(i))
+    return fn
+#    with open(reflFile, 'rb') as rf:
+#        contentsList = msgpack.unpackb(rf, raw=True)
+#        for i in contentsList:
+#            print(type(i))
     # with open(fn, 'w') as f:
     #    f.write(contents)
     # print(contents)

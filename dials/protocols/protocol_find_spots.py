@@ -148,13 +148,16 @@ class DialsProtFindSpots(EdProtFindSpots):
     def convertInputStep(self, inputId):
         inputImages = self.inputImages.get()
         self.info("Number of images: %s" % inputImages.getSize())
-        jsonName = os.path.join(self._getExtraPath(),'imported.expt')
+        jsonName = self._getExtraPath('imported.expt')
         self.model = writeJson(inputImages,fn=jsonName)
 
     def findSpotsStep(self):
         self.program='dials.find_spots'
         arguments = self._prepCommandline()
         self.runJob(self.program,arguments)
+        readargs = self._readReflFile(self.reflectionsPath)
+        self.runJob('dials.show',readargs)
+        self._readTxtRefl()
 
     def createOutputStep(self):
         pass
@@ -169,8 +172,8 @@ class DialsProtFindSpots(EdProtFindSpots):
         "Create the command line input to run dials programs"
         # Input basic parameters
         logPath = "{}/{}.log".format(self._getLogsPath(),self.program)
-        reflectionsPath = "{}/strong.refl".format(self._getExtraPath())
-        params = "{} output.log={} output.reflections={} {}".format(self.model,logPath,reflectionsPath,self._createScanRanges())
+        self.reflectionsPath = "{}/strong.refl".format(self._getExtraPath())
+        params = "{} output.log={} output.reflections={} {}".format(self.model,logPath,self.reflectionsPath,self._createScanRanges())
 
         # Update the command line with additional parameters
         if self.dMin.get():
@@ -219,3 +222,31 @@ class DialsProtFindSpots(EdProtFindSpots):
         scanranges = find_subranges(images)
         scanrange = ' '.join('spotfinder.scan_range={},{}'.format(i,j) for i, j in scanranges)
         return scanrange
+    
+    def _readReflFile(self,reflFile):
+        if reflFile is None:
+            reflFile = self.reflectionsPath
+        self.txtRefl="{}/strong.txt".format(self._getExtraPath())
+        commandLine = " show_all_reflection_data=True {} > {}".format(reflFile,self.txtRefl)
+        return commandLine
+    
+    def _readTxtRefl(self):
+        from collections import OrderedDict
+        columns = None
+        columnsLists = None
+        with open(self.txtRefl,'r') as f:
+            for line in f:
+                line = line.strip()
+                if columns and line:
+                    values = line.split()
+                    columns['id'].append(values[0])
+                    columns['panel'].append(values[1])
+                    columns['flags'].append(values[2])
+                    columns['intensity.sum.value'].append(values[3])
+                    columns['intensity.sum.variance'].append(values[4])
+                    columns['xyzobs.px.value'].append((values[5],values[6],values[7]))
+                    columns['xyzobs.px.variance'].append((values[8],values[9],values[10]))
+                if line.startswith('id panel flags intensity.sum.value'):
+                    columns = OrderedDict()
+                    for key in line.split():
+                        columns[key] = []
