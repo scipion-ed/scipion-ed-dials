@@ -33,7 +33,7 @@ import pyworkflow.protocol as pwprot
 from pwed.objects import DiffractionImage, SetOfDiffractionImages
 from pwed.protocols import EdProtFindSpots
 from pwed.convert import find_subranges
-from dials.convert import writeJson
+from dials.convert import writeJson, readRefl
 
 
 class DialsProtFindSpots(EdProtFindSpots):
@@ -149,15 +149,13 @@ class DialsProtFindSpots(EdProtFindSpots):
         inputImages = self.inputImages.get()
         self.info("Number of images: %s" % inputImages.getSize())
         jsonName = self._getExtraPath('imported.expt')
-        self.model = writeJson(inputImages,fn=jsonName)
+        self.model = writeJson(inputImages, fn=jsonName)
 
     def findSpotsStep(self):
-        self.program='dials.find_spots'
+        self.program = 'dials.find_spots'
         arguments = self._prepCommandline()
-        self.runJob(self.program,arguments)
-        readargs = self._readReflFile(self.reflectionsPath)
-        self.runJob('dials.show',readargs)
-        self._readTxtRefl()
+        self.runJob(self.program, arguments)
+        self.reflectionData = readRefl(self.reflectionsPath)
 
     def createOutputStep(self):
         pass
@@ -171,9 +169,10 @@ class DialsProtFindSpots(EdProtFindSpots):
     def _prepCommandline(self):
         "Create the command line input to run dials programs"
         # Input basic parameters
-        logPath = "{}/{}.log".format(self._getLogsPath(),self.program)
+        logPath = "{}/{}.log".format(self._getLogsPath(), self.program)
         self.reflectionsPath = "{}/strong.refl".format(self._getExtraPath())
-        params = "{} output.log={} output.reflections={} {}".format(self.model,logPath,self.reflectionsPath,self._createScanRanges())
+        params = "{} output.log={} output.reflections={} {}".format(
+            self.model, logPath, self.reflectionsPath, self._createScanRanges())
 
         # Update the command line with additional parameters
         if self.dMin.get():
@@ -183,70 +182,56 @@ class DialsProtFindSpots(EdProtFindSpots):
             params += " spotfinder.filter.d_max={}".format(self.dMax.get())
 
         if self.iceRings.get():
-            params += " spotfinder.filter.ice_rings.filter={}".format(self.iceRings.get())
+            params += " spotfinder.filter.ice_rings.filter={}".format(
+                self.iceRings.get())
 
         if self.minSpotSize.get():
-            params += " spotfinder.filter.min_spot_size={}".format(self.minSpotSize.get())
+            params += " spotfinder.filter.min_spot_size={}".format(
+                self.minSpotSize.get())
 
         if self.maxSpotSize.get():
-            params += " spotfinder.filter.max_spot_size={}".format(self.maxSpotSize.get())
+            params += " spotfinder.filter.max_spot_size={}".format(
+                self.maxSpotSize.get())
 
         if self.maxStrongPixelFraction.get():
-            params += " spotfinder.filter.max_strong_pixel_fraction={}".format(self.maxStrongPixelFraction.get())
+            params += " spotfinder.filter.max_strong_pixel_fraction={}".format(
+                self.maxStrongPixelFraction.get())
 
         if self.untrustedAreas.get():
-            params += " spotfinder.filter.untrusted.circle={}".format(self.untrustedCircle.get())
-            params += " spotfinder.filter.untrusted.rectangle={}".format(self.untrustedRectangle_1.get())
-            params += " spotfinder.filter.untrusted.rectangle={}".format(self.untrustedRectangle_2.get())
+            params += " spotfinder.filter.untrusted.circle={}".format(
+                self.untrustedCircle.get())
+            params += " spotfinder.filter.untrusted.rectangle={}".format(
+                self.untrustedRectangle_1.get())
+            params += " spotfinder.filter.untrusted.rectangle={}".format(
+                self.untrustedRectangle_2.get())
 
         if self.thresholdIntensity.get():
-            params += " spotfinder.threshold.dispersion.global_threshold={}".format(self.thresholdIntensity.get())
+            params += " spotfinder.threshold.dispersion.global_threshold={}".format(
+                self.thresholdIntensity.get())
 
         if self.gain.get():
-            params += " spotfinder.threshold.dispersion.gain={}".format(self.gain.get())
+            params += " spotfinder.threshold.dispersion.gain={}".format(
+                self.gain.get())
 
         if self.sigmaBackground.get():
-            params += " spotfinder.threshold.dispersion.sigma_background={}".format(self.sigmaBackground.get())
+            params += " spotfinder.threshold.dispersion.sigma_background={}".format(
+                self.sigmaBackground.get())
 
         if self.sigmaStrong.get():
-            params += " spotfinder.threshold.dispersion.sigma_strong={}".format(self.sigmaStrong.get())
+            params += " spotfinder.threshold.dispersion.sigma_strong={}".format(
+                self.sigmaStrong.get())
 
         if self.kernelSize.get():
-            params += " spotfinder.threshold.dispersion.kernel_size={},{}".format(self.kernelSize.get(),self.kernelSize.get())
+            params += " spotfinder.threshold.dispersion.kernel_size={},{}".format(
+                self.kernelSize.get(), self.kernelSize.get())
 
         return params
 
     def _createScanRanges(self):
-        # Go through the 
-        images=[image.getObjId() for image in self.inputImages.get() if image.getIgnore() is not True]
+        # Go through the
+        images = [image.getObjId() for image in self.inputImages.get()
+                  if image.getIgnore() is not True]
         scanranges = find_subranges(images)
-        scanrange = ' '.join('spotfinder.scan_range={},{}'.format(i,j) for i, j in scanranges)
+        scanrange = ' '.join('spotfinder.scan_range={},{}'.format(i, j)
+                             for i, j in scanranges)
         return scanrange
-    
-    def _readReflFile(self,reflFile):
-        if reflFile is None:
-            reflFile = self.reflectionsPath
-        self.txtRefl="{}/strong.txt".format(self._getExtraPath())
-        commandLine = " show_all_reflection_data=True {} > {}".format(reflFile,self.txtRefl)
-        return commandLine
-    
-    def _readTxtRefl(self):
-        from collections import OrderedDict
-        columns = None
-        columnsLists = None
-        with open(self.txtRefl,'r') as f:
-            for line in f:
-                line = line.strip()
-                if columns and line:
-                    values = line.split()
-                    columns['id'].append(values[0])
-                    columns['panel'].append(values[1])
-                    columns['flags'].append(values[2])
-                    columns['intensity.sum.value'].append(values[3])
-                    columns['intensity.sum.variance'].append(values[4])
-                    columns['xyzobs.px.value'].append((values[5],values[6],values[7]))
-                    columns['xyzobs.px.variance'].append((values[8],values[9],values[10]))
-                if line.startswith('id panel flags intensity.sum.value'):
-                    columns = OrderedDict()
-                    for key in line.split():
-                        columns[key] = []

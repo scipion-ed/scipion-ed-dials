@@ -216,21 +216,19 @@ def writeJson(inputImages, fn='model.expt', idname="ExperimentList"):
     return fn
 
 
-def readRefl(self, reflFile, fn='reflections.txt', **kwargs):
+def readRefl(reflFile, fn='reflections.txt', **kwargs):
     with open(reflFile, 'rb') as f:
         buf = msgpack.unpack(f)
 
-    if buf[0].decode() is 'dials::af::reflection_table':
-        version = buf[1]
-        nrows = buf[2][b'nrows']
-        identifier_dict = buf[2][b'identifiers']
-        data_dict = buf[2][b'data']
-
-        data = {}
-        for k, v in data_dict.items():
-            data[k.decode()] = np.array(self.extract(v))
-
-        return version, nrows, identifier_dict, data
+    reflFileIdentifier = buf[0].decode()
+    version = buf[1]
+    nrows = buf[2][b'nrows']
+    identifier_dict = buf[2][b'identifiers']
+    data_dict = buf[2][b'data']
+    data = {}
+    for k, v in data_dict.items():
+        data[k.decode()] = np.array(extractRefls(v))
+    return reflFileIdentifier, version, nrows, identifier_dict, data
 
 
 def extractRefls(v):
