@@ -2,13 +2,15 @@
 
 import json
 import msgpack
+import numpy as np
 
 
 def writeJson(inputImages, fn='model.expt', idname="ExperimentList"):
     imageList = [img.clone() for img in inputImages]
     firstimage = imageList[0]
     lastimage = imageList[-1]
-    templatepath = "{}/#####{}".format(firstimage.getDirName(),firstimage.getExtension())
+    templatepath = "{}/#####{}".format(firstimage.getDirName(),
+                                       firstimage.getExtension())
     origin = [-firstimage.getBeamCenterMm()[0], firstimage.getBeamCenterMm()[1],
               -firstimage.getDistance()]
     exposure_time = []
@@ -173,28 +175,28 @@ def writeJson(inputImages, fn='model.expt', idname="ExperimentList"):
     ]
 
     output = {
-            "__id__": "{}".format(idname),
-            "experiment": [
-                {
-                    "__id__": "Experiment",
-                    "identifier": "",
-                    "beam": 0,
-                    "detector": 0,
-                    "goniometer": 0,
-                    "scan": 0,
-                    "imageset": 0
-                }
-            ],
-            "imageset": [
-                {
-                    "__id__": "ImageSequence",
-                    "template": templatepath,
-                    "mask": "",
-                    "gain": "",
-                    "pedestal": "",
-                    "dx": "",
-                    "dy": "",
-                    "params": {
+        "__id__": "{}".format(idname),
+        "experiment": [
+            {
+                "__id__": "Experiment",
+                "identifier": "",
+                "beam": 0,
+                "detector": 0,
+                "goniometer": 0,
+                "scan": 0,
+                "imageset": 0
+            }
+        ],
+        "imageset": [
+            {
+                "__id__": "ImageSequence",
+                "template": templatepath,
+                "mask": "",
+                "gain": "",
+                "pedestal": "",
+                "dx": "",
+                "dy": "",
+                "params": {
                         "dynamic_shadowing": "Auto",
                         "multi_panel": False
                 },
@@ -214,13 +216,43 @@ def writeJson(inputImages, fn='model.expt', idname="ExperimentList"):
     return fn
 
 
-def readRefl(reflFile, fn='reflections.txt', **kwargs):
-    return fn
-#    with open(reflFile, 'rb') as rf:
-#        contentsList = msgpack.unpackb(rf, raw=True)
-#        for i in contentsList:
-#            print(type(i))
-    # with open(fn, 'w') as f:
-    #    f.write(contents)
-    # print(contents)
-    # return fn
+def readRefl(self, reflFile, fn='reflections.txt', **kwargs):
+    with open(reflFile, 'rb') as f:
+        buf = msgpack.unpack(f)
+
+    if buf[0].decode() is 'dials::af::reflection_table':
+        version = buf[1]
+        nrows = buf[2][b'nrows']
+        identifier_dict = buf[2][b'identifiers']
+        data_dict = buf[2][b'data']
+
+        data = {}
+        for k, v in data_dict.items():
+            data[k.decode()] = np.array(self.extract(v))
+
+        return version, nrows, identifier_dict, data
+
+
+def extractRefls(v):
+    dtype = v[0]
+    size = v[1][0]
+    if dtype == b"int":
+        data = np.frombuffer(v[1][1], dtype=np.int32)
+        assert len(data) == size
+    elif dtype == b"int6":
+        data = np.frombuffer(v[1][1], dtype=np.int32)
+        assert len(data) == size * 6
+        data = data.reshape((size, 6))
+    elif dtype == b"std::size_t":
+        data = np.frombuffer(v[1][1], dtype=np.uint64)
+        assert len(data) == size
+    elif dtype == b"double":
+        data = np.frombuffer(v[1][1], dtype=np.float64)
+        assert len(data) == size
+    elif dtype == b"vec3<double>":
+        data = np.frombuffer(v[1][1], dtype=np.float64)
+        assert len(data) == size * 3
+        data = data.reshape((size, 3))
+    else:
+        data = None
+    return data
