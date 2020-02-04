@@ -30,7 +30,7 @@ from glob import glob
 
 import pyworkflow.protocol as pwprot
 
-from pwed.objects import DiffractionImage, SetOfDiffractionImages
+from pwed.objects import DiffractionImage, SetOfDiffractionImages, DiffractionSpot, SetOfSpots
 from pwed.protocols import EdProtFindSpots
 from pwed.convert import find_subranges
 from dials.convert import writeJson, readRefl
@@ -44,7 +44,7 @@ class DialsProtFindSpots(EdProtFindSpots):
 
     # -------------------------- DEFINE param functions -----------------------
     def _defineParams(self, form):
-        #EdProtFindSpots._defineParams(self, form)
+        # EdProtFindSpots._defineParams(self, form)
         form.addSection(label='Input')
 
         form.addParam('inputImages', pwprot.PointerParam,
@@ -158,7 +158,34 @@ class DialsProtFindSpots(EdProtFindSpots):
         self.reflectionData = readRefl(self.reflectionsPath)
 
     def createOutputStep(self):
-        pass
+        outputSet = self._createSetOfSpots()
+        dSpot = DiffractionSpot()
+        numberOfSpots = self.reflectionData[2]
+        reflDict = self.reflectionData[4]
+
+        outputSet.setSpots(numberOfSpots)
+        
+        for i in range(0, numberOfSpots):
+            dSpot.setObjId(i)
+            dSpot.setSpotId(reflDict['id'][i])
+            dSpot.setBbox(reflDict['bbox'][i])
+            dSpot.setFlag(reflDict['flags'][i])
+            dSpot.setIntensitySumValue(reflDict['intensity.sum.value'][i])
+            dSpot.setIntensitySumVariance(
+                reflDict['intensity.sum.variance'][i])
+            dSpot.setNSignal(reflDict['n_signal'][i])
+            dSpot.setPanel(reflDict['panel'][i])
+            try:
+                dSpot.setShoebox(reflDict['shoebox'][i])
+            except IndexError:
+                pass
+            dSpot.setXyzobsPxValue(reflDict['xyzobs.px.value'][i])
+            dSpot.setXyzobsPxVariance(reflDict['xyzobs.px.variance'][i])
+            outputSet.append(dSpot)
+
+        outputSet.write()
+
+        self._defineOutputs(outputDiffractionSpots=outputSet)
 
     # -------------------------- INFO functions -------------------------------
     def _validate(self):
