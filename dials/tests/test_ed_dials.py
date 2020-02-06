@@ -25,6 +25,7 @@
 # **************************************************************************
 
 import os
+import json
 
 import pyworkflow as pw
 import pyworkflow.tests as pwtests
@@ -81,22 +82,25 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         # TODO: Add confirmation step that Statistics format and values are correct (after defining them)
 
     def test_writeJson(self):
-        import json
+        
         template = os.path.join(self.dataPath, 'IO-test', 'imported.expt')
         self.assertIsNotNone(template)
         protImport = self._runImportImages('{TS}/SMV/data/{TI}.img',
                                            rotationAxis='-0.6204,-0.7843,0')
         inputImages = protImport.outputDiffractionImages
-        modelPath = os.path.join(
-            self.dataPath, 'IO-test', 'testoutput', 'model.expt')
-        if os.path.exists(modelPath):
-            os.remove(modelPath)
+        modelPath = self.getOutputPath('model.expt')
         model = writeJson(inputImages, fn=modelPath)
         self.assertIsNotNone(model)
         with open(template) as tf:
             t = json.load(tf)
         with open(model) as mf:
             m = json.load(mf)
+
+        # Replace the path prefix to match with template value
+        p = m['imageset'][0]['template']
+        m['imageset'][0]['template'] = p.replace(pwed.Config.SCIPION_ED_TESTDATA,
+                                                 "$SCIPION_ED_TESTDATA")
+
         self.assertEqual(type(t), type(m))
         if type(t) == dict:
             self.assertEqual(len(t), len(m))
@@ -112,7 +116,6 @@ class TestEdDialsProtocols(pwtests.BaseTest):
 
     def test_readRefl(self):
         spotfile = os.path.join(self.dataPath, 'IO-test', 'strong.refl')
-        outputFile = os.path.join(
-            self.dataPath, 'IO-test', 'testoutput', 'strong.out')
+        outputFile = self.getOutputPath('strong.out')
         result = readRefl(spotfile, fn=outputFile)
         self.assertIsNotNone(result)
