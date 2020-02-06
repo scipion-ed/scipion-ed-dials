@@ -24,4 +24,4 @@
 # *
 # **************************************************************************
 
-from .viewers_data import EdDataViewer
+from .dials_viewers import DialsImageViewer #, DialsReciprocalLatticeViewer

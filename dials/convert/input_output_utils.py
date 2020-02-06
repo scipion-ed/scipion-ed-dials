@@ -213,7 +213,6 @@ def writeJson(inputImages, fn='model.expt', idname="ExperimentList"):
 
     with open(fn, 'w') as f:
         f.write(json.dumps(output, indent=4))
-    return fn
 
 
 def readRefl(reflFile, fn='reflections.txt', **kwargs):

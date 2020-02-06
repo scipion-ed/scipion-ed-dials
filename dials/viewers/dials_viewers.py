@@ -24,26 +24,34 @@
 # *
 # **************************************************************************
 
-import pyworkflow.viewer as pwviewer
-from pwed.objects import SetOfDiffractionImages
+from pyworkflow.viewer import CommandView, Viewer, DESKTOP_TKINTER
+from pwed.objects import SetOfDiffractionImages, SetOfSpots
+from ..protocols import DialsProtFindSpots
 
+# Base on https://github.com/scipion-em/scipion-em-bsoft/blob/devel/bsoft/viewers/bsoft_viewers.py
+# ProtocolView in Gautomat
 
-class EdDataViewer(pwviewer.Viewer):
-    """ Wrapper to visualize different type of objects
-    with the Xmipp program xmipp_showj
-    """
-    _environments = [pwviewer.DESKTOP_TKINTER]
-    _targets = [
-        SetOfDiffractionImages
-    ]
+class DialsImageView(CommandView):
+    def __init__(self, modelFile, reflectionFile=None, **kwargs):
+        
+        if reflectionFile is None:
+            CommandView.__init__(self, 'dials.image_viewer "%s" &' % modelFile, **kwargs)
+        else:
+            CommandView.__init__(self, 'dials.image_viewer "%s" "%s" &' % (modelFile, reflectionFile), **kwargs)
 
+class DialsReciprocalLatticeView(CommandView):
+    def __init__(self, modelFile, reflectionFile=None, **kwargs):
+        CommandView.__init__(self, 'dials.reciprocal_lattice_viewer "%s" "%s" &' % (modelFile, reflectionFile), **kwargs)
+
+class DialsImageViewer(Viewer):
+    _environments = [DESKTOP_TKINTER]
+    _targets = [DialsProtFindSpots]
+    
     def __init__(self, **kwargs):
-        pwviewer.Viewer.__init__(self, **kwargs)
-        self._views = []
+        Viewer.__init__(self, **kwargs)
 
-    def _visualize(self, obj, **kwargs):
+    def visualize(self, obj, **kwargs):
         cls = type(obj)
 
-        if issubclass(cls, SetOfDiffractionImages):
-            return [self.objectView(obj)]
-
+        modelFn = obj.getModelFile()
+        DialsImageView(modelFn).show()
