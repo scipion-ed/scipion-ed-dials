@@ -216,7 +216,7 @@ def writeJson(inputImages, fn='model.expt', idname="ExperimentList"):
     return fn
 
 
-def readRefl(reflFile, fn='reflections.txt', **kwargs):
+def readRefl(reflFile, **kwargs):
     with open(reflFile, 'rb') as f:
         buf = msgpack.unpack(f)
 
@@ -254,3 +254,34 @@ def extractRefls(v):
     else:
         data = None
     return data
+
+
+def writeRefl(inputRefls, fn='reflections.refl', reflFileIdentifier='dials::af::reflection_table', version=1, nrows=None, identifier_dict={}, **kwargs):
+    # TODO: Get all data from database and add additional ones
+    if nrows is not None:
+        nrows = nrows
+    else:
+        nrows = inputRefls.getSpots()
+    
+    # TODO: Do the inverse conversion of extractRefls above
+    # TODO: Create the overall structure to pack
+    # Initialise the parts of the structure to pack
+    data = {'bbox': ['int6', [nrows, None]],
+            'flags': ['std::size_t', [nrows, None]],
+            'id': ['int', [nrows, None]],
+            'intensity.sum.value': ['double', [nrows, None]],
+            'intensity.sum.variance': ['double', [nrows, None]],
+            'n_signal': ['int', [nrows, None]],
+            'panel': ['std::size_t', [nrows, None]],
+            'shoebox': ['Shoebox<>', [nrows, None]],
+            'xyzobs.px.value': ['vec3<double>', [nrows, None]],
+            'xyzobs.px.variance': ['vec3<double>', [nrows, None]]
+            }
+    content_dict = {'identifiers': identifier_dict,
+                    'nrows': nrows, 'data': data}
+
+    # TODO: Pack all data using msgpack
+    output = [reflFileIdentifier, version, content_dict]
+    with open(fn, 'wb') as f:
+        f.write(msgpack.packb(output))
+    return fn
