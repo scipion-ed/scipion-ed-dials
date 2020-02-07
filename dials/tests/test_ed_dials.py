@@ -82,18 +82,17 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         # TODO: Add confirmation step that Statistics format and values are correct (after defining them)
 
     def test_writeJson(self):
-        
+
         template = os.path.join(self.dataPath, 'IO-test', 'imported.expt')
         self.assertIsNotNone(template)
         protImport = self._runImportImages('{TS}/SMV/data/{TI}.img',
                                            rotationAxis='-0.6204,-0.7843,0')
         inputImages = protImport.outputDiffractionImages
         modelPath = self.getOutputPath('model.expt')
-        model = writeJson(inputImages, fn=modelPath)
-        self.assertIsNotNone(model)
+        writeJson(inputImages, fn=modelPath)
         with open(template) as tf:
             t = json.load(tf)
-        with open(model) as mf:
+        with open(modelPath) as mf:
             m = json.load(mf)
 
         # Replace the path prefix to match with template value
