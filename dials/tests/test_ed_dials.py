@@ -76,7 +76,8 @@ class TestEdDialsProtocols(pwtests.BaseTest):
 
         outputset = getattr(protFindSpots, 'outputDiffractionSpots', None)
         self.assertIsNotNone(outputset)
-        # TODO: Add confirmation step that SetOfSpots format and values are correct (after defining the set)
+        self.assertEqual(outputset.getSpots(), 626)
+        # TODO: Add confirmation step that SetOfSpots format and values are correct
 
     def test_writeJson(self):
 

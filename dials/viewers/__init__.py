@@ -24,4 +24,4 @@
 # *
 # **************************************************************************
 
-from .dials_viewers import DialsImageViewer #, DialsReciprocalLatticeViewer
+from .dials_viewers import DialsFoundSpotsViewer

@@ -24,34 +24,76 @@
 # *
 # **************************************************************************
 
-from pyworkflow.viewer import CommandView, Viewer, DESKTOP_TKINTER
+import pyworkflow.protocol.params as params
+from pyworkflow.viewer import CommandView, ProtocolViewer, DESKTOP_TKINTER
 from pwed.objects import SetOfDiffractionImages, SetOfSpots
 from ..protocols import DialsProtFindSpots
 
 # Base on https://github.com/scipion-em/scipion-em-bsoft/blob/devel/bsoft/viewers/bsoft_viewers.py
 # ProtocolView in Gautomat
 
+
 class DialsImageView(CommandView):
     def __init__(self, modelFile, reflectionFile=None, **kwargs):
-        
+
         if reflectionFile is None:
-            CommandView.__init__(self, 'dials.image_viewer "%s" &' % modelFile, **kwargs)
+            CommandView.__init__(
+                self, 'dials.image_viewer "%s" &' % modelFile, **kwargs)
         else:
-            CommandView.__init__(self, 'dials.image_viewer "%s" "%s" &' % (modelFile, reflectionFile), **kwargs)
+            CommandView.__init__(self, 'dials.image_viewer "%s" "%s" &' % (
+                modelFile, reflectionFile), **kwargs)
+
 
 class DialsReciprocalLatticeView(CommandView):
     def __init__(self, modelFile, reflectionFile=None, **kwargs):
-        CommandView.__init__(self, 'dials.reciprocal_lattice_viewer "%s" "%s" &' % (modelFile, reflectionFile), **kwargs)
+        CommandView.__init__(self, 'dials.reciprocal_lattice_viewer "%s" "%s" &' % (
+            modelFile, reflectionFile), **kwargs)
 
-class DialsImageViewer(Viewer):
+
+IMAGE_VIEWER = 0
+RECIPROCAL_VIEWER = 1
+
+
+class DialsFoundSpotsViewer(ProtocolViewer):
+    ''' Vizualisation of Dials spotfinding results '''
+
     _environments = [DESKTOP_TKINTER]
     _targets = [DialsProtFindSpots]
-    
-    def __init__(self, **kwargs):
-        Viewer.__init__(self, **kwargs)
 
-    def visualize(self, obj, **kwargs):
-        cls = type(obj)
+    def _defineParams(self, form):
+        form.addSection(label='Pick viewer')
 
-        modelFn = obj.getModelFile()
-        DialsImageView(modelFn).show()
+        form.addParam('viewSelection', params.EnumParam, choices=['image viewer', 'reciprocal lattice viewer'],
+                      default=IMAGE_VIEWER, label='Display data with', display=params.EnumParam.DISPLAY_HLIST,
+                      help='*image viewer*: Display the images used in spotfinding. Option to show the found spots on the images\n'
+                      '*reciprocal viewer*: View the found spots in reciprocal space.')
+
+        form.addParam('viewSpotsOnImage', params.BooleanParam,
+                      default=True, label='View the found spots on the images?', condition='viewSelection==%d' % IMAGE_VIEWER)
+
+    def _getVisualizeDict(self):
+        visualizeDict = {
+            'viewSelection': self._viewerSelection
+        }
+        return visualizeDict
+
+    def _viewerSelection(self, paramName=None):
+        if self.viewSelection == IMAGE_VIEWER:
+            return self._viewImages()
+        elif self.viewSelection == RECIPROCAL_VIEWER:
+            return self._viewReciprocal()
+
+    def _viewImages(self, reflFn=None, **kwargs):
+        if self.viewSpotsOnImage:
+            reflFn = self._getRefls()
+        DialsImageView(self._getModel(), reflectionFile=reflFn).show()
+
+    def _viewReciprocal(self, **kwargs):
+        DialsReciprocalLatticeView(
+            self._getModel(), reflectionFile=self._getRefls()).show()
+
+    def _getModel(self):
+        return self.protocol.getModelFile()
+
+    def _getRefls(self):
+        return self.protocol.getReflFile()
