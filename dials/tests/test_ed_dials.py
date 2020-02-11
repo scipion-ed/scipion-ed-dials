@@ -74,12 +74,9 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             '{TS}/SMV/data/{TI}.img', skipImages=10)
         protFindSpots = self._runFindSpots(protImport.outputDiffractionImages)
 
-        outputset = getattr(protFindSpots, 'SetOfSpots', None)
-        outputstats = getattr(protFindSpots, 'Statistics', None)
-        # self.assertIsNotNone(outputset)
-        # self.assertIsNotNone(outputstats)
+        outputset = getattr(protFindSpots, 'outputDiffractionSpots', None)
+        self.assertIsNotNone(outputset)
         # TODO: Add confirmation step that SetOfSpots format and values are correct (after defining the set)
-        # TODO: Add confirmation step that Statistics format and values are correct (after defining them)
 
     def test_writeJson(self):
 
