@@ -1,8 +1,10 @@
 # **************************************************************************
 # *
 # * Authors:     J.M. De la Rosa Trevin (delarosatrevin@scilifelab.se) [1]
+# *              V. E.G: Bengtsson (viktor.bengtsson@mmk.su.se) [2]
 # *
 # * [1] SciLifeLab, Stockholm University
+# * [2] Department of Materials and Environmental Chemistry, Stockholm University
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
@@ -136,6 +138,12 @@ class DialsProtFindSpots(EdProtFindSpots):
                       help='All pixels with a lower value will be considered part of the background',
                       expertLevel=pwprot.LEVEL_ADVANCED)
 
+        form.addSection('Bespoke input', expertLevel=pwprot.LEVEL_ADVANCED)
+        form.addParam('doUseBespoke', pwprot.BooleanParam, default=False,
+                      help='Do you want to add command line arguments directly?')
+        form.addParam('bespokeInput', pwprot.StringParam,
+                      default='', condition='doUseBespoke')
+
     # -------------------------- INSERT functions ------------------------------
 
     def _insertAllSteps(self):
@@ -163,7 +171,7 @@ class DialsProtFindSpots(EdProtFindSpots):
         reflDict = reflectionData[4]
 
         outputSet.setSpots(numberOfSpots)
-        
+
         for i in range(0, numberOfSpots):
             dSpot.setObjId(i+1)
             dSpot.setSpotId(reflDict['id'][i])
@@ -194,10 +202,10 @@ class DialsProtFindSpots(EdProtFindSpots):
     # -------------------------- UTILS functions ------------------------------
     def getModelFile(self):
         return self._getExtraPath('imported.expt')
-    
+
     def getReflFile(self):
         return self._getExtraPath('strong.refl')
-        
+
     def _prepCommandline(self):
         "Create the command line input to run dials programs"
         # Input basic parameters
@@ -255,6 +263,8 @@ class DialsProtFindSpots(EdProtFindSpots):
         if self.kernelSize.get():
             params += " spotfinder.threshold.dispersion.kernel_size={},{}".format(
                 self.kernelSize.get(), self.kernelSize.get())
+        if self.bespokeInput.get():
+            params += " {}".format(self.bespokeInput.get())
 
         return params
 
