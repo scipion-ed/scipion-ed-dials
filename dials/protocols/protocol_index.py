@@ -592,8 +592,8 @@ class DialsProtIndexSpots(EdProtIndexSpots):
         group.addParam('composeModelPer', pwprot.EnumParam,
                        choice=['image' 'block'], default=BLOCK,
                        help='For scan-varying parameterisations, compose a new model either every image or within blocks'
-                      'of a width specified in the reflections parameters. When this block width is larger than the'
-                      'image width the result is faster, with a trade-off in accuracy',
+                       'of a width specified in the reflections parameters. When this block width is larger than the'
+                       'image width the result is faster, with a trade-off in accuracy',
                        label='Compose model per', expertLevel=pwprot.LEVEL_ADVANCED,
                        condition='paramScanVarying==True'
                        )
@@ -608,41 +608,41 @@ class DialsProtIndexSpots(EdProtIndexSpots):
         group.addParam('setScanVaryingErrors', pwprot.BooleanParam,
                        label='Set scan varying errors?', default=False,
                        help='If scan-varying refinement is done, and if the estimated covariance of the model'
-                      'states have been calculated by the minimiser, choose whether to return this to the models or not.'
-                      'The default is not to, in order to keep the file size of the serialized model small. At the moment,'
-                      'this only has an effect for crystal unit cell (B matrix) errors.',
+                       'states have been calculated by the minimiser, choose whether to return this to the models or not.'
+                       'The default is not to, in order to keep the file size of the serialized model small. At the moment,'
+                       'this only has an effect for crystal unit cell (B matrix) errors.',
                        condition='paramScanVarying==True'
                        )
 
         group.addParam('debugCentroidAnalysis', pwprot.BooleanParam,
                        label='Debug centroid analysis?', default=False,
                        help="Set True to write out a file containing the reflections used for centroid analysis for"
-                      "automatic setting of the scan-varying interval width. This can then be analysed with dev.dials."
-                      "plot_centroid_analysis (requires dials_scratch repository).", expertLevel=pwprot.LEVEL_ADVANCED
+                       "automatic setting of the scan-varying interval width. This can then be analysed with dev.dials."
+                       "plot_centroid_analysis (requires dials_scratch repository).", expertLevel=pwprot.LEVEL_ADVANCED
                        )
 
         group.addParam('beamFixInSpindlePlane', pwprot.BooleanParam,
                        label='Fix beam in spindle plane?', default=True,
                        help="Whether to fix beam parameters. By default, in_spindle_plane is selected, and one of the two"
-                      "parameters is fixed. If a goniometer is present this leads to the beam orientation being restricted to a"
-                      "direction in the initial spindle-beam plane. Wavelength is also fixed by default, to allow refinement of"
-                      "the unit cell volume.",
+                       "parameters is fixed. If a goniometer is present this leads to the beam orientation being restricted to a"
+                       "direction in the initial spindle-beam plane. Wavelength is also fixed by default, to allow refinement of"
+                       "the unit cell volume.",
                        )
 
         group.addParam('beamFixOutSpindlePlane', pwprot.BooleanParam,
                        label='Fix beam out of spindle plane?', default=False,
                        help="Whether to fix beam parameters. By default, in_spindle_plane is selected, and one of the two"
-                      "parameters is fixed. If a goniometer is present this leads to the beam orientation being restricted to"
-                      "a direction in the initial spindle-beam plane. Wavelength is also fixed by default, to allow refinement"
-                      "of the unit cell volume.",
+                       "parameters is fixed. If a goniometer is present this leads to the beam orientation being restricted to"
+                       "a direction in the initial spindle-beam plane. Wavelength is also fixed by default, to allow refinement"
+                       "of the unit cell volume.",
                        )
 
         group.addParam('beamFixWavelength', pwprot.BooleanParam,
                        label='Fix beam wavelength?', default=True,
                        help="Whether to fix beam parameters. By default, in_spindle_plane is selected, and one of the two"
-                      "parameters is fixed. If a goniometer is present this leads to the beam orientation being restricted"
-                      "to a direction in the initial spindle-beam plane. Wavelength is also fixed by default, to allow"
-                      "refinement of the unit cell volume.",
+                       "parameters is fixed. If a goniometer is present this leads to the beam orientation being restricted"
+                       "to a direction in the initial spindle-beam plane. Wavelength is also fixed by default, to allow"
+                       "refinement of the unit cell volume.",
                        )
 
         group.addParam('beamForceStatic', pwprot.BooleanParam,
@@ -667,8 +667,8 @@ class DialsProtIndexSpots(EdProtIndexSpots):
 
         group.addParam('SmootherAbsoluteNumIntervals', pwprot.IntParam,
                        default=None,
-                      allowsNull=True, help="Number of intervals between checkpoints if scan_varying refinement is requested."
-                      "If set, this overrides interval_width_degrees",
+                       allowsNull=True, help="Number of intervals between checkpoints if scan_varying refinement is requested."
+                       "If set, this overrides interval_width_degrees",
                        label='Absolute number of intervals',
                        expertLevel=pwprot.LEVEL_ADVANCED,
                        condition='SmootherUseAbsolute==True'
@@ -708,26 +708,26 @@ class DialsProtIndexSpots(EdProtIndexSpots):
 
         group.addParam('detectorHierarchyLevel', pwprot.IntParam,
                        default=0, help="Level of the detector hierarchy (starting from the root at 0) at which to"
-                      "determine panel groups to parametrise independently",
+                       "determine panel groups to parametrise independently",
                        label='Detector hierarchy level', expertLevel=pwprot.LEVEL_ADVANCED
                        )
 
         group.addParam('detectorFixPosition', pwprot.BooleanParam,
                        label='Fix detector position?', default=True,
                        help="Fix detector parameters. The translational parameters (position) may be set"
-                      "separately to the orientation.",
+                       "separately to the orientation.",
                        )
 
         group.addParam('detectorFixOrientation', pwprot.BooleanParam,
                        label='Fix detector orientation?', default=True,
                        help="Fix detector parameters. The translational parameters (position) may be set"
-                      "separately to the orientation.",
+                       "separately to the orientation.",
                        )
 
         group.addParam('detectorFixdistance', pwprot.BooleanParam,
                        label='Fix detector distance?', default=True,
                        help="Fix detector parameters. The translational parameters (position) may be set"
-                      "separately to the orientation.",
+                       "separately to the orientation.",
                        )
 
         group.addParam('crystalForceStatic', pwprot.BooleanParam,
@@ -780,16 +780,16 @@ class DialsProtIndexSpots(EdProtIndexSpots):
                        )
 
         group.addParam('refineryMaxIterations', pwprot.IntParam,
-                        default=None,
-                      allowsNull=True, help="Maximum number of iterations in refinement before termination."
-                        "None implies the engine supplies its own default.",
-                        label='Max iterations',
-                        )
+                       default=None,
+                       allowsNull=True, help="Maximum number of iterations in refinement before termination."
+                       "None implies the engine supplies its own default.",
+                       label='Max iterations',
+                       )
         group.addParam('refineryLog', pwprot.FileParam,
-                        default=None,
-                      allowsNull=True, label="Minimisation engine log",
-                        help="Filename for an optional log that a minimisation engine may use to write"
-                        "additional information",)
+                       default=None,
+                       allowsNull=True, label="Minimisation engine log",
+                       help="Filename for an optional log that a minimisation engine may use to write"
+                       "additional information",)
 
         group.addParam('refineryJournalTrackStep', pwprot.BooleanParam,
                        label='Record parameter shifts?', default=False,
@@ -797,25 +797,25 @@ class DialsProtIndexSpots(EdProtIndexSpots):
                        )
 
         group.addParam('refineryJournalTrackGradient', pwprot.BooleanParam,
-                      label='Record parameter gradients?', default=False,
-                      help="Record parameter gradients history in the refinement journal, if the engine supports it.",
-                      )
+                       label='Record parameter gradients?', default=False,
+                       help="Record parameter gradients history in the refinement journal, if the engine supports it.",
+                       )
 
         group.addParam('refineryJournalTrackParameterCorrelation', pwprot.BooleanParam,
-                      label='Record parameter parameter correlation?', default=False,
-                      help="Record correlation matrix between columns of the Jacobian for each step of refinement.",
-                      )
+                       label='Record parameter parameter correlation?', default=False,
+                       help="Record correlation matrix between columns of the Jacobian for each step of refinement.",
+                       )
 
         group.addParam('refineryJournalTrackConditionNumber', pwprot.BooleanParam,
-                      label='Record condition number?', default=False,
-                      help="Record condition number of the Jacobian for each step of  refinement.",
-                      )
+                       label='Record condition number?', default=False,
+                       help="Record condition number of the Jacobian for each step of  refinement.",
+                       )
 
         group.addParam('refineryJournalTrackOutOfSampleRmsd', pwprot.BooleanParam,
-                      label='Record out of sample RMSDs?', default=False,
-                      help="Record RMSDs calculated using the refined experiments with reflections not used"
-                           "in refinement at each step. Only valid if a subset of input reflections was taken for refinement",
-                      )
+                       label='Record out of sample RMSDs?', default=False,
+                       help="Record RMSDs calculated using the refined experiments with reflections not used"
+                       "in refinement at each step. Only valid if a subset of input reflections was taken for refinement",
+                       )
 
         group = form.addGroup('target')
 
@@ -1031,7 +1031,7 @@ class DialsProtIndexSpots(EdProtIndexSpots):
 
    # -------------------------- INSERT functions ------------------------------
 
-   def _insertAllSteps(self):
+    def _insertAllSteps(self):
         self._insertFunctionStep(
             'convertInputStep', self.inputImages.getObjId(), self.inputSpots.getObjId())
         if self.doIndex:
@@ -1055,17 +1055,16 @@ class DialsProtIndexSpots(EdProtIndexSpots):
         program = 'dials.index'
         arguments = self._prepIndexCommandline(program)
         self.runJob(program, arguments)
-    
+
     def refineBravaisStep(self):
         program = 'dials.refine_bravais_settings'
         arguments = self._prepBravaisCommandline(program)
         self.runJob(program, arguments)
-    
+
     def indexStep(self):
         program = 'dials.reindex'
         arguments = self._prepReindexCommandline(program)
         self.runJob(program, arguments)
-    
 
     def createOutputStep(self):
         reflectionData = readRefl(self.getReflFile())
@@ -1109,13 +1108,13 @@ class DialsProtIndexSpots(EdProtIndexSpots):
 
     def getReflFile(self):
         return self._getExtraPath('strong.refl')
-    
+
     def getChangeOfBasisOp(self):
         # TODO: extract change of basis op from result in refineBravaisStep
-        change_of_basis_op='a,b,c'
+        change_of_basis_op = 'a,b,c'
         return change_of_basis_op
 
-    def _prepIndexCommandline(self,program):
+    def _prepIndexCommandline(self, program):
         "Create the command line input to run dials programs"
         # Input basic parameters
         logPath = "{}/{}.log".format(self._getLogsPath(), program)
@@ -1126,329 +1125,419 @@ class DialsProtIndexSpots(EdProtIndexSpots):
 
         if self.indexNproc.get() not in (None, 1):
             params += " indexing.nproc={}".format(self.indexNproc.get())
-        
+
         if self.enterSpaceGroup.get():
-            params += " indexing.known_symmetry.space_group={}".format(self.knownSpaceGroup.get())
-        
+            params += " indexing.known_symmetry.space_group={}".format(
+                self.knownSpaceGroup.get())
+
         if self.enterUnitCell.get():
-            params += " indexing.known_symmetry.unit_cell={}".format(self.knownUnitCell.get())
-        
+            params += " indexing.known_symmetry.unit_cell={}".format(
+                self.knownUnitCell.get())
+
         if self.combine_scans.get():
-            params += " indexing.combine_scans={}".format(self.combine_scans.get())
-        
+            params += " indexing.combine_scans={}".format(
+                self.combine_scans.get())
+
         if self.relative_length_tolerance.get() not in (None, 0.1):
-            params += " relative_length_tolerance={}".format(self.relative_length_tolerance.get())
-        
+            params += " relative_length_tolerance={}".format(
+                self.relative_length_tolerance.get())
+
         if self.absolute_angle_tolerance.get() not in (None, 5):
-            params += " absolute_angle_tolerance={}".format(self.absolute_angle_tolerance.get())
-        
+            params += " absolute_angle_tolerance={}".format(
+                self.absolute_angle_tolerance.get())
+
         if self.max_delta.get() not in (None, 5):
             params += " max_delta={}".format(self.max_delta.get())
-        
+
         if self.indexMm_search_scope.get() not in (None, 4.0):
-            params += " index.mm_search_scope={}".format(self.indexMm_search_scope.get())
-        
+            params += " index.mm_search_scope={}".format(
+                self.indexMm_search_scope.get())
+
         if self.indexWide_search_binning.get() not in (None, 2):
-            params += " index.wide_search_binning={}".format(self.indexWide_search_binning.get())
-        
+            params += " index.wide_search_binning={}".format(
+                self.indexWide_search_binning.get())
+
         if self.indexMin_cell_volume.get() not in (None, 25):
-            params += " index.min_cell_volume={}".format(self.indexMin_cell_volume.get())
-        
+            params += " index.min_cell_volume={}".format(
+                self.indexMin_cell_volume.get())
+
         if self.indexMax_cell.get() is not None:
             params += " index.max_cell={}".format(self.indexMax_cell.get())
-        
-        if self.misindexCheckGridScope.get() is not in (None, 0):
-            params += " check_misindexing.grid_search_scope={}".format(self.misindexCheckGridScope.get())
-        
-        if self.indexingMethod.get() is FFT3D:
-            pass
-        elif: self.indexingMethod.get() is FFT1D:
+
+        if self.misindexCheckGridScope.get() not in (None, 0):
+            params += " check_misindexing.grid_search_scope={}".format(
+                self.misindexCheckGridScope.get())
+
+        if self.indexingMethod.get() is FFT1D:
             params += " indexing.method=fft1d"
-        elif: self.indexingMethod.get() is REALSPACE_GRID_SEARCH:
+        elif self.indexingMethod.get() is REALSPACE_GRID_SEARCH:
             params += " indexing.method=real_space_grid_search"
-        elif: self.indexingMethod.get() is LOWRES_SPOT_MATCH:
+        elif self.indexingMethod.get() is LOWRES_SPOT_MATCH:
             params += " indexing.method=low_res_spot_match"
-        
+
         if self.indexingOptimiseInitialBasisVectors.get():
-            params += " indexing.optimise_initial_basis_vectors={}".format(self.indexingOptimiseInitialBasisVectors.get())
-        
+            params += " indexing.optimise_initial_basis_vectors={}".format(
+                self.indexingOptimiseInitialBasisVectors.get())
+
         if self.fft3dBIso.get() is not None:
             params += " indexing.fft3d.b_iso={}".format(self.fft3dBIso.get())
-        
-        if self.fft3dRmsdCutoff.get() is not in (None, 15):
-            params += " indexing.fft3d.rmsd_cutoff={}".format(self.fft3dRmsdCutoff.get())
-        
-        if self.fft3dPeakSearch.get() is not in (None, FLOOD_FILL):
-            params += " indexing.fft3d.peak_search=clean".format(self.fft3dPeakSearch.get())
-        
-        if self.fft3dPeakVolumeCutoff.get() is not in (None, 1.15):
-            params += " indexing.fft3d.peak_volume_cutoff={}".format(self.fft3dPeakVolumeCutoff.get())
-        
-        if self.fft3dReciprocSpaceGridNPoints.get() is not in (None, 256):
-            params += " indexing.fft3d.reciprocal_space_grid.n_points={}".format(self.fft3dReciprocSpaceGridNPoints.get())
-        
-        if self.fft3dReciprocSpaceGridDMin.get() is not in (None):
-            params += " indexing.fft3d.reciprocal_space_grid.d_min={}".format(self.fft3dReciprocSpaceGridDMin.get())
-        
-        if self.fft1dCharacteristicGrid.get() is not in (None):
-            params += " indexing.fft1d.characteristic_grid={}".format(self.fft1dCharacteristicGrid.get())
-        
-        if self.realSpaceGridSearchCharacteristicGrid.get() is not in (None, 0.02):
-            params += " indexing.fft1d.real_space_grid_search.characteristic_grid={}".format(self.realSpaceGridSearchCharacteristicGrid.get())
-        
-        if self.realSpaceGridSearchMaxVectors.get() is not in (None, 30):
-            params += " indexing.fft1d.real_space_grid_search.max_vectors={}".format(self.realSpaceGridSearchMaxVectors.get())
-        
-        if self.lowResSpotMatchCandidateSpotsLimitResolutionBy.get() is not in (None, N_SPOTS):
-            params += " indexing.fft1d.low_res_spot_match.candidate_spots.limit_resolution_by=d_min")
-        
-        if self.lowResSpotMatchCandidateSpotsDMin.get() is not in (None, 15.0):
-            params += " indexing.fft1d.low_res_spot_match.candidate_spots.d_min={}".format(self.lowResSpotMatchCandidateSpotsDMin.get())
-        
-        if self.lowResSpotMatchCandidateSpotsNSpots.get() is not in (None, 10):
-            params += " indexing.fft1d.low_res_spot_match.candidate_spots.n_spots={}".format(self.lowResSpotMatchCandidateSpotsNSpots.get())
-        
-        if self.lowResSpotMatchCandidateSpotsDStarTolerance.get() is not in (None, 4.0):
-            params += " indexing.fft1d.low_res_spot_match.candidate_spots.d_star_tolerance={}".format(self.lowResSpotMatchCandidateSpotsDStarTolerance.get())
-        
-        if self.lowResSpotMatchUseP1IndiciesAsSeeds.get():
-            params += " indexing.fft1d.low_res_spot_match.use_P1_indices_as_seeds={}".format(self.lowResSpotMatchUseP1IndiciesAsSeeds.get())
-        
-        if self.lowResSpotMatchSearchDepth.get() is not in (None, TRIPLETS):
-            params += " indexing.fft1d.low_res_spot_match.search_depth={}".format(self.lowResSpotMatchSearchDepth.get())
-        if self.lowResSpotMatchBootstrapCrystal.get():
-            params += " indexing.fft1d.low_res_spot_match.bootstrap_crystal={}".format(self.lowResSpotMatchBootstrapCrystal.get())
-        
-        if self.lowResSpotMatchMaxPairs.get() is not in (None, 200):
-            params += " indexing.fft1d.low_res_spot_match.max_pairs={}".format(self.lowResSpotMatchMaxPairs.get())
-        
-        if self.lowResSpotMatchMaxTriplets.get() is not in (None, 600):
-            params += " indexing.fft1d.low_res_spot_match.max_triplets={}".format(self.lowResSpotMatchMaxTriplets.get())
-        
-        if self.lowResSpotMatchMaxQuads.get() is not in (None, 600):
-            params += " indexing.fft1d.low_res_spot_match.max_quads={}".format(self.lowResSpotMatchMaxQuads.get())
-        
-        if self.doFilter_ice.get():
-            params += " indexing.max_cell_estimation.filter_ice={}".format(self.doFilter_ice.get())
-        
-        if self.doFilter_overlaps.get():
-            params += " indexing.max_cell_estimation.filter_overlaps={}".format(self.doFilter_overlaps.get())
-        
-        if self.overlaps_border.get() is not in (None, 0):
-            params += " indexing.max_cell_estimation.overlaps_border={}".format(self.overlaps_border.get())
-        
-        if self.multiplier.get() is not in (None, 1.3):
-            params += " indexing.max_cell_estimation.multiplier={}".format(self.multiplier.get())
-        
-        if self.step_size.get() is not in (None, 45):
-            params += " indexing.max_cell_estimation.step_size={}".format(self.step_size.get())
-        
-        if self.nearest_neighbor_percentile.get():
-            params += " indexing.max_cell_estimation.nearest_neighbor_percentile={}".format(self.nearest_neighbor_percentile.get())
-        
-        if self.histogram_binning.get() is not in (None, LOG):
-            params += " indexing.max_cell_estimation.histogram_binning={}".format(self.histogram_binning.get())
-        
-        if self.nn_per_bin.get() is not in (None, 5):
-            params += " indexing.max_cell_estimation.nn_per_bin={}".format(self.nn_per_bin.get())
-        
-        if self.max_height_fraction.get() is not in (None, 0.25):
-            params += " indexing.max_cell_estimation.max_height_fraction={}".format(self.max_height_fraction.get())
-        
-        if self.indexAssignmentMethod.get() is not in (None, SIMPLE):
-            params += " indexing.index_assignment.method=local")
-        
-        if self.simpleHkl_tolerance.get() is not in (None, 0.3):
-            params += " indexing.index_assignment.simple.hkl_tolerance={}".format(self.simpleHkl_tolerance.get())
-        
-        if self.localEpsilon.get() is not in (None, 0.05):
-            params += " indexing.index_assignment.local.epsilon={}".format(self.localEpsilon.get())
-        
-        if self.localDelta.get() is not in (None, 8):
-            params += " indexing.index_assignment.local.delta={}".format(self.localDelta.get())
-        
-        if self.localLMin.get() is not in (None, 0.8):
-            params += " indexing.index_assignment.local.l_min={}".format(self.localLMin.get())
-        
-        if self.localNearestNeighbours.get() is not in (None, 20):
-            params += " indexing.index_assignment.local.nearest_neighbours={}".format(self.localNearestNeighbours.get())
-        
-        if self.refinementMode.get() is REPREDICT_ONLY:
-            params += " indexing.refinement_protocol.mode=repredict_only")
-        elif self.refinementMode.get() is MODE_NONE:
-            params += " indexing.refinement_protocol.mode=None")
-        
-        if self.n_macro_cycles.get() is not in (None, 5):
-            params += " indexing.refinement_protocol.n_macro_cycles={}".format(self.n_macro_cycles.get())
-        
-        if self.d_min_step.get() is not None:
-            params += " indexing.refinement_protocol.d_min_step={}".format(self.d_min_step.get())
-        
-        if self.d_min_start.get() is not in None:
-            params += " indexing.refinement_protocol.d_min_start={}".format(self.d_min_start.get())
 
-        if self.d_min_final.get() is not in None:
-            params += " indexing.refinement_protocol.d_min_final={}".format(self.d_min_final.get())
-        
+        if self.fft3dRmsdCutoff.get() not in (None, 15):
+            params += " indexing.fft3d.rmsd_cutoff={}".format(
+                self.fft3dRmsdCutoff.get())
+
+        if self.fft3dPeakSearch.get() not in (None, FLOOD_FILL):
+            params += " indexing.fft3d.peak_search=clean".format(
+                self.fft3dPeakSearch.get())
+
+        if self.fft3dPeakVolumeCutoff.get() not in (None, 1.15):
+            params += " indexing.fft3d.peak_volume_cutoff={}".format(
+                self.fft3dPeakVolumeCutoff.get())
+
+        if self.fft3dReciprocSpaceGridNPoints.get() not in (None, 256):
+            params += " indexing.fft3d.reciprocal_space_grid.n_points={}".format(
+                self.fft3dReciprocSpaceGridNPoints.get())
+
+        if self.fft3dReciprocSpaceGridDMin.get() not in (None):
+            params += " indexing.fft3d.reciprocal_space_grid.d_min={}".format(
+                self.fft3dReciprocSpaceGridDMin.get())
+
+        if self.fft1dCharacteristicGrid.get() not in (None):
+            params += " indexing.fft1d.characteristic_grid={}".format(
+                self.fft1dCharacteristicGrid.get())
+
+        if self.realSpaceGridSearchCharacteristicGrid.get() not in (None, 0.02):
+            params += " indexing.fft1d.real_space_grid_search.characteristic_grid={}".format(
+                self.realSpaceGridSearchCharacteristicGrid.get())
+
+        if self.realSpaceGridSearchMaxVectors.get() not in (None, 30):
+            params += " indexing.fft1d.real_space_grid_search.max_vectors={}".format(
+                self.realSpaceGridSearchMaxVectors.get())
+
+        if self.lowResSpotMatchCandidateSpotsLimitResolutionBy.get() not in (None, N_SPOTS):
+            params += " indexing.fft1d.low_res_spot_match.candidate_spots.limit_resolution_by=d_min"
+
+        if self.lowResSpotMatchCandidateSpotsDMin.get() not in (None, 15.0):
+            params += " indexing.fft1d.low_res_spot_match.candidate_spots.d_min={}".format(
+                self.lowResSpotMatchCandidateSpotsDMin.get())
+
+        if self.lowResSpotMatchCandidateSpotsNSpots.get() not in (None, 10):
+            params += " indexing.fft1d.low_res_spot_match.candidate_spots.n_spots={}".format(
+                self.lowResSpotMatchCandidateSpotsNSpots.get())
+
+        if self.lowResSpotMatchCandidateSpotsDStarTolerance.get() not in (None, 4.0):
+            params += " indexing.fft1d.low_res_spot_match.candidate_spots.d_star_tolerance={}".format(
+                self.lowResSpotMatchCandidateSpotsDStarTolerance.get())
+
+        if self.lowResSpotMatchUseP1IndiciesAsSeeds.get():
+            params += " indexing.fft1d.low_res_spot_match.use_P1_indices_as_seeds={}".format(
+                self.lowResSpotMatchUseP1IndiciesAsSeeds.get())
+
+        if self.lowResSpotMatchSearchDepth.get() not in (None, TRIPLETS):
+            params += " indexing.fft1d.low_res_spot_match.search_depth={}".format(
+                self.lowResSpotMatchSearchDepth.get())
+        if self.lowResSpotMatchBootstrapCrystal.get():
+            params += " indexing.fft1d.low_res_spot_match.bootstrap_crystal={}".format(
+                self.lowResSpotMatchBootstrapCrystal.get())
+
+        if self.lowResSpotMatchMaxPairs.get() not in (None, 200):
+            params += " indexing.fft1d.low_res_spot_match.max_pairs={}".format(
+                self.lowResSpotMatchMaxPairs.get())
+
+        if self.lowResSpotMatchMaxTriplets.get() not in (None, 600):
+            params += " indexing.fft1d.low_res_spot_match.max_triplets={}".format(
+                self.lowResSpotMatchMaxTriplets.get())
+
+        if self.lowResSpotMatchMaxQuads.get() not in (None, 600):
+            params += " indexing.fft1d.low_res_spot_match.max_quads={}".format(
+                self.lowResSpotMatchMaxQuads.get())
+
+        if self.doFilter_ice.get():
+            params += " indexing.max_cell_estimation.filter_ice={}".format(
+                self.doFilter_ice.get())
+
+        if self.doFilter_overlaps.get():
+            params += " indexing.max_cell_estimation.filter_overlaps={}".format(
+                self.doFilter_overlaps.get())
+
+        if self.overlaps_border.get() not in (None, 0):
+            params += " indexing.max_cell_estimation.overlaps_border={}".format(
+                self.overlaps_border.get())
+
+        if self.multiplier.get() not in (None, 1.3):
+            params += " indexing.max_cell_estimation.multiplier={}".format(
+                self.multiplier.get())
+
+        if self.step_size.get() not in (None, 45):
+            params += " indexing.max_cell_estimation.step_size={}".format(
+                self.step_size.get())
+
+        if self.nearest_neighbor_percentile.get():
+            params += " indexing.max_cell_estimation.nearest_neighbor_percentile={}".format(
+                self.nearest_neighbor_percentile.get())
+
+        if self.histogram_binning.get() not in (None, LOG):
+            params += " indexing.max_cell_estimation.histogram_binning={}".format(
+                self.histogram_binning.get())
+
+        if self.nn_per_bin.get() not in (None, 5):
+            params += " indexing.max_cell_estimation.nn_per_bin={}".format(
+                self.nn_per_bin.get())
+
+        if self.max_height_fraction.get() not in (None, 0.25):
+            params += " indexing.max_cell_estimation.max_height_fraction={}".format(
+                self.max_height_fraction.get())
+
+        if self.indexAssignmentMethod.get() not in (None, SIMPLE):
+            params += " indexing.index_assignment.method=local"
+
+        if self.simpleHkl_tolerance.get() not in (None, 0.3):
+            params += " indexing.index_assignment.simple.hkl_tolerance={}".format(
+                self.simpleHkl_tolerance.get())
+
+        if self.localEpsilon.get() not in (None, 0.05):
+            params += " indexing.index_assignment.local.epsilon={}".format(
+                self.localEpsilon.get())
+
+        if self.localDelta.get() not in (None, 8):
+            params += " indexing.index_assignment.local.delta={}".format(
+                self.localDelta.get())
+
+        if self.localLMin.get() not in (None, 0.8):
+            params += " indexing.index_assignment.local.l_min={}".format(
+                self.localLMin.get())
+
+        if self.localNearestNeighbours.get() not in (None, 20):
+            params += " indexing.index_assignment.local.nearest_neighbours={}".format(
+                self.localNearestNeighbours.get())
+
+        if self.refinementMode.get() is REPREDICT_ONLY:
+            params += " indexing.refinement_protocol.mode=repredict_only"
+        elif self.refinementMode.get() is MODE_NONE:
+            params += " indexing.refinement_protocol.mode=None"
+
+        if self.n_macro_cycles.get() not in (None, 5):
+            params += " indexing.refinement_protocol.n_macro_cycles={}".format(
+                self.n_macro_cycles.get())
+
+        if self.d_min_step.get() is not None:
+            params += " indexing.refinement_protocol.d_min_step={}".format(
+                self.d_min_step.get())
+
+        if self.d_min_start.get() is not None:
+            params += " indexing.refinement_protocol.d_min_start={}".format(
+                self.d_min_start.get())
+
+        if self.d_min_final.get() is not None:
+            params += " indexing.refinement_protocol.d_min_final={}".format(
+                self.d_min_final.get())
+
         if self.cluster_analysis_search.get():
-            params += " indexing.cluster_analysis_search={}".format(self.cluster_analysis_search.get())
-        
-        if self.recycle_unindexed_reflections_cutoff.get() is not in (None, 0.1):
-            params += " indexing.recycle_unindexed_reflections_cutoff={}".format(self.recycle_unindexed_reflections_cutoff.get())
-        
-        if self.minimum_angular_separation.get() is not in (None, 5):
-            params += " indexing.minimum_angular_separation={}".format(self.minimum_angular_separation.get())
-        
-        if self.max_lattices.get() is not in (None, 1):
-            params += " indexing.max_lattices={}".format(self.max_lattices.get())
-        
-        if self.clusterAnalysisMethod.get() is not in (None, HCLUSTER):
-            params += " indexing.cluster_analysis.method=hcluster".format(self.clusterAnalysisMethod.get())
-        
-        if self.cutoff.get() is not in (None, 15):
-            params += " indexing.cluster_analysis.hccluster.cutoff={}".format(self.cutoff.get())
-        
+            params += " indexing.cluster_analysis_search={}".format(
+                self.cluster_analysis_search.get())
+
+        if self.recycle_unindexed_reflections_cutoff.get() not in (None, 0.1):
+            params += " indexing.recycle_unindexed_reflections_cutoff={}".format(
+                self.recycle_unindexed_reflections_cutoff.get())
+
+        if self.minimum_angular_separation.get() not in (None, 5):
+            params += " indexing.minimum_angular_separation={}".format(
+                self.minimum_angular_separation.get())
+
+        if self.max_lattices.get() not in (None, 1):
+            params += " indexing.max_lattices={}".format(
+                self.max_lattices.get())
+
+        if self.clusterAnalysisMethod.get() not in (None, HCLUSTER):
+            params += " indexing.cluster_analysis.method=hcluster".format(
+                self.clusterAnalysisMethod.get())
+
+        if self.cutoff.get() not in (None, 15):
+            params += " indexing.cluster_analysis.hccluster.cutoff={}".format(
+                self.cutoff.get())
+
         if self.cutoff_criterion.get() is INCONSISTENT:
-            params += " indexing.cluster_analysis.hccluster.cutoff_criterion=inconsistent")
-        
-        if self.dbscanEps.get() is not in (None, 0.05):
-            params += " indexing.cluster_analysis.dbscan.eps={}".format(self.dbscanEps.get())
-        
-        if self.dbscanMin_samples.get() is not in (None, 30):
-            params += " indexing.cluster_analysis.dbscan.min_samples={}".format(self.dbscanMin_samples.get())
-        
-        if self.minClusterSize.get() is not in (None, 20):
-            params += " indexing.cluster_analysis.min_cluster_size={}".format(self.minClusterSize.get())
-        
-        if self.intersectionUnionRatioCutoff.get() is not in (None, 0.4):
-            params += " indexing.cluster_analysis.intersection_union_ratio_cutoff={}".format(self.intersectionUnionRatioCutoff.get())
-        
+            params += " indexing.cluster_analysis.hccluster.cutoff_criterion=inconsistent"
+
+        if self.dbscanEps.get() not in (None, 0.05):
+            params += " indexing.cluster_analysis.dbscan.eps={}".format(
+                self.dbscanEps.get())
+
+        if self.dbscanMin_samples.get() not in (None, 30):
+            params += " indexing.cluster_analysis.dbscan.min_samples={}".format(
+                self.dbscanMin_samples.get())
+
+        if self.minClusterSize.get() not in (None, 20):
+            params += " indexing.cluster_analysis.min_cluster_size={}".format(
+                self.minClusterSize.get())
+
+        if self.intersectionUnionRatioCutoff.get() not in (None, 0.4):
+            params += " indexing.cluster_analysis.intersection_union_ratio_cutoff={}".format(
+                self.intersectionUnionRatioCutoff.get())
+
         if self.stillsIndexer.get() is STILLS:
-            params += " indexing.stills.indexer=stills")
+            params += " indexing.stills.indexer=stills"
         elif self.stillsIndexer.get() is SEQUENCES:
-            params += " indexing.stills.indexer=sequences")
-        
-        if self.ewald_proximity_resolution_cutoff.get() is not in (None, 2.0):
-            params += " indexing.stills.ewald_proximity_resolution_cutoff={}".format(self.ewald_proximity_resolution_cutoff.get())
-        
-        if self.stillsRefineAllCandidates.get() is not in (None, True):
-            params += " indexing.stills.refine_all_candidates={}".format(self.stillsRefineAllCandidates.get())
-        
-        if self.stillsCandidateOutlierRejection.get() is not in (None, True):
-            params += " indexing.stills.candidate_outlier_rejection={}".format(self.stillsCandidateOutlierRejection.get())
-        
-        if self.stillsRefineCandidatesWithKnownSymmetry.get() is not in (None, False):
-            params += " indexing.stills.refine_candidates_with_known_symmetry={}".format(self.stillsRefineCandidatesWithKnownSymmetry.get())
-        
-        if self.stillsRmsdMinPx.get() is not in (None, 2):
-            params += " indexing.stills.rmsd_min_px={}".format(self.stillsRmsdMinPx.get())
-        
-        if self.stillsEwaldProximalVolumeMax.get() is not in (None, 0.0025):
-            params += " indexing.stills.ewald_proximal_volume_max={}".format(self.stillsEwaldProximalVolumeMax.get())
-        
+            params += " indexing.stills.indexer=sequences"
+
+        if self.ewald_proximity_resolution_cutoff.get() not in (None, 2.0):
+            params += " indexing.stills.ewald_proximity_resolution_cutoff={}".format(
+                self.ewald_proximity_resolution_cutoff.get())
+
+        if self.stillsRefineAllCandidates.get() not in (None, True):
+            params += " indexing.stills.refine_all_candidates={}".format(
+                self.stillsRefineAllCandidates.get())
+
+        if self.stillsCandidateOutlierRejection.get() not in (None, True):
+            params += " indexing.stills.candidate_outlier_rejection={}".format(
+                self.stillsCandidateOutlierRejection.get())
+
+        if self.stillsRefineCandidatesWithKnownSymmetry.get() not in (None, False):
+            params += " indexing.stills.refine_candidates_with_known_symmetry={}".format(
+                self.stillsRefineCandidatesWithKnownSymmetry.get())
+
+        if self.stillsRmsdMinPx.get() not in (None, 2):
+            params += " indexing.stills.rmsd_min_px={}".format(
+                self.stillsRmsdMinPx.get())
+
+        if self.stillsEwaldProximalVolumeMax.get() not in (None, 0.0025):
+            params += " indexing.stills.ewald_proximal_volume_max={}".format(
+                self.stillsEwaldProximalVolumeMax.get())
+
         if self.stillsSetDomainSizeAngValue.get() is not None:
-            params += " indexing.stills.set_domain_size_ang_value={}".format(self.stillsSetDomainSizeAngValue.get())
-        
+            params += " indexing.stills.set_domain_size_ang_value={}".format(
+                self.stillsSetDomainSizeAngValue.get())
+
         if self.stillsSetMosaicHalfDegValue.get() is not None:
-            params += " indexing.stills.set_mosaic_half_deg_value={}".format(self.stillsSetMosaicHalfDegValue.get())
-        
-        if self.refineNproc.get() is not in (None, 1):
+            params += " indexing.stills.set_mosaic_half_deg_value={}".format(
+                self.stillsSetMosaicHalfDegValue.get())
+
+        if self.refineNproc.get() not in (None, 1):
             params += " refinement.nproc={}".format(self.refineNproc.get())
-        
-        if self.autoReductionMinNrefPerParameter.get() is not in (None, 5):
-            params += " refinement.parameterisation.auto_reduction.min_nref_per_parameter={}".format(self.autoReductionMinNrefPerParameter.get())
-        
+
+        if self.autoReductionMinNrefPerParameter.get() not in (None, 5):
+            params += " refinement.parameterisation.auto_reduction.min_nref_per_parameter={}".format(
+                self.autoReductionMinNrefPerParameter.get())
+
         if self.autoReductionAction.get() is FIX:
-            params += " refinement.parameterisation.auto_reduction.action={}".format('fix')
+            params += " refinement.parameterisation.auto_reduction.action={}".format(
+                'fix')
         elif self.autoReductionAction.get() is REMOVE:
-            params += " refinement.parameterisation.auto_reduction.action={}".format('remove')
-        
-        if self.paramScanVarying.get() is not in (None, False):
-            params += " refinement.parameterisation.scan_varying={}".format(self.paramScanVarying.get())
-        
+            params += " refinement.parameterisation.auto_reduction.action={}".format(
+                'remove')
+
+        if self.paramScanVarying.get() not in (None, False):
+            params += " refinement.parameterisation.scan_varying={}".format(
+                self.paramScanVarying.get())
+
         if self.composeModelPer.get() is IMAGE:
-            params += " refinement.parameterisation.compose_model_per={}".format('image')
-        
-        if self.blockWidth.get() is not in (None, 1.0):
-            params += " refinement.parameterisation.block_width={}".format(self.blockWidth.get())
-        
-        if self.setScanVaryingErrors.get() is not in (None, False):
-            params += " refinement.parameterisation.set_scan_varying_errors={}".format(self.setScanVaryingErrors.get())
-        
-        if self.debugCentroidAnalysis.get() is not in (None, False):
-            params += " refinement.parameterisation.debug_centroid_analysis={}".format(self.debugCentroidAnalysis.get())
-        
+            params += " refinement.parameterisation.compose_model_per={}".format(
+                'image')
+
+        if self.blockWidth.get() not in (None, 1.0):
+            params += " refinement.parameterisation.block_width={}".format(
+                self.blockWidth.get())
+
+        if self.setScanVaryingErrors.get() not in (None, False):
+            params += " refinement.parameterisation.set_scan_varying_errors={}".format(
+                self.setScanVaryingErrors.get())
+
+        if self.debugCentroidAnalysis.get() not in (None, False):
+            params += " refinement.parameterisation.debug_centroid_analysis={}".format(
+                self.debugCentroidAnalysis.get())
+
         # FIXME: make all beamfix one block
-        beamfix=[]
+        beamfix = []
         if self.beamFixInSpindlePlane.get() is True:
             beamfix += "in_spindle_plane,"
         if self.beamFixOutSpindlePlane.get() is True:
             beamfix += "out_spindle_plane,"
         if self.beamFixWavelength.get() is True:
             beamfix += "wavelength"
-        params += " refinement.parameterisation.beamFixInSpindlePlane={}".format(beamfix)
-        
-        if self.beamForceStatic.get() is not in (None, True):
-            params += " refinement.parameterisation.beam.force_static={}".format(self.beamForceStatic.get())
-        
-        if self.SmootherIntervalWidthDegrees.get() is not in (None, 36.0):
-            params += " refinement.parameterisation.Smoother.interval_width_degrees={}".format(self.SmootherIntervalWidthDegrees.get())
-        
+        params += " refinement.parameterisation.beamFixInSpindlePlane={}".format(
+            beamfix)
+
+        if self.beamForceStatic.get() not in (None, True):
+            params += " refinement.parameterisation.beam.force_static={}".format(
+                self.beamForceStatic.get())
+
+        if self.SmootherIntervalWidthDegrees.get() not in (None, 36.0):
+            params += " refinement.parameterisation.Smoother.interval_width_degrees={}".format(
+                self.SmootherIntervalWidthDegrees.get())
+
         if self.SmootherAbsoluteNumIntervals.get() is not None:
-            params += " refinement.parameterisation.Smoother.absolute_num_intervals={}".format(self.SmootherAbsoluteNumIntervals.get())
-        
+            params += " refinement.parameterisation.Smoother.absolute_num_intervals={}".format(
+                self.SmootherAbsoluteNumIntervals.get())
+
         # FIXME: Combine in one line
-        if self.crystalFixCell.get() is not in (None, True):
-            params += " refinement.parameterisation.crystal.fix.cell={}".format(self.crystalFixCell.get())
-        
-        if self.crystalFixOrientation.get() is not in (None, True):
-            params += " refinement.parameterisation.crystal.fix.orientation={}".format(self.crystalFixOrientation.get())
-        
-        if self.crystalUnitCellForceStatic.get() is not in (None, True):
-            params += " refinement.parameterisation.crystal.unit_cell.force_static={}".format(self.crystalUnitCellForceStatic.get())
-        
-        if self.crystalOrientationForceStatic.get() is not in (None, True):
-            params += " refinement.parameterisation.crystal.orientation.force_static={}".format(self.crystalOrientationForceStatic.get())
-        
+        if self.crystalFixCell.get() not in (None, True):
+            params += " refinement.parameterisation.crystal.fix.cell={}".format(
+                self.crystalFixCell.get())
+
+        if self.crystalFixOrientation.get() not in (None, True):
+            params += " refinement.parameterisation.crystal.fix.orientation={}".format(
+                self.crystalFixOrientation.get())
+
+        if self.crystalUnitCellForceStatic.get() not in (None, True):
+            params += " refinement.parameterisation.crystal.unit_cell.force_static={}".format(
+                self.crystalUnitCellForceStatic.get())
+
+        if self.crystalOrientationForceStatic.get() not in (None, True):
+            params += " refinement.parameterisation.crystal.orientation.force_static={}".format(
+                self.crystalOrientationForceStatic.get())
+
         if self.detectorPanels.get() is SINGLE:
-            params += " refinement.parameterisation.detector.panels={}".format('single')
+            params += " refinement.parameterisation.detector.panels={}".format(
+                'single')
         elif self.detectorPanels.get() is MULTIPLE:
-            params += " refinement.parameterisation.detector.panels={}".format('multiple')
+            params += " refinement.parameterisation.detector.panels={}".format(
+                'multiple')
         elif self.detectorPanels.get() is HIERARCHICAL:
-            params += " refinement.parameterisation.detector.panels={}".format('hierarchical')
-        
-        if self.detectorHierarchyLevel.get() is not in (None, 0):
-            params += " refinement.parameterisation.detector.hierarchy_level={}".format(self.detectorHierarchyLevel.get())
-        
+            params += " refinement.parameterisation.detector.panels={}".format(
+                'hierarchical')
+
+        if self.detectorHierarchyLevel.get() not in (None, 0):
+            params += " refinement.parameterisation.detector.hierarchy_level={}".format(
+                self.detectorHierarchyLevel.get())
+
         # FIXME: Convert to one line
-        if self.detectorFixPosition.get() is not in (None, True):
-            params += " refinement.parameterisation.detector.fix.position={}".format(self.detectorFixPosition.get())
-        
-        if self.detectorFixOrientation.get() is not in (None, True):
-            params += " refinement.parameterisation.detector.fix.orientation={}".format(self.detectorFixOrientation.get())
-        
-        if self.detectorFixdistance.get() is not in (None, True):
-            params += " refinement.parameterisation.detector.fix.distance={}".format(self.detectorFixdistance.get())
-        
-        if self.crystalForceStatic.get() is not in (None, True):
-            params += " refinement.parameterisation.crystal.force_static={}".format(self.crystalForceStatic.get())
-        
+        if self.detectorFixPosition.get() not in (None, True):
+            params += " refinement.parameterisation.detector.fix.position={}".format(
+                self.detectorFixPosition.get())
+
+        if self.detectorFixOrientation.get() not in (None, True):
+            params += " refinement.parameterisation.detector.fix.orientation={}".format(
+                self.detectorFixOrientation.get())
+
+        if self.detectorFixdistance.get() not in (None, True):
+            params += " refinement.parameterisation.detector.fix.distance={}".format(
+                self.detectorFixdistance.get())
+
+        if self.crystalForceStatic.get() not in (None, True):
+            params += " refinement.parameterisation.crystal.force_static={}".format(
+                self.crystalForceStatic.get())
+
         # FIXME
-        if self.goniometerFixInBeamPlane.get() is not in (None, True):
-            params += " refinement.parameterisation.goniometer.fix.in_beam_plane={}".format(self.goniometerFixInBeamPlane.get())
-        
-        if self.goniometerFixOutBeamPlane.get() is not in (None, True):
-            params += " refinement.parameterisation.goniometer.fix.out_beam_plane={}".format(self.goniometerFixOutBeamPlane.get())
-        
-        if self.goniometerForceStatic.get() is not in (None, True):
-            params += " refinement.parameterisation.goniometer.force_static={}".format(self.goniometerForceStatic.get())
-        
-        if self.treatSingleImageAsStill.get() is not in (None, False):
-            params += " refinement.parameterisation.treat_single_image_as_still={}".format(self.treatSingleImageAsStill.get())
-        
-        if self.sphericalRelpModel.get() is not in (None, False):
-            params += " refinement.parameterisation.spherical_relp_model={}".format(self.sphericalRelpModel.get())
-        
+        if self.goniometerFixInBeamPlane.get() not in (None, True):
+            params += " refinement.parameterisation.goniometer.fix.in_beam_plane={}".format(
+                self.goniometerFixInBeamPlane.get())
+
+        if self.goniometerFixOutBeamPlane.get() not in (None, True):
+            params += " refinement.parameterisation.goniometer.fix.out_beam_plane={}".format(
+                self.goniometerFixOutBeamPlane.get())
+
+        if self.goniometerForceStatic.get() not in (None, True):
+            params += " refinement.parameterisation.goniometer.force_static={}".format(
+                self.goniometerForceStatic.get())
+
+        if self.treatSingleImageAsStill.get() not in (None, False):
+            params += " refinement.parameterisation.treat_single_image_as_still={}".format(
+                self.treatSingleImageAsStill.get())
+
+        if self.sphericalRelpModel.get() not in (None, False):
+            params += " refinement.parameterisation.spherical_relp_model={}".format(
+                self.sphericalRelpModel.get())
+
         if self.refineryEngine.get() is SIMPLE_LBFGS:
             params += " refinery.engine={}".format('SimpleLBFGS')
         elif self.refineryEngine.get() is LBFGS_CURVS:
@@ -1457,73 +1546,94 @@ class DialsProtIndexSpots(EdProtIndexSpots):
             params += " refinery.engine={}".format('GaussNewton')
         elif self.refineryEngine.get() is SPARSE_LEV_MAR:
             params += " refinery.engine={}".format('SparseLevMar')
-        
+
         if self.refineryMaxIterations.get() is not None:
-            params += " refinery.max_iterations={}".format(self.refineryMaxIterations.get())
-        
+            params += " refinery.max_iterations={}".format(
+                self.refineryMaxIterations.get())
+
         if self.refineryLog.get() is not None:
             params += " refinery.log={}".format(self.refineryLog.get())
-        
-        if self.refineryJournalTrackStep.get() is not in (None, False):
-            params += " refinery.Journal..track_step={}".format(self.refineryJournalTrackStep.get())
-        
-        if self.refineryJournalTrackGradient.get() is not in (None, False):
-            params += " refinery.Journal.track_gradient={}".format(self.refineryJournalTrackGradient.get())
-        
-        if self.refineryJournalTrackParameterCorrelation.get() is not in (None, False):
-            params += " refinery.Journal.track_parameter_correlation={}".format(self.refineryJournalTrackParameterCorrelation.get())
-        
-        if self.refineryJournalTrackConditionNumber.get() is not in (None, False):
-            params += " refinery.Journal.track_condition_number={}".format(self.refineryJournalTrackConditionNumber.get())
-        
-        if self.refineryJournalTrackOutOfSampleRmsd.get() is not in (None, False):
-            params += " refinery.Journal.track_out_of_sample_rmsd={}".format(self.refineryJournalTrackOutOfSampleRmsd.get())
-        
+
+        if self.refineryJournalTrackStep.get() not in (None, False):
+            params += " refinery.Journal..track_step={}".format(
+                self.refineryJournalTrackStep.get())
+
+        if self.refineryJournalTrackGradient.get() not in (None, False):
+            params += " refinery.Journal.track_gradient={}".format(
+                self.refineryJournalTrackGradient.get())
+
+        if self.refineryJournalTrackParameterCorrelation.get() not in (None, False):
+            params += " refinery.Journal.track_parameter_correlation={}".format(
+                self.refineryJournalTrackParameterCorrelation.get())
+
+        if self.refineryJournalTrackConditionNumber.get() not in (None, False):
+            params += " refinery.Journal.track_condition_number={}".format(
+                self.refineryJournalTrackConditionNumber.get())
+
+        if self.refineryJournalTrackOutOfSampleRmsd.get() not in (None, False):
+            params += " refinery.Journal.track_out_of_sample_rmsd={}".format(
+                self.refineryJournalTrackOutOfSampleRmsd.get())
+
         if self.targetRmsdCutoff.get() is ABSOLUTE:
             params += " target.rmsd_cutoff={}".format('absolute')
-        
-        if self.targetBinSizeFraction.get() is not in (None, 0.0):
-            params += " target.bin_size_fraction={}".format(self.targetBinSizeFraction.get())
-        
+
+        if self.targetBinSizeFraction.get() not in (None, 0.0):
+            params += " target.bin_size_fraction={}".format(
+                self.targetBinSizeFraction.get())
+
         if self.targetAbsoluteCutoffs.get() is not None:
-            params += " target.absolute_cutoffs={}".format(self.targetAbsoluteCutoffs.get())
-        
-        if self.targetGradientCalculationBlockSize.get() is not in (None, True):
-            params += " target.gradient_calculation_block_size={}".format(self.targetGradientCalculationBlockSize.get())
-        
+            params += " target.absolute_cutoffs={}".format(
+                self.targetAbsoluteCutoffs.get())
+
+        if self.targetGradientCalculationBlockSize.get() not in (None, True):
+            params += " target.gradient_calculation_block_size={}".format(
+                self.targetGradientCalculationBlockSize.get())
+
         if self.reflectionsPerDegree.get() is not None:
-            params += " reflections.reflections_per_degree={}".format(self.reflectionsPerDegree.get())
-        
-        if self.minimumSampleSize.get() is not in (None, 1000):
-            params += " reflections.minimum_sample_size={}".format(self.minimumSampleSize.get())
-        
+            params += " reflections.reflections_per_degree={}".format(
+                self.reflectionsPerDegree.get())
+
+        if self.minimumSampleSize.get() not in (None, 1000):
+            params += " reflections.minimum_sample_size={}".format(
+                self.minimumSampleSize.get())
+
         if self.maximumSampleSize.get() is not None:
-            params += " reflections.maximum_sample_size={}".format(self.maximumSampleSize.get())
-        
+            params += " reflections.maximum_sample_size={}".format(
+                self.maximumSampleSize.get())
+
         if self.randomSeed.get() is not 42:
-            params += " reflections.random_seed={}".format(self.randomSeed.get())
-        
-        if self.closeToSpindleCutoff.get() is not in (None, 0.02):
-            params += " reflections.close_to_spindle_cutoff={}".format(self.closeToSpindleCutoff.get())
-        
-        if self.trimScanEdges.get() is not in (None, 0.0):
-            params += " reflections.trim_scan_edges={}".format(self.trimScanEdges.get())
-        
+            params += " reflections.random_seed={}".format(
+                self.randomSeed.get())
+
+        if self.closeToSpindleCutoff.get() not in (None, 0.02):
+            params += " reflections.close_to_spindle_cutoff={}".format(
+                self.closeToSpindleCutoff.get())
+
+        if self.trimScanEdges.get() not in (None, 0.0):
+            params += " reflections.trim_scan_edges={}".format(
+                self.trimScanEdges.get())
+
         if self.weightingStratOverride.get() is STATISTICAL:
-            params += " reflections.weighting_strategy.override={}".format('statistical')
+            params += " reflections.weighting_strategy.override={}".format(
+                'statistical')
         elif self.weightingStratOverride.get() is STILLS:
-            params += " reflections.weighting_strategy.override={}".format('stills')
+            params += " reflections.weighting_strategy.override={}".format(
+                'stills')
         elif self.weightingStratOverride.get() is CONSTANT:
-            params += " reflections.weighting_strategy.override={}".format('constant')
+            params += " reflections.weighting_strategy.override={}".format(
+                'constant')
         elif self.weightingStratOverride.get() is EXTERNAL_DELTAPSI:
-            params += " reflections.weighting_strategy.override={}".format('external_deltapsi')
-        
-        if self.delpsiConstant.get() is not in (None, 1000000):
-            params += " reflections.weighting_strategy.delpsi_constant={}".format(self.delpsiConstant.get())
-        
-        if self.weightingStrategyConstants.get() is not in (None, 1.0):
-            params += " reflections.weighting_strategy.constants={} {} {}".format(self.weightingStrategyConstants.get(),self.weightingStrategyConstants.get(),self.weightingStrategyConstants.get())
-        
+            params += " reflections.weighting_strategy.override={}".format(
+                'external_deltapsi')
+
+        if self.delpsiConstant.get() not in (None, 1000000):
+            params += " reflections.weighting_strategy.delpsi_constant={}".format(
+                self.delpsiConstant.get())
+
+        if self.weightingStrategyConstants.get() not in (None, 1.0):
+            params += " reflections.weighting_strategy.constants={} {} {}".format(self.weightingStrategyConstants.get(
+            ), self.weightingStrategyConstants.get(), self.weightingStrategyConstants.get())
+
         if self.outlierAlgorithm.get() is NULL:
             params += " reflections.outlier.algorithm={}".format('null')
         elif self.outlierAlgorithm.get() is MCD:
@@ -1532,61 +1642,74 @@ class DialsProtIndexSpots(EdProtIndexSpots):
             params += " reflections.outlier.algorithm={}".format('tukey')
         elif self.outlierAlgorithm.get() is SAUTER_POON:
             params += " reflections.outlier.algorithm={}".format('sauter_poon')
-        
-        if self.outlierMinimumNumberOfReflections.get() is not in (None, 20):
-            params += " reflections.outlier.minimum_number_of_reflections={}".format(self.outlierMinimumNumberOfReflections.get())
-        
-        if self.outlierSeparateExperiments.get() is not in (None, True):
-            params += " reflections.outlier.separate_experiments={}".format(self.outlierSeparateExperiments.get())
-        
+
+        if self.outlierMinimumNumberOfReflections.get() not in (None, 20):
+            params += " reflections.outlier.minimum_number_of_reflections={}".format(
+                self.outlierMinimumNumberOfReflections.get())
+
+        if self.outlierSeparateExperiments.get() not in (None, True):
+            params += " reflections.outlier.separate_experiments={}".format(
+                self.outlierSeparateExperiments.get())
+
         if self.outlierSeparatePanels.get() is not None:
-            params += " reflections.outlier.separate_panels={}".format(self.outlierSeparatePanels.get())
-        
-        if self.outlierSeparateBlocks.get() is not in (None, True):
-            params += " reflections.outlier.separate_blocks={}".format(self.outlierSeparateBlocks.get())
-        
+            params += " reflections.outlier.separate_panels={}".format(
+                self.outlierSeparatePanels.get())
+
+        if self.outlierSeparateBlocks.get() not in (None, True):
+            params += " reflections.outlier.separate_blocks={}".format(
+                self.outlierSeparateBlocks.get())
+
         if self.outlierBlockWidth.get() is not None:
-            params += " reflections.outlier.block_width={}".format(self.outlierBlockWidth.get())
-        
-        if self.outlierTukeyIqrMultiplier.get() is not in (None, 1.5):
-            params += " reflections.outlier.tukey.iqr_multiplier={}".format(self.outlierTukeyIqrMultiplier.get())
-        
-        if self.mcdAlpha.get() is not in (None, 0.5):
+            params += " reflections.outlier.block_width={}".format(
+                self.outlierBlockWidth.get())
+
+        if self.outlierTukeyIqrMultiplier.get() not in (None, 1.5):
+            params += " reflections.outlier.tukey.iqr_multiplier={}".format(
+                self.outlierTukeyIqrMultiplier.get())
+
+        if self.mcdAlpha.get() not in (None, 0.5):
             params += " reflections.mcd.alpha={}".format(self.mcdAlpha.get())
-        
-        if self.mcdMaxNGroups.get() is not in (None, 5):
-            params += " reflections.mcd.max_n_groups={}".format(self.mcdMaxNGroups.get())
-        
-        if self.mcdMinGroupSize.get() is not in (None, 300):
-            params += " reflections.mcd.min_group_size={}".format(self.mcdMinGroupSize.get())
-        
-        if self.mcdNTrials.get() is not in (None, 500):
-            params += " reflections.mcd.n_trials={}".format(self.mcdNTrials.get())
-        
-        if self.mcdK1.get() is not in (None, 2):
+
+        if self.mcdMaxNGroups.get() not in (None, 5):
+            params += " reflections.mcd.max_n_groups={}".format(
+                self.mcdMaxNGroups.get())
+
+        if self.mcdMinGroupSize.get() not in (None, 300):
+            params += " reflections.mcd.min_group_size={}".format(
+                self.mcdMinGroupSize.get())
+
+        if self.mcdNTrials.get() not in (None, 500):
+            params += " reflections.mcd.n_trials={}".format(
+                self.mcdNTrials.get())
+
+        if self.mcdK1.get() not in (None, 2):
             params += " reflections.mcd.k1={}".format(self.mcdK1.get())
-        
-        if self.mcdK2.get() is not in (None, 2):
+
+        if self.mcdK2.get() not in (None, 2):
             params += " reflections.mcd.k2={}".format(self.mcdK2.get())
-        
-        if self.mcdK3.get() is not in (None, 100):
+
+        if self.mcdK3.get() not in (None, 100):
             params += " reflections.mcd.k3={}".format(self.mcdK3.get())
-        
-        if self.mcdThresholdProbability.get() is not in (None, 0.975):
-            params += " reflections.mcd.threshold_probability={}".format(self.mcdThresholdProbability.get())
-        
+
+        if self.mcdThresholdProbability.get() not in (None, 0.975):
+            params += " reflections.mcd.threshold_probability={}".format(
+                self.mcdThresholdProbability.get())
+
         if self.sauterPoonPxSz.get() is not None:
-            params += " reflections.sauter_poon.px_sz={}".format(self.sauterPoonPxSz.get())
-        
-        if self.sauterPoonVerbose.get() is not in (None, False):
-            params += " reflections.sauter_poon.verbose={}".format(self.sauterPoonVerbose.get())
-        
-        if self.sauterPoonPdf.get() is not in (None, ''):
-            params += " reflections.sauter_poon.pdf={}".format(self.sauterPoonPdf.get())        
+            params += " reflections.sauter_poon.px_sz={}".format(
+                self.sauterPoonPxSz.get())
+
+        if self.sauterPoonVerbose.get() not in (None, False):
+            params += " reflections.sauter_poon.verbose={}".format(
+                self.sauterPoonVerbose.get())
+
+        if self.sauterPoonPdf.get() not in (None, ''):
+            params += " reflections.sauter_poon.pdf={}".format(
+                self.sauterPoonPdf.get())
 
         return params
-    
-    def _prepBravaisCommandline(self,program):
+
+    def _prepBravaisCommandline(self, program):
         "Create the command line input to run dials programs"
         # Input basic parameters
         logPath = "{}/{}.log".format(self._getLogsPath(), program)
@@ -1598,19 +1721,18 @@ class DialsProtIndexSpots(EdProtIndexSpots):
         if self.refineBravNproc.get() not in (None, 4):
             params += " nproc={}".format(self.refineBravNproc.get())
 
-    def _prepReindexCommandline(self,program):
+    def _prepReindexCommandline(self, program):
         "Create the command line input to run dials programs"
         # Input basic parameters
         logPath = "{}/{}.log".format(self._getLogsPath(), program)
-        params = "change_of_basis_op={} output.log={}".format(self.getChangeOfBasisOp(),logPath)
-        
+        params = "change_of_basis_op={} output.log={}".format(
+            self.getChangeOfBasisOp(), logPath)
+
         if self.doReindexModel.get():
             params += " {}".format(self.getModelFile())
-        
+
         if self.doReindexReflections.get():
             params += " {}".format(self.getReflFile())
-        
-        
 
     def _createScanRanges(self):
         # Go through the
