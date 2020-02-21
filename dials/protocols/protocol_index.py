@@ -39,73 +39,77 @@ from dials.convert import writeJson, readRefl, writeRefl
 
 # Create 'aliases' for indices in EnumParam choices
 
-FFT3D = 0
-FFT1D = 1
-REALSPACE_GRID_SEARCH = 2
-LOWRES_SPOT_MATCH = 3
-
-FLOOD_FILL = 0
-CLEAN = 1
-
-N_SPOTS = 0
-D_MIN = 1
-
-TRIPLETS = 0
-QUADS = 1
-
-SIMPLE = 0
-LOCAL = 1
-
-AUTOMATIC = 0
-SINGLE = 1
-MULTIPLE = 2
-HIERARCHICAL = 3
-
-FAIL = 0
-FIX = 1
-REMOVE = 2
-
-IMAGE = 0
-BLOCK = 1
-
-SIMPLE_LBFGS = 0
-LBFGS_CURVS = 1
-GAUSS_NEWTON = 2
-LEV_MAR = 3
-SPARSE_LEV_MAR = 3
-
-REFINE_SHELLS = 0
-REPREDICT_ONLY = 1
-MODE_NONE = 2
-
-FRACTION_OF_BIN_SIZE = 0
-ABSOLUTE = 1
-
-STATISTICAL = 0
-STILLS = 1
-CONSTANT = 2
-EXTERNAL_DELTAPSI = 3
-
-NULL = 0
-AUTO = 1
-MCD = 2
-TUKEY = 3
-SAUTER_POON = 4
-
-LINEAR = 0
-LOG = 1
-
-DBSCAN = 0
-HCLUSTER = 1
-
-DISTANCE = 0
-INCONSISTENT = 1
-
 
 class DialsProtIndexSpots(EdProtIndexSpots):
     """ Protocol for indexing spots using Dials
     """
     _label = 'index'
+
+    FFT3D = 0
+    FFT1D = 1
+    REALSPACE_GRID_SEARCH = 2
+    LOWRES_SPOT_MATCH = 3
+
+    FLOOD_FILL = 0
+    CLEAN = 1
+
+    N_SPOTS = 0
+    D_MIN = 1
+
+    TRIPLETS = 0
+    QUADS = 1
+
+    SIMPLE = 0
+    LOCAL = 1
+
+    AUTOMATIC = 0
+    SINGLE = 1
+    MULTIPLE = 2
+    HIERARCHICAL = 3
+
+    STILLS_INDEXER_AUTO = 0
+    STILLS_INDEXER_STILLS = 1
+    STILLS_INDEXER_SEQUENCES = 2
+
+    FAIL = 0
+    FIX = 1
+    REMOVE = 2
+
+    IMAGE = 0
+    BLOCK = 1
+
+    SIMPLE_LBFGS = 0
+    LBFGS_CURVS = 1
+    GAUSS_NEWTON = 2
+    LEV_MAR = 3
+    SPARSE_LEV_MAR = 3
+
+    REFINE_SHELLS = 0
+    REPREDICT_ONLY = 1
+    MODE_NONE = 2
+
+    FRACTION_OF_BIN_SIZE = 0
+    ABSOLUTE = 1
+
+    STATISTICAL = 0
+    STILLS = 1
+    CONSTANT = 2
+    EXTERNAL_DELTAPSI = 3
+
+    NULL = 0
+    AUTO = 1
+    MCD = 2
+    TUKEY = 3
+    SAUTER_POON = 4
+
+    LINEAR = 0
+    LOG = 1
+
+    DBSCAN = 0
+    HCLUSTER = 1
+
+    DISTANCE = 0
+    INCONSISTENT = 1
 
     # -------------------------- DEFINE param functions -----------------------
 
@@ -213,7 +217,7 @@ class DialsProtIndexSpots(EdProtIndexSpots):
                       label='Which indexing method do you want to use?',
                       choice=['fft3d', 'fft1d',
                               'realSpaceGridSearch', 'lowResSpotMatch'],
-                      default=FFT3D)
+                      default=self.FFT3D)
 
         form.addParam('indexingOptimiseInitialBasisVectors', pwprot.BooleanParam,
                       label='Optimise initial basis vectors?', default=False,
@@ -239,7 +243,7 @@ class DialsProtIndexSpots(EdProtIndexSpots):
                       )
 
         form.addParam('fft3dPeakSearch', pwprot.EnumParam,
-                      choice=['flood fill' 'clean'], default=FLOOD_FILL,
+                      choice=['flood fill' 'clean'], default=self.FLOOD_FILL,
                       label='How should peak search be done?',
                       condition='indexingMethod==FFT3D',
                       help='No help currently available. Check '
@@ -292,7 +296,7 @@ class DialsProtIndexSpots(EdProtIndexSpots):
                       )
 
         form.addParam('lowResSpotMatchCandidateSpotsLimitResolutionBy', pwprot.EnumParam,
-                      choice=['n_spots' 'd_min'], default=N_SPOTS,
+                      choice=['n_spots' 'd_min'], default=self.N_SPOTS,
                       label='Limit resolution by', condition='indexingMethod==LOWRES_SPOT_MATCH'
                       )
 
@@ -316,7 +320,7 @@ class DialsProtIndexSpots(EdProtIndexSpots):
                       )
 
         form.addParam('lowResSpotMatchSearchDepth', pwprot.EnumParam,
-                      choice=['triplets' 'quads'], default=TRIPLETS,
+                      choice=['triplets' 'quads'], default=self.TRIPLETS,
                       label='Search depth for low-res spot match?',
                       condition='indexingMethod==LOWRES_SPOT_MATCH'
                       )
@@ -375,7 +379,7 @@ class DialsProtIndexSpots(EdProtIndexSpots):
 
         form.addParam('histogram_binning', pwprot.EnumParam,
                       label='Histogram binning',
-                      choice=['linear', 'log'], default=LOG,
+                      choice=['linear', 'log'], default=self.LOG,
                       help="Choose between linear or logarithmic bins for nearest neighbour histogram analysis.")
 
         form.addParam('nn_per_bin', pwprot.IntParam, default=5,
@@ -392,7 +396,7 @@ class DialsProtIndexSpots(EdProtIndexSpots):
 
         form.addParam('indexAssignmentMethod', pwprot.EnumParam,
                       label='Assignment method',
-                      choice=['simple' 'local'], default=SIMPLE,
+                      choice=['simple' 'local'], default=self.SIMPLE,
                       help="Choose between simple 'global' index assignment and xds-style "
                       "'local' index assignment.")
 
@@ -420,7 +424,7 @@ class DialsProtIndexSpots(EdProtIndexSpots):
 
         form.addParam('refinementMode', pwprot.EnumParam,
                       label='Refinement mode',
-                      choice=['refine_shells' 'repredict_only' 'None'], default=REFINE_SHELLS,
+                      choice=['refine_shells' 'repredict_only' 'None'], default=self.REFINE_SHELLS,
                       help="refine_shells: refine in increasing resolution cutoffs after indexing.\n"
                       "repredict_only: do not refine after indexing, just update spot predictions.\n"
                       "None: turns off all forms of refinement(currently only  applies to stills_indexer)",
@@ -466,7 +470,7 @@ class DialsProtIndexSpots(EdProtIndexSpots):
 
         form.addParam('clusterAnalysisMethod', pwprot.EnumParam,
                       label='Cluster analysis method',
-                      choice=['dbscan' 'hcluster'], default=DBSCAN)
+                      choice=['dbscan' 'hcluster'], default=self.DBSCAN)
 
         form.addParam('cutoff', pwprot.FloatParam,
                       label='Cutoff', default=15,
@@ -474,7 +478,7 @@ class DialsProtIndexSpots(EdProtIndexSpots):
 
         form.addParam('cutoff_criterion', pwprot.EnumParam,
                       label='Cutoff criterion',
-                      choice=['distance' 'inconsistent'], default=DISTANCE,
+                      choice=['distance' 'inconsistent'], default=self.DISTANCE,
                       condition='clusterAnalysisMethod==HCLUSTER')
 
         form.addParam('dbscanEps', pwprot.FloatParam,
@@ -494,7 +498,7 @@ class DialsProtIndexSpots(EdProtIndexSpots):
         # Section with options for stills
         form.addSection('stills')
 
-        form.addParam('stillsIndexer', pwprot.EnumParam, choice=['Auto' 'stills' 'sequences'], default=AUTO,
+        form.addParam('stillsIndexer', pwprot.EnumParam, choice=['Auto' 'stills' 'sequences'], default=self.STILLS_INDEXER_AUTO,
                       help="Use the stills or sequences indexer.\n"
                       "Auto: choose based on the input imagesets (stills or sequences).",
                       expertLevel=pwprot.LEVEL_ADVANCED)
@@ -569,7 +573,7 @@ class DialsProtIndexSpots(EdProtIndexSpots):
                        )
 
         group.addParam('autoReductionAction', pwprot.EnumParam,
-                       choice=['fail' 'fix' 'remove'], default=FAIL,
+                       choice=['fail' 'fix' 'remove'], default=self.FAIL,
                        help='action to take if there are too few reflections across the experiments related'
                        'to a particular model parameterisation. If fail, an exception will be raised and refinement'
                        'will not proceed. If fix, refinement will continue but with the parameters relating to that'
@@ -590,7 +594,7 @@ class DialsProtIndexSpots(EdProtIndexSpots):
                        )
 
         group.addParam('composeModelPer', pwprot.EnumParam,
-                       choice=['image' 'block'], default=BLOCK,
+                       choice=['image' 'block'], default=self.BLOCK,
                        help='For scan-varying parameterisations, compose a new model either every image or within blocks'
                        'of a width specified in the reflections parameters. When this block width is larger than the'
                        'image width the result is faster, with a trade-off in accuracy',
@@ -699,7 +703,7 @@ class DialsProtIndexSpots(EdProtIndexSpots):
                        )
 
         group.addParam('detectorPanels', pwprot.EnumParam,
-                       choice=['automatic' 'single' 'multiple' 'hierarchical'], default=AUTOMATIC,
+                       choice=['automatic' 'single' 'multiple' 'hierarchical'], default=self.AUTOMATIC,
                        help="Select appropriate detector parameterisation."
                        "Both the single and multiple panel detector options treat the whole detector as a rigid body."
                        "The hierarchical parameterisation treats groups of panels as separate rigid bodies.",
@@ -774,7 +778,7 @@ class DialsProtIndexSpots(EdProtIndexSpots):
         group = form.addGroup('Refinery')
 
         group.addParam('refineryEngine', pwprot.EnumParam,
-                       choice=['SimpleLBFGS' 'LBFGScurvs' 'GaussNewton' 'LevMar' 'SparseLevMar'], default=LEV_MAR,
+                       choice=['SimpleLBFGS' 'LBFGScurvs' 'GaussNewton' 'LevMar' 'SparseLevMar'], default=self.LEV_MAR,
                        help="The minimisation engine to use",
                        label='Minimisation engine: ',
                        )
@@ -820,7 +824,7 @@ class DialsProtIndexSpots(EdProtIndexSpots):
         group = form.addGroup('target')
 
         group.addParam('targetRmsdCutoff', pwprot.EnumParam,
-                       choice=['fraction_of_bin_size' 'absolute'], default=FRACTION_OF_BIN_SIZE,
+                       choice=['fraction_of_bin_size' 'absolute'], default=self.FRACTION_OF_BIN_SIZE,
                        help="Method to choose rmsd cutoffs. This is currently either as a fraction of the discrete units of the spot positional data, i.e. (pixel width, pixel height, image thickness in phi), or a tuple of absolute values to use     as the cutoffs",
                        label='RMSD cutoff',
                        expertLevel=pwprot.LEVEL_ADVANCED
@@ -901,7 +905,7 @@ class DialsProtIndexSpots(EdProtIndexSpots):
                        )
 
         group.addParam('outlierAlgorithm', pwprot.EnumParam,
-                       choice=['null' 'auto' 'mcd' 'tukey' 'sauter_poon'], default=AUTO,
+                       choice=['null' 'auto' 'mcd' 'tukey' 'sauter_poon'], default=self.AUTO,
                        label='Outlier rejection algorithm',
                        help="Outlier rejection algorithm. If auto is selected, the algorithm is chosen automatically",
                        )
@@ -1168,11 +1172,11 @@ class DialsProtIndexSpots(EdProtIndexSpots):
             params += " check_misindexing.grid_search_scope={}".format(
                 self.misindexCheckGridScope.get())
 
-        if self.indexingMethod.get() is FFT1D:
+        if self.indexingMethod.get() is self.FFT1D:
             params += " indexing.method=fft1d"
-        elif self.indexingMethod.get() is REALSPACE_GRID_SEARCH:
+        elif self.indexingMethod.get() is self.REALSPACE_GRID_SEARCH:
             params += " indexing.method=real_space_grid_search"
-        elif self.indexingMethod.get() is LOWRES_SPOT_MATCH:
+        elif self.indexingMethod.get() is self.LOWRES_SPOT_MATCH:
             params += " indexing.method=low_res_spot_match"
 
         if self.indexingOptimiseInitialBasisVectors.get():
@@ -1311,9 +1315,9 @@ class DialsProtIndexSpots(EdProtIndexSpots):
             params += " indexing.index_assignment.local.nearest_neighbours={}".format(
                 self.localNearestNeighbours.get())
 
-        if self.refinementMode.get() is REPREDICT_ONLY:
+        if self.refinementMode.get() is self.REPREDICT_ONLY:
             params += " indexing.refinement_protocol.mode=repredict_only"
-        elif self.refinementMode.get() is MODE_NONE:
+        elif self.refinementMode.get() is self.MODE_NONE:
             params += " indexing.refinement_protocol.mode=None"
 
         if self.n_macro_cycles.get() not in (None, 5):
@@ -1356,7 +1360,7 @@ class DialsProtIndexSpots(EdProtIndexSpots):
             params += " indexing.cluster_analysis.hccluster.cutoff={}".format(
                 self.cutoff.get())
 
-        if self.cutoff_criterion.get() is INCONSISTENT:
+        if self.cutoff_criterion.get() is self.INCONSISTENT:
             params += " indexing.cluster_analysis.hccluster.cutoff_criterion=inconsistent"
 
         if self.dbscanEps.get() not in (None, 0.05):
@@ -1375,9 +1379,9 @@ class DialsProtIndexSpots(EdProtIndexSpots):
             params += " indexing.cluster_analysis.intersection_union_ratio_cutoff={}".format(
                 self.intersectionUnionRatioCutoff.get())
 
-        if self.stillsIndexer.get() is STILLS:
+        if self.stillsIndexer.get() is self.STILLS_INDEXER_STILLS:
             params += " indexing.stills.indexer=stills"
-        elif self.stillsIndexer.get() is SEQUENCES:
+        elif self.stillsIndexer.get() is self.STILLS_INDEXER_SEQUENCES:
             params += " indexing.stills.indexer=sequences"
 
         if self.ewald_proximity_resolution_cutoff.get() not in (None, 2.0):
@@ -1419,10 +1423,10 @@ class DialsProtIndexSpots(EdProtIndexSpots):
             params += " refinement.parameterisation.auto_reduction.min_nref_per_parameter={}".format(
                 self.autoReductionMinNrefPerParameter.get())
 
-        if self.autoReductionAction.get() is FIX:
+        if self.autoReductionAction.get() is self.FIX:
             params += " refinement.parameterisation.auto_reduction.action={}".format(
                 'fix')
-        elif self.autoReductionAction.get() is REMOVE:
+        elif self.autoReductionAction.get() is self.REMOVE:
             params += " refinement.parameterisation.auto_reduction.action={}".format(
                 'remove')
 
@@ -1486,13 +1490,13 @@ class DialsProtIndexSpots(EdProtIndexSpots):
             params += " refinement.parameterisation.crystal.orientation.force_static={}".format(
                 self.crystalOrientationForceStatic.get())
 
-        if self.detectorPanels.get() is SINGLE:
+        if self.detectorPanels.get() is self.SINGLE:
             params += " refinement.parameterisation.detector.panels={}".format(
                 'single')
-        elif self.detectorPanels.get() is MULTIPLE:
+        elif self.detectorPanels.get() is self.MULTIPLE:
             params += " refinement.parameterisation.detector.panels={}".format(
                 'multiple')
-        elif self.detectorPanels.get() is HIERARCHICAL:
+        elif self.detectorPanels.get() is self.HIERARCHICAL:
             params += " refinement.parameterisation.detector.panels={}".format(
                 'hierarchical')
 
@@ -1538,13 +1542,13 @@ class DialsProtIndexSpots(EdProtIndexSpots):
             params += " refinement.parameterisation.spherical_relp_model={}".format(
                 self.sphericalRelpModel.get())
 
-        if self.refineryEngine.get() is SIMPLE_LBFGS:
+        if self.refineryEngine.get() is self.SIMPLE_LBFGS:
             params += " refinery.engine={}".format('SimpleLBFGS')
-        elif self.refineryEngine.get() is LBFGS_CURVS:
+        elif self.refineryEngine.get() is self.LBFGS_CURVS:
             params += " refinery.engine={}".format('LBFGScurvs')
-        elif self.refineryEngine.get() is GAUSS_NEWTON:
+        elif self.refineryEngine.get() is self.GAUSS_NEWTON:
             params += " refinery.engine={}".format('GaussNewton')
-        elif self.refineryEngine.get() is SPARSE_LEV_MAR:
+        elif self.refineryEngine.get() is self.SPARSE_LEV_MAR:
             params += " refinery.engine={}".format('SparseLevMar')
 
         if self.refineryMaxIterations.get() is not None:
@@ -1574,7 +1578,7 @@ class DialsProtIndexSpots(EdProtIndexSpots):
             params += " refinery.Journal.track_out_of_sample_rmsd={}".format(
                 self.refineryJournalTrackOutOfSampleRmsd.get())
 
-        if self.targetRmsdCutoff.get() is ABSOLUTE:
+        if self.targetRmsdCutoff.get() is self.ABSOLUTE:
             params += " target.rmsd_cutoff={}".format('absolute')
 
         if self.targetBinSizeFraction.get() not in (None, 0.0):
