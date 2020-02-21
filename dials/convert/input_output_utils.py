@@ -253,3 +253,25 @@ def extractRefls(v):
     else:
         data = None
     return data
+
+
+def compressRefl(data):
+    data_dict = {}
+    return data_dict
+
+
+def writeRefl(reflectionData, fn='reflections.refl', **kwargs):
+    # Assume reflectionData is a list as returned from readRefl
+    [reflFileIdentifier, version, nrows, identifier_dict, data] = reflectionData
+
+    data_dict = compressRefl(data)
+
+    header_dict = {
+        b'nrows': nrows,
+        b'identifiers': identifier_dict,
+        b'data': data_dict
+    }
+    output = [reflFileIdentifier.encode(), version, header_dict]
+
+    with open(fn, 'wb') as f:
+        f.write(msgpack.packb(output))

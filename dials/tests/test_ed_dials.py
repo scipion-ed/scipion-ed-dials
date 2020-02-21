@@ -73,7 +73,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         protImport = self._runImportImages(
             '{TS}/SMV/data/{TI}.img', skipImages=10)
         protFindSpots = self._runFindSpots(protImport.outputDiffractionImages)
-
+        self.assertIsNotNone(protFindSpots.getReflFile())
         outputset = getattr(protFindSpots, 'outputDiffractionSpots', None)
         self.assertIsNotNone(outputset)
         self.assertEqual(outputset.getSpots(), 626)
