@@ -528,7 +528,7 @@ class DialsProtIndexSpots(EdProtIndexSpots):
                       help='Minimum acceptable RMSD for choosing candidate basis solutions (in pixels)'
                       )
 
-        form.addParam('stillsEwaldProximalVolumeMax', pwprot.IntParam,
+        form.addParam('stillsEwaldProximalVolumeMax', pwprot.FloatParam,
                       label='Ewald proximal volume max', default=0.0025,
                       help='Maximum acceptable ewald proximal volume when choosing candidate basis solutions'
                       )
@@ -843,7 +843,7 @@ class DialsProtIndexSpots(EdProtIndexSpots):
                        label='Target gradient calculation blocksize',
                        )
 
-        group = addGroup('Reflections')
+        group = form.addGroup('Reflections')
 
         group.addParam('reflectionsPerDegree', pwprot.FloatParam,
                        default=None, allowsNull=True, expertLevel=pwprot.LEVEL_ADVANCED,
@@ -1720,6 +1720,7 @@ class DialsProtIndexSpots(EdProtIndexSpots):
 
         if self.refineBravNproc.get() not in (None, 4):
             params += " nproc={}".format(self.refineBravNproc.get())
+        return params
 
     def _prepReindexCommandline(self, program):
         "Create the command line input to run dials programs"
@@ -1733,6 +1734,7 @@ class DialsProtIndexSpots(EdProtIndexSpots):
 
         if self.doReindexReflections.get():
             params += " {}".format(self.getReflFile())
+        return params
 
     def _createScanRanges(self):
         # Go through the

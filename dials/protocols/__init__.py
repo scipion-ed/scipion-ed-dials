@@ -25,5 +25,4 @@
 # **************************************************************************
 
 from .protocol_find_spots import DialsProtFindSpots
-
-
+from .protocol_index import DialsProtIndexSpots

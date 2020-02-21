@@ -31,11 +31,11 @@ import pyworkflow as pw
 import pyworkflow.tests as pwtests
 
 import pwed
-from pwed.objects import DiffractionImage, SetOfDiffractionImages
+from pwed.objects import DiffractionImage, SetOfDiffractionImages, DiffractionSpot, SetOfSpots, IndexedSpot, SetOfIndexedSpots
 from pwed.protocols import ProtImportDiffractionImages
 
-from dials.protocols import DialsProtFindSpots
-from dials.convert import writeJson, readRefl
+from dials.protocols import DialsProtFindSpots, DialsProtIndexSpots
+from dials.convert import writeJson, readRefl, writeRefl
 
 
 pw.Config.setDomain(pwed)
@@ -52,6 +52,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             raise Exception("Can not run DIALS tests, missing file:\n  %s"
                             % cls.dataPath)
 
+    # Functions for running protocols
     def _runImportImages(self, filesPattern, **kwargs):
         protImport = self.newProtocol(
             ProtImportDiffractionImages,
@@ -68,8 +69,17 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         self.launchProtocol(protFindSpots)
         return protFindSpots
 
-    def test_find_spots(self):
+    def _runIndex(self, inputImages, inputSpots, **kwargs):
+        protIndex = self.newProtocol(DialsProtIndexSpots,
+                                     inputImages=inputImages,
+                                     inputSpots=inputSpots,
+                                     **kwargs)
+        self.launchProtocol(protIndex)
+        return protIndex
 
+    # Tests of protocols
+    # TODO: Make tests independent of each other
+    def test_find_spots(self):
         protImport = self._runImportImages(
             '{TS}/SMV/data/{TI}.img', skipImages=10)
         protFindSpots = self._runFindSpots(protImport.outputDiffractionImages)
@@ -77,8 +87,25 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         outputset = getattr(protFindSpots, 'outputDiffractionSpots', None)
         self.assertIsNotNone(outputset)
         self.assertEqual(outputset.getSpots(), 626)
+        self.exampleSetOfSpots = outputset
         # TODO: Add confirmation step that SetOfSpots format and values are correct
 
+    def test_index(self):
+        protImport = self._runImportImages(
+            '{TS}/SMV/data/{TI}.img', skipImages=10)
+        protFindSpots = self._runFindSpots(protImport.outputDiffractionImages)
+        protIndex = self._runIndex(
+            inputImages=protImport.outputDiffractionImages,
+            inputSpots=protFindSpots.outputDiffractionSpots,
+            doRefineBravaisSettings=False,
+            doReindex=False,
+            detectorFixPosition=True,
+            detectorFixOrientation=False,
+            detectorFixdistance=False,
+        )
+        self.assertIsNotNone(protIndex.outputIndexedSpots)
+
+    # Test of I/O utilities
     def test_writeJson(self):
 
         template = os.path.join(self.dataPath, 'IO-test', 'imported.expt')
@@ -113,6 +140,19 @@ class TestEdDialsProtocols(pwtests.BaseTest):
 
     def test_readRefl(self):
         spotfile = os.path.join(self.dataPath, 'IO-test', 'strong.refl')
-        outputFile = self.getOutputPath('strong.out')
-        result = readRefl(spotfile, fn=outputFile)
+        #outputFile = self.getOutputPath('strong.out')
+        #result = readRefl(spotfile, fn=outputFile)
+        result = readRefl(spotfile)
         self.assertIsNotNone(result)
+
+    def test_writeRefl(self):
+        spotfile = os.path.join(self.dataPath, 'IO-test', 'strong.refl')
+        reflPath = self.getOutputPath('strong.refl')
+        readVar = readRefl(spotfile)
+        writeRefl(readVar,
+                  fn=reflPath)
+        with open(reflPath, 'rb') as rp:
+            r = rp.read()
+        with open(spotfile, 'rb') as sf:
+            s = sf.read()
+        self.assertEqual(r, s)
