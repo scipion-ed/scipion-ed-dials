@@ -138,11 +138,10 @@ class DialsProtFindSpots(EdProtFindSpots):
                       help='All pixels with a lower value will be considered part of the background',
                       expertLevel=pwprot.LEVEL_ADVANCED)
 
-        form.addSection('Bespoke input', expertLevel=pwprot.LEVEL_ADVANCED)
-        form.addParam('doUseBespoke', pwprot.BooleanParam, default=False,
-                      help='Do you want to add command line arguments directly?')
-        form.addParam('bespokeInput', pwprot.StringParam,
-                      default='', condition='doUseBespoke')
+        form.addSection('Plain command line input')
+        form.addParam('commandLineInput', pwprot.StringParam,
+                      expertLevel=pwprot.LEVEL_ADVANCED,
+                      default='')
 
     # -------------------------- INSERT functions ------------------------------
 
@@ -263,8 +262,9 @@ class DialsProtFindSpots(EdProtFindSpots):
         if self.kernelSize.get():
             params += " spotfinder.threshold.dispersion.kernel_size={},{}".format(
                 self.kernelSize.get(), self.kernelSize.get())
-        if self.bespokeInput.get():
-            params += " {}".format(self.bespokeInput.get())
+
+        if self.commandLineInput.get():
+            params += " {}".format(self.commandLineInput.get())
 
         return params
 
