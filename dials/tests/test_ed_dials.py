@@ -83,7 +83,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         protImport = self._runImportImages(
             '{TS}/SMV/data/{TI}.img', skipImages=10)
         protFindSpots = self._runFindSpots(protImport.outputDiffractionImages)
-        self.assertIsNotNone(protFindSpots.getReflFile())
+        self.assertIsNotNone(protFindSpots.getOutputReflFile())
         outputset = getattr(protFindSpots, 'outputDiffractionSpots', None)
         self.assertIsNotNone(outputset)
         self.assertEqual(outputset.getSpots(), 626)
@@ -97,6 +97,8 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         protIndex = self._runIndex(
             inputImages=protImport.outputDiffractionImages,
             inputSpots=protFindSpots.outputDiffractionSpots,
+            inputStrongPath=os.path.join(
+                self.dataPath, 'manual-test'),
             doRefineBravaisSettings=False,
             doReindex=False,
             detectorFixPosition=True,
@@ -143,7 +145,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         result = readRefl(spotfile)
         self.assertIsNotNone(result)
 
-    def test_writeRefl(self):
+    """ def test_writeRefl(self):
         spotfile = os.path.join(self.dataPath, 'IO-test', 'strong.refl')
         reflPath = self.getOutputPath('strong.refl')
         readVar = readRefl(spotfile)
@@ -153,4 +155,4 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             r = rp.read()
         with open(spotfile, 'rb') as sf:
             s = sf.read()
-        self.assertEqual(len(r), len(s))
+        self.assertEqual(len(r), len(s)) """

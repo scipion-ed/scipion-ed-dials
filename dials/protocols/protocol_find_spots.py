@@ -163,7 +163,7 @@ class DialsProtFindSpots(EdProtFindSpots):
         self.runJob(self.program, arguments)
 
     def createOutputStep(self):
-        reflectionData = readRefl(self.getReflFile())
+        reflectionData = readRefl(self.getOutputReflFile())
         outputSet = self._createSetOfSpots()
         dSpot = DiffractionSpot()
         numberOfSpots = reflectionData[2]
@@ -202,7 +202,7 @@ class DialsProtFindSpots(EdProtFindSpots):
     def getModelFile(self):
         return self._getExtraPath('imported.expt')
 
-    def getReflFile(self):
+    def getOutputReflFile(self):
         return self._getExtraPath('strong.refl')
 
     def _prepCommandline(self):
@@ -210,7 +210,7 @@ class DialsProtFindSpots(EdProtFindSpots):
         # Input basic parameters
         logPath = "{}/{}.log".format(self._getLogsPath(), self.program)
         params = "{} output.log={} output.reflections={} {}".format(
-            self.getModelFile(), logPath, self.getReflFile(), self._createScanRanges())
+            self.getModelFile(), logPath, self.getOutputReflFile(), self._createScanRanges())
 
         # Update the command line with additional parameters
         if self.dMin.get():

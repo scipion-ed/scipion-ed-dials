@@ -3,6 +3,7 @@
 import json
 import msgpack
 import numpy as np
+import shutil
 
 
 def writeJson(inputImages, fn='model.expt', idname="ExperimentList"):
@@ -260,18 +261,61 @@ def compressRefl(data):
     return data_dict
 
 
-def writeRefl(reflectionData, fn='reflections.refl', **kwargs):
-    # Assume reflectionData is a list as returned from readRefl
-    [reflFileIdentifier, version, nrows, identifier_dict, data] = reflectionData
+def writeRefl(inputSpots, fn='reflections.refl', **kwargs):
+    # Workaround to use existing file
+    if type(inputSpots) is str:
+        try:
+            shutil.copy(inputSpots, fn)
+        except shutil.SameFileError:
+            pass
 
-    data_dict = compressRefl(data)
+            # FIXME: Make the below implementation work
+    else:
+        # FIXME: Convert to use SetOfSpots
+        [reflFileIdentifier, version, nrows, identifier_dict, data] = inputSpots
 
-    header_dict = {
-        b'nrows': nrows,
-        b'identifiers': identifier_dict,
-        b'data': data_dict
-    }
-    output = [reflFileIdentifier.encode(), version, header_dict]
+        data_dict = compressRefl(data)
 
-    with open(fn, 'wb') as f:
-        f.write(msgpack.packb(output))
+        header_dict = {
+            b'nrows': nrows,
+            b'identifiers': identifier_dict,
+            b'data': data_dict
+        }
+        output = [reflFileIdentifier.encode(), version, header_dict]
+
+        with open(fn, 'wb') as f:
+            f.write(msgpack.packb(output))
+
+
+def writeRefinementPhil(fn='refinement.phil', **kwargs):
+    template = ["refinement {",
+                "   parameterisation {",
+                "        beam {",
+                "            fix = all *in_spindle_plane out_spindle_plane *wavelength",
+                "            }",
+                "        crystal {",
+                "            fix = all cell orientation",
+                "            }",
+                "        detector {",
+                "            fix = all position orientation distance",
+                "            }",
+                "        goniometer {",
+                "            fix = *all in_beam_plane out_beam_plane",
+                "      }",
+                "   }",
+                "    reflections {",
+                "    outlier {",
+                "      algorithm = null *auto mcd tukey sauter_poon",
+                "    }",
+                "  }",
+                "}"]
+
+    with open(fn, 'w') as f:
+        f.write("\n".join(template))
+
+
+def copyJson(originalJson, fn='model.expt'):
+    try:
+        shutil.copy(originalJson, fn)
+    except shutil.SameFileError:
+        pass

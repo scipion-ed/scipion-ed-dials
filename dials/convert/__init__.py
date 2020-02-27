@@ -24,4 +24,4 @@
 # *
 # **************************************************************************
 
-from .input_output_utils import writeJson, readRefl, writeRefl
+from .input_output_utils import writeJson, readRefl, writeRefl, writeRefinementPhil, copyJson
