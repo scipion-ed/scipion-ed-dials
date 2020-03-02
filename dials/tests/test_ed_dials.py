@@ -34,7 +34,7 @@ import pwed
 from pwed.objects import DiffractionImage, SetOfDiffractionImages, DiffractionSpot, SetOfSpots, IndexedSpot, SetOfIndexedSpots
 from pwed.protocols import ProtImportDiffractionImages
 
-from dials.protocols import DialsProtFindSpots, DialsProtIndexSpots
+from dials.protocols import DialsProtImportDiffractionImages, DialsProtFindSpots, DialsProtIndexSpots
 from dials.convert import writeJson, readRefl, writeRefl
 
 
@@ -62,6 +62,15 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         self.launchProtocol(protImport)
         return protImport
 
+    def _runDialsImportImages(self, filesPattern, **kwargs):
+        protImport = self.newProtocol(
+            DialsProtImportDiffractionImages,
+            filesPath=os.path.join(self.dataPath),
+            filesPattern=filesPattern,
+            **kwargs)
+        self.launchProtocol(protImport)
+        return protImport
+
     def _runFindSpots(self, inputImages, **kwargs):
         protFindSpots = self.newProtocol(DialsProtFindSpots,
                                          inputImages=inputImages,
@@ -80,32 +89,35 @@ class TestEdDialsProtocols(pwtests.BaseTest):
     # Tests of protocols
     # TODO: Make tests independent of each other
     def test_find_spots(self):
-        protImport = self._runImportImages(
-            '{TS}/SMV/data/{TI}.img', skipImages=10)
+        protImport = self._runDialsImportImages(
+            '{TS}/SMV/data/{TI}.img', skipImages=10, rotationAxis='-0.6204,-0.7843,0')
         protFindSpots = self._runFindSpots(protImport.outputDiffractionImages)
         self.assertIsNotNone(protFindSpots.getOutputReflFile())
         outputset = getattr(protFindSpots, 'outputDiffractionSpots', None)
         self.assertIsNotNone(outputset)
         self.assertEqual(outputset.getSpots(), 626)
+        self.assertIsNotNone(outputset.getDialsModel())
+        self.assertIsNotNone(outputset.getDialsRefl())
         self.exampleSetOfSpots = outputset
         # TODO: Add confirmation step that SetOfSpots format and values are correct
 
     def test_index(self):
-        protImport = self._runImportImages(
-            '{TS}/SMV/data/{TI}.img', skipImages=10)
+        protImport = self._runDialsImportImages(
+            '{TS}/SMV/data/{TI}.img', skipImages=10, rotationAxis='-0.6204,-0.7843,0')
         protFindSpots = self._runFindSpots(protImport.outputDiffractionImages)
         protIndex = self._runIndex(
             inputImages=protImport.outputDiffractionImages,
             inputSpots=protFindSpots.outputDiffractionSpots,
-            inputStrongPath=os.path.join(
-                self.dataPath, 'manual-test'),
             doRefineBravaisSettings=False,
             doReindex=False,
             detectorFixPosition=True,
             detectorFixOrientation=False,
             detectorFixdistance=False,
         )
+        outputset = getattr(protIndex, 'outputIndexedSpots', None)
         self.assertIsNotNone(protIndex.outputIndexedSpots)
+        self.assertIsNotNone(outputset.getDialsModel())
+        self.assertIsNotNone(outputset.getDialsRefl())
 
     # Test of I/O utilities
     def test_writeJson(self):

@@ -93,7 +93,19 @@ class DialsFoundSpotsViewer(ProtocolViewer):
             self._getModel(), reflectionFile=self._getRefls()).show()
 
     def _getModel(self):
-        return self.protocol.getModelFile()
+        try:
+            return self.protocol.getModelFile()
+        except AttributeError:
+            try:
+                return self.protocol.getOutputModelFile()
+            except AttributeError:
+                return self.protocol.getInputModelFile()
 
     def _getRefls(self):
-        return self.protocol.getReflFile()
+        try:
+            return self.protocol.getReflFile()
+        except AttributeError:
+            try:
+                return self.protocol.getOutputReflFile()
+            except AttributeError:
+                return self.protocol.getInputReflFile()

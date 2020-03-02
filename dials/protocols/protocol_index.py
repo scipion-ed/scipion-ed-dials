@@ -36,7 +36,7 @@ import pyworkflow.protocol as pwprot
 from pwed.objects import DiffractionImage, SetOfDiffractionImages, DiffractionSpot, SetOfSpots, IndexedSpot, SetOfIndexedSpots
 from pwed.protocols import EdProtIndexSpots
 from pwed.convert import find_subranges
-from dials.convert import writeJson, readRefl, writeRefl, writeRefinementPhil, copyJson
+from dials.convert import writeJson, readRefl, writeRefl, writeRefinementPhil, copyInput
 
 
 class DialsProtIndexSpots(EdProtIndexSpots):
@@ -262,16 +262,32 @@ class DialsProtIndexSpots(EdProtIndexSpots):
     def convertInputStep(self, inputImgId, inputSpotId):
         inputImages = self.inputImages.get()
         inputSpots = self.inputSpots.get()
-        inputStrongPath = self.inputStrongPath.get()
         self.info("Number of images: %s" % inputImages.getSize())
         self.info("Number of spots: %s" % inputSpots.getSpots())
-        self.info("Input path: %s" % inputStrongPath)
-        # writeJson(inputImages, fn=self.getInputModelFile())
-        # FIXME: inputStrongPath is just a workaround. Replace with inputSpots
-        copyJson(os.path.join(inputStrongPath, 'imported.expt'),
-                 fn=self.getInputModelFile())
-        writeRefl(os.path.join(inputStrongPath, 'strong.refl'),
-                  fn=self.getInputReflFile())
+        # Make a model and reflections available
+        if self.getSetModel() is None:
+            try:
+                writeJson(inputImages, fn=self.getInputModelFile())
+            except:
+                inputStrongPath = self.inputStrongPath.get()
+                self.info("Using workaround")
+                self.info("Input path: %s" % inputStrongPath)
+                copyInput(os.path.join(inputStrongPath, 'imported.expt'),
+                          fn=self.getInputModelFile())
+        else:
+            copyInput(self.getSetModel(), fn=self.getInputModelFile())
+
+        if self.getSetRefl() is None:
+            try:
+                writeJson(inputImages, fn=self.getInputReflFile())
+            except:
+                inputStrongPath = self.inputStrongPath.get()
+                self.info("Using workaround")
+                self.info("Input path: %s" % inputStrongPath)
+                writeRefl(os.path.join(inputStrongPath, 'strong.refl'),
+                          fn=self.getInputReflFile())
+        else:
+            copyInput(self.getSetRefl(), fn=self.getInputReflFile())
 
     def indexStep(self):
         program = 'dials.index'
@@ -293,12 +309,10 @@ class DialsProtIndexSpots(EdProtIndexSpots):
 
     # TODO: Create a temporary "SetOfIndexedSpotsFile" that only saves the file location
     def createOutputStep(self):
-        try:
-            assert(os.path.exists(self.getOutputReflFile()))
-        except AssertionError:
-            self.info("Could not index. Did not create {}".format(
-                self.getOutputReflFile()))
-            return
+        # Check that the indexing created proper output
+        assert(os.path.exists(self.getOutputReflFile()))
+        assert(os.path.exists(self.getOutputModelFile()))
+
         reflectionData = readRefl(self.getOutputReflFile())
         outputSet = self._createSetOfIndexedSpots()
         iSpot = IndexedSpot()
@@ -306,6 +320,8 @@ class DialsProtIndexSpots(EdProtIndexSpots):
         reflDict = reflectionData[4]
 
         outputSet.setSpots(numberOfSpots)
+        outputSet.setDialsModel(self.getOutputModelFile())
+        outputSet.setDialsRefl(self.getOutputReflFile())
 
         for i in range(0, numberOfSpots):
             iSpot.setObjId(i+1)
@@ -336,27 +352,43 @@ class DialsProtIndexSpots(EdProtIndexSpots):
 
     # -------------------------- UTILS functions ------------------------------
     def getInputModelFile(self):
-        # basepath = "/mnt/e/Programming/scipion/Extra_files/tmp/Runs/DialsManIndexSpots"
-        # inputpath = os.path.join(basepath, 'extra', 'imported.expt')
-        # return inputpath
         return self._getExtraPath('imported.expt')
 
     def getInputReflFile(self):
-        # basepath = "/mnt/e/Programming/scipion/Extra_files/tmp/Runs/DialsManIndexSpots"
-        # inputpath = os.path.join(basepath, 'extra', 'strong.refl')
-        # return inputpath
         return self._getExtraPath('strong.refl')
 
     def getOutputModelFile(self):
         return self._getExtraPath('indexed.expt')
-        # return "/mnt/e/Programming/scipion/Extra_files/tmp/Runs/000198_DialsProtIndexSpots/extra/indexed.expt"
 
     def getOutputReflFile(self):
-        # return "/mnt/e/Programming/scipion/Extra_files/tmp/Runs/000198_DialsProtIndexSpots/extra/indexed.refl"
         return self._getExtraPath('indexed.refl')
 
     def getPhilPath(self):
         return self._getTmpPath('index.phil')
+
+    def existsPath(self, path):
+        return os.path.exists(path)
+
+    def getSetModel(self):
+        inputImages = self.inputImages.get()
+        inputSpots = self.inputSpots.get()
+        if self.existsPath(inputSpots.getDialsModel()):
+            return inputSpots.getDialsModel()
+        elif self.existsPath(inputImages.getDialsModel()):
+            return inputImages.getDialsModel()
+        else:
+            return None
+        return os.path.exists(path)
+
+    def getSetRefl(self):
+        inputImages = self.inputImages.get()
+        inputSpots = self.inputSpots.get()
+        if self.existsPath(inputSpots.getDialsRefl()):
+            return inputSpots.getDialsRefl()
+        elif self.existsPath(inputImages.getDialsRefl()):
+            return inputImages.getDialsRefl()
+        else:
+            return None
 
     def getChangeOfBasisOp(self):
         # TODO: extract change of basis op from result in refineBravaisStep

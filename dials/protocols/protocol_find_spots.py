@@ -35,7 +35,7 @@ import pyworkflow.protocol as pwprot
 from pwed.objects import DiffractionImage, SetOfDiffractionImages, DiffractionSpot, SetOfSpots
 from pwed.protocols import EdProtFindSpots
 from pwed.convert import find_subranges
-from dials.convert import writeJson, readRefl
+from dials.convert import writeJson, readRefl, copyInput
 
 
 class DialsProtFindSpots(EdProtFindSpots):
@@ -155,7 +155,14 @@ class DialsProtFindSpots(EdProtFindSpots):
     def convertInputStep(self, inputId):
         inputImages = self.inputImages.get()
         self.info("Number of images: %s" % inputImages.getSize())
-        writeJson(inputImages, fn=self.getModelFile())
+        try:
+            if os.path.exists(inputImages.getDialsModel()):
+                copyInput(inputImages.getDialsModel(),
+                          fn=self.getInputModelFile())
+            else:
+                writeJson(inputImages, fn=self.getInputModelFile())
+        except TypeError:
+            writeJson(inputImages, fn=self.getInputModelFile())
 
     def findSpotsStep(self):
         self.program = 'dials.find_spots'
@@ -170,6 +177,8 @@ class DialsProtFindSpots(EdProtFindSpots):
         reflDict = reflectionData[4]
 
         outputSet.setSpots(numberOfSpots)
+        outputSet.setDialsModel(self.getInputModelFile())
+        outputSet.setDialsRefl(self.getOutputReflFile())
 
         for i in range(0, numberOfSpots):
             dSpot.setObjId(i+1)
@@ -199,7 +208,7 @@ class DialsProtFindSpots(EdProtFindSpots):
         return errors
 
     # -------------------------- UTILS functions ------------------------------
-    def getModelFile(self):
+    def getInputModelFile(self):
         return self._getExtraPath('imported.expt')
 
     def getOutputReflFile(self):
@@ -210,7 +219,7 @@ class DialsProtFindSpots(EdProtFindSpots):
         # Input basic parameters
         logPath = "{}/{}.log".format(self._getLogsPath(), self.program)
         params = "{} output.log={} output.reflections={} {}".format(
-            self.getModelFile(), logPath, self.getOutputReflFile(), self._createScanRanges())
+            self.getInputModelFile(), logPath, self.getOutputReflFile(), self._createScanRanges())
 
         # Update the command line with additional parameters
         if self.dMin.get():

@@ -1,12 +1,15 @@
 """ Functions for writing required json files (*.expt) for use with DIALS. """
 
+import os
 import json
 import msgpack
 import numpy as np
 import shutil
 
 
-def writeJson(inputImages, fn='model.expt', idname="ExperimentList"):
+def writeJson(inputImages, fn='model.expt', idname="ExperimentList", overwriteModel=False):
+    if overwriteModel is False and os.path.exists(fn):
+        return
     imageList = [img.clone() for img in inputImages]
     firstimage = imageList[0]
     lastimage = imageList[-1]
@@ -314,8 +317,8 @@ def writeRefinementPhil(fn='refinement.phil', **kwargs):
         f.write("\n".join(template))
 
 
-def copyJson(originalJson, fn='model.expt'):
+def copyInput(originalInputFile, fn='copiedFile.txt'):
     try:
-        shutil.copy(originalJson, fn)
+        shutil.copy(originalInputFile, fn)
     except shutil.SameFileError:
         pass
