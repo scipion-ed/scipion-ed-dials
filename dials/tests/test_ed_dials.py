@@ -25,6 +25,7 @@
 # **************************************************************************
 
 import os
+import io
 import json
 
 import pyworkflow as pw
@@ -86,6 +87,35 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         self.launchProtocol(protIndex)
         return protIndex
 
+    # Helper functions
+    def assertSameModel(self, *args):
+        contentlist = []
+        for arg in args:
+            with io.open(arg) as a:
+                contentlist.append(list(a))
+        return self.assertListEqual(*contentlist)
+
+    def assertSameRefl(self, *args):
+        contentlist = []
+        for arg in args:
+            with io.open(arg, 'rb') as a:
+                contentlist.append(a)
+        return self.assertEqual(*contentlist)
+
+    def updateImagePath(self, modelPath):
+        with open(modelPath) as mf:
+            m = json.load(mf)
+            p = m['imageset'][0]['template']
+            m['imageset'][0]['template'] = p.replace(pwed.Config.SCIPION_ED_TESTDATA,
+                                                     "$SCIPION_ED_TESTDATA")
+        return m
+
+    def getReferenceFile(self, reffile=None):
+        if reffile != None:
+            reference = os.path.join(self.dataPath, 'manual-test', reffile)
+            self.updateImagePath(reference)
+            return reference
+
     # Tests of protocols
     # TODO: Make tests independent of each other
     def test_find_spots(self):
@@ -98,13 +128,21 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         self.assertEqual(outputset.getSpots(), 626)
         self.assertIsNotNone(outputset.getDialsModel())
         self.assertIsNotNone(outputset.getDialsRefl())
-        self.exampleSetOfSpots = outputset
         # TODO: Add confirmation step that SetOfSpots format and values are correct
 
     def test_index(self):
         protImport = self._runDialsImportImages(
             '{TS}/SMV/data/{TI}.img', skipImages=10, rotationAxis='-0.6204,-0.7843,0')
+        self.assertIsNotNone(protImport.getOutputModelFile())
+        importedset = getattr(protImport, 'outputDiffractionImages', None)
+        self.assertIsNotNone(importedset)
+        self.assertIsNotNone(importedset.getDialsModel())
         protFindSpots = self._runFindSpots(protImport.outputDiffractionImages)
+        foundspotset = getattr(protFindSpots, 'outputDiffractionSpots', None)
+        self.assertIsNotNone(foundspotset.getDialsRefl())
+        self.assertSameModel(importedset.getDialsModel(),
+                             foundspotset.getDialsModel(),
+                             self.getReferenceFile('imported.expt'))
         protIndex = self._runIndex(
             inputImages=protImport.outputDiffractionImages,
             inputSpots=protFindSpots.outputDiffractionSpots,
@@ -118,6 +156,8 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         self.assertIsNotNone(protIndex.outputIndexedSpots)
         self.assertIsNotNone(outputset.getDialsModel())
         self.assertIsNotNone(outputset.getDialsRefl())
+        self.assertSameModel(outputset.getDialsModel(),
+                             self.getReferenceFile('indexed.expt'))
 
     # Test of I/O utilities
     def test_writeJson(self):
@@ -131,13 +171,14 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         writeJson(inputImages, fn=modelPath)
         with open(template) as tf:
             t = json.load(tf)
-        with open(modelPath) as mf:
+        m = self.updateImagePath(modelPath)
+        """ with open(modelPath) as mf:
             m = json.load(mf)
 
         # Replace the path prefix to match with template value
         p = m['imageset'][0]['template']
         m['imageset'][0]['template'] = p.replace(pwed.Config.SCIPION_ED_TESTDATA,
-                                                 "$SCIPION_ED_TESTDATA")
+                                                 "$SCIPION_ED_TESTDATA") """
 
         self.assertEqual(type(t), type(m))
         if type(t) == dict:
