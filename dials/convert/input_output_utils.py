@@ -317,8 +317,8 @@ def writeRefinementPhil(fn='refinement.phil', **kwargs):
         f.write("\n".join(template))
 
 
-def copyInput(originalInputFile, fn='copiedFile.txt'):
+def copyDialsFile(originalDialsFile, fn=None):
     try:
-        shutil.copy(originalInputFile, fn)
+        shutil.copy(originalDialsFile, fn)
     except shutil.SameFileError:
         pass

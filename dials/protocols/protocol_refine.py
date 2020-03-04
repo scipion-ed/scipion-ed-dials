@@ -36,7 +36,7 @@ import pyworkflow.protocol as pwprot
 from pwed.objects import RefinedSpot, SetOfRefinedSpots, RefinedSpot, SetOfRefinedSpots
 from pwed.protocols import EdProtRefineSpots
 from pwed.convert import find_subranges
-from dials.convert import writeJson, readRefl, writeRefl, writeRefinementPhil, copyInput
+from dials.convert import writeJson, readRefl, writeRefl, writeRefinementPhil, copyDialsFile
 
 
 class DialsProtRefineSpots(EdProtRefineSpots):

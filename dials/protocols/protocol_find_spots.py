@@ -35,7 +35,7 @@ import pyworkflow.protocol as pwprot
 from pwed.objects import DiffractionImage, SetOfDiffractionImages, DiffractionSpot, SetOfSpots
 from pwed.protocols import EdProtFindSpots
 from pwed.convert import find_subranges
-from dials.convert import writeJson, readRefl, copyInput
+from dials.convert import writeJson, readRefl, copyDialsFile
 
 
 class DialsProtFindSpots(EdProtFindSpots):
@@ -158,8 +158,8 @@ class DialsProtFindSpots(EdProtFindSpots):
         fileName = self.getInputModelFile()
         try:
             if os.path.exists(inputImages.getDialsModel()):
-                copyInput(inputImages.getDialsModel(),
-                          fn=fileName)
+                copyDialsFile(inputImages.getDialsModel(),
+                              fn=fileName)
             else:
                 self.info("Writing new input model file {}".format(fileName))
                 writeJson(inputImages, fn=fileName)
