@@ -26,8 +26,7 @@
 
 import pyworkflow.protocol.params as params
 from pyworkflow.viewer import CommandView, ProtocolViewer, DESKTOP_TKINTER
-from pwed.objects import SetOfDiffractionImages, SetOfSpots, SetOfIndexedSpots
-from ..protocols import DialsProtFindSpots, DialsProtIndexSpots, DialsProtImportDiffractionImages
+from ..protocols import DialsProtImportDiffractionImages, DialsProtFindSpots, DialsProtIndexSpots, DialsProtRefineSpots, DialsProtIntegrateSpots
 
 # Base on https://github.com/scipion-em/scipion-em-bsoft/blob/devel/bsoft/viewers/bsoft_viewers.py
 # ProtocolView in Gautomat
@@ -58,8 +57,8 @@ class DialsFoundSpotsViewer(ProtocolViewer):
     ''' Vizualisation of Dials imported images and results from spotfinding and indexing '''
 
     _environments = [DESKTOP_TKINTER]
-    _targets = [DialsProtFindSpots, DialsProtIndexSpots,
-                DialsProtImportDiffractionImages]
+    _targets = [DialsProtImportDiffractionImages, DialsProtFindSpots, DialsProtIndexSpots,
+                DialsProtRefineSpots, DialsProtIntegrateSpots]
 
     def _defineParams(self, form):
         form.addSection(label='Pick viewer')
