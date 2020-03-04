@@ -30,13 +30,14 @@ import os
 import re
 from glob import glob
 from pathlib import Path
+import json
 
 import pyworkflow.protocol as pwprot
 
 from pwed.objects import DiffractionImage, SetOfDiffractionImages, DiffractionSpot, SetOfSpots, IndexedSpot, SetOfIndexedSpots
 from pwed.protocols import EdProtIndexSpots
 from pwed.convert import find_subranges
-from dials.convert import writeJson, readRefl, writeRefl, writeRefinementPhil, copyInput
+from dials.convert import writeJson, readRefl, writeRefl, writeRefinementPhil, copyDialsFile
 
 
 class DialsProtIndexSpots(EdProtIndexSpots):
@@ -285,6 +286,8 @@ class DialsProtIndexSpots(EdProtIndexSpots):
             self.runJob(program, arguments)
         except:
             self.info(self.getError())
+            return
+        assert(self.getBravaisSummary() is not None)
 
     def reindexStep(self):
         program = 'dials.reindex'
@@ -296,9 +299,29 @@ class DialsProtIndexSpots(EdProtIndexSpots):
 
     # TODO: Create a temporary "SetOfIndexedSpotsFile" that only saves the file location
     def createOutputStep(self):
-        # Check that the indexing created proper output
-        assert(os.path.exists(self.getOutputReflFile()))
-        assert(os.path.exists(self.getOutputModelFile()))
+        # Find the most processed model file and reflection file and copy to output
+        if self.existsPath(self.getReindexedModelFile()):
+            copyDialsFile(self.getReindexedModelFile(),
+                          self.getOutputModelFile())
+        elif self.existsPath(self.getBravaisModelFile(self.getBravaisId())):
+            copyDialsFile(self.getBravaisModelFile(self.getBravaisId()),
+                          self.getOutputModelFile())
+        elif self.existsPath(self.getIndexedModelFile()):
+            copyDialsFile(self.getIndexedModelFile(),
+                          self.getOutputModelFile())
+
+        if self.existsPath(self.getReindexedReflFile()):
+            copyDialsFile(self.getReindexedReflFile(),
+                          self.getOutputReflFile())
+        elif self.existsPath(self.getIndexedReflFile()):
+            copyDialsFile(self.getIndexedReflFile(),
+                          self.getOutputReflFile())
+
+            # Check that the indexing created proper output
+        assert(self.existsPath(self.getOutputReflFile()))
+        assert(self.existsPath(self.getOutputModelFile()))
+
+        # TODO: Add Diffraction images as well
 
         reflectionData = readRefl(self.getOutputReflFile())
         outputSet = self._createSetOfIndexedSpots()
@@ -350,11 +373,63 @@ class DialsProtIndexSpots(EdProtIndexSpots):
         else:
             return self._getExtraPath('strong.refl')
 
+    def getIndexedModelFile(self):
+        return self._getTmpPath('indexed.expt')
+
+    def getIndexedReflFile(self):
+        return self._getTmpPath('indexed.refl')
+
+    def getBravaisPath(self, fn=None):
+        if fn is None:
+            return self._getExtraPath()
+        else:
+            return self._getExtraPath(fn)
+
+    def getBravaisId(self):
+        # FIXME: sortlist is NoneType
+        summary = self.getBravaisSummary()
+        if summary is None:
+            return None
+        else:
+            keys = summary.keys()
+            keylist = list(keys)
+            sortlist = keylist.sort(key=float, reverse=True)
+            return sortlist[0]
+
+    def getBravaisModelFile(self, fileId):
+        fn = "bravais_setting_{}.expt".format(fileId)
+        return self.getBravaisPath(fn)
+
+    def getChangeOfBasisOp(self, fileId):
+        # TODO: extract change of basis op from result in refineBravaisStep
+        summary = self.getBravaisSummary()
+        if summary is None:
+            change_of_basis_op = 'a,b,c'
+        else:
+            cbop = summary[self.getBravaisId()]["cb_op"]
+            change_of_basis_op = cbop
+        return change_of_basis_op
+
+    def getBravaisSummary(self):
+        fn = self.getBravaisPath('bravais_summary.json')
+        if self.existsPath(fn):
+            with open(fn) as f:
+                summary = json.load(f)
+            return summary
+        else:
+            return None
+
+    def getReindexedModelFile(self):
+        return self._getTmpPath('reindexed.expt')
+
+    def getReindexedReflFile(self):
+        return self._getTmpPath('reindexed.refl')
+
     def getOutputModelFile(self):
-        return self._getExtraPath('indexed_model.expt')
+        return self._getExtraPath('indexed.expt')
 
     def getOutputReflFile(self):
-        return self._getExtraPath('indexed_reflections.refl')
+        return self._getExtraPath('indexed.refl')
 
     def getPhilPath(self):
         return self._getTmpPath('index.phil')
@@ -382,11 +457,6 @@ class DialsProtIndexSpots(EdProtIndexSpots):
         else:
             return None
 
-    def getChangeOfBasisOp(self):
-        # TODO: extract change of basis op from result in refineBravaisStep
-        change_of_basis_op = 'a,b,c'
-        return change_of_basis_op
-
     def _checkWriteModel(self):
         return self.getSetModel() != self.getInputModelFile()
 
@@ -402,8 +472,8 @@ class DialsProtIndexSpots(EdProtIndexSpots):
             self.getInputModelFile(),
             self.getInputReflFile(),
             logPath,
-            self.getOutputModelFile(),
-            self.getOutputReflFile(),
+            self.getIndexedModelFile(),
+            self.getIndexedReflFile(),
         )
 
         # Update the command line with additional parameters
@@ -492,8 +562,8 @@ class DialsProtIndexSpots(EdProtIndexSpots):
         "Create the command line input to run dials programs"
         # Input basic parameters
         logPath = "{}/{}.log".format(self._getLogsPath(), program)
-        params = "{} {} output.log={}".format(
-            self.getOutputModelFile(), self.getOutputReflFile(), logPath)
+        params = "{} {} output.log={} output.directory={}".format(
+            self.getIndexedModelFile(), self.getIndexedReflFile(), logPath, self.getBravaisPath())
 
         # Update the command line with additional parameters
 
@@ -508,15 +578,16 @@ class DialsProtIndexSpots(EdProtIndexSpots):
     def _prepReindexCommandline(self, program):
         "Create the command line input to run dials programs"
         # Input basic parameters
-        logPath = "{}/{}.log".format(self._getLogsPath(), program)
         params = "change_of_basis_op={}".format(
-            self.getChangeOfBasisOp(), logPath)
+            self.getChangeOfBasisOp(self.getBravaisId()))
 
         if self.doReindexModel.get():
-            params += " {}".format(self.getOutputModelFile())
+            params += " {} output.experiments={}".format(
+                self.getIndexedModelFile(), self.getReindexedModelFile())
 
         if self.doReindexReflections.get():
-            params += " {}".format(self.getOutputReflFile())
+            params += " {} output.reflections={}".format(
+                self.getIndexedReflFile(), self.getReindexedReflFile())
 
         if self.commandLineInputReindexing.get():
             params += " {}".format(self.commandLineInputReindexing.get())
