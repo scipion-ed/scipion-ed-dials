@@ -377,7 +377,7 @@ class DialsProtImportDiffractionImages(EdBaseProtocol):
             logPath, self.getOutputModelFile())
 
         if type(self.getRotationAxis()) is str:
-            cmdparams = " goniometer.axes={}".format(self.getRotationAxis())
+            cmdparams += " goniometer.axes={}".format(self.getRotationAxis())
 
         if self.commandLineInput.get():
             cmdparams += " {}".format(self.commandLineInput.get())
