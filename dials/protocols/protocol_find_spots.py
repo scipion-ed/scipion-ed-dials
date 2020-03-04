@@ -155,14 +155,18 @@ class DialsProtFindSpots(EdProtFindSpots):
     def convertInputStep(self, inputId):
         inputImages = self.inputImages.get()
         self.info("Number of images: %s" % inputImages.getSize())
+        fileName = self.getInputModelFile()
         try:
             if os.path.exists(inputImages.getDialsModel()):
                 copyInput(inputImages.getDialsModel(),
-                          fn=self.getInputModelFile())
+                          fn=fileName)
             else:
-                writeJson(inputImages, fn=self.getInputModelFile())
-        except TypeError:
-            writeJson(inputImages, fn=self.getInputModelFile())
+                self.info("Writing new input model file {}".format(fileName))
+                writeJson(inputImages, fn=fileName)
+        except TypeError as e:
+            self.info(e)
+            self.info("Writing new input model file {}".format(fileName))
+            writeJson(inputImages, fn=fileName)
 
     def findSpotsStep(self):
         self.program = 'dials.find_spots'
