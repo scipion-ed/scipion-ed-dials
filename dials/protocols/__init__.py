@@ -27,3 +27,5 @@
 from .protocol_dials_import import DialsProtImportDiffractionImages
 from .protocol_find_spots import DialsProtFindSpots
 from .protocol_index import DialsProtIndexSpots
+from .protocol_refine import DialsProtRefineSpots
+from .protocol_integrate import DialsProtIntegrateSpots
