@@ -498,7 +498,7 @@ class DialsProtIndexSpots(EdProtIndexSpots):
         # Input basic parameters
         logPath = "{}/{}.log".format(self._getLogsPath(), program)
         params = "{} {} output.log={}".format(
-            self.getInputModelFile(), self.getReflFile(), logPath)
+            self.getOutputModelFile(), self.getOutputReflFile(), logPath)
 
         # Update the command line with additional parameters
 
@@ -514,17 +514,17 @@ class DialsProtIndexSpots(EdProtIndexSpots):
         "Create the command line input to run dials programs"
         # Input basic parameters
         logPath = "{}/{}.log".format(self._getLogsPath(), program)
-        params = "change_of_basis_op={} output.log={}".format(
+        params = "change_of_basis_op={}".format(
             self.getChangeOfBasisOp(), logPath)
 
         if self.doReindexModel.get():
-            params += " {}".format(self.getInputModelFile())
+            params += " {}".format(self.getOutputModelFile())
 
         if self.doReindexReflections.get():
-            params += " {}".format(self.getReflFile())
+            params += " {}".format(self.getOutputReflFile())
 
-        if self.commandLineInputRendexing.get():
-            params += " {}".format(self.commandLineInputRendexing.get())
+        if self.commandLineInputReindexing.get():
+            params += " {}".format(self.commandLineInputReindexing.get())
 
         return params
 
