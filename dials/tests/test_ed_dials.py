@@ -34,10 +34,10 @@ import pyworkflow as pw
 import pyworkflow.tests as pwtests
 
 import pwed
-from pwed.objects import DiffractionImage, SetOfDiffractionImages, DiffractionSpot, SetOfSpots, IndexedSpot, SetOfIndexedSpots
+from pwed.objects import DiffractionImage, SetOfDiffractionImages, DiffractionSpot, SetOfSpots, IndexedSpot, SetOfIndexedSpots, RefinedSpot, SetOfRefinedSpots, IntegratedSpot, SetOfIntegratedSpots
 from pwed.protocols import ProtImportDiffractionImages
 
-from dials.protocols import DialsProtImportDiffractionImages, DialsProtFindSpots, DialsProtIndexSpots
+from dials.protocols import DialsProtImportDiffractionImages, DialsProtFindSpots, DialsProtIndexSpots, DialsProtRefineSpots, DialsProtIntegrateSpots
 from dials.convert import writeJson, readRefl, writeRefl
 
 
@@ -89,6 +89,20 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         self.launchProtocol(protIndex)
         return protIndex
 
+    def _runRefine(self, inputSet, **kwargs):
+        protRefine = self.newProtocol(DialsProtRefineSpots,
+                                      inputSet=inputSet,
+                                      **kwargs)
+        self.launchProtocol(protRefine)
+        return protRefine
+
+    def _runIntegrate(self, inputSet, **kwargs):
+        protIntegrate = self.newProtocol(DialsProtIntegrateSpots,
+                                         inputSet=inputSet,
+                                         **kwargs)
+        self.launchProtocol(protIntegrate)
+        return protIntegrate
+
     # Helper functions
     def assertSameModel(self, model1, model2):
         with io.open(model1) as m1:
@@ -138,7 +152,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                                 self.getReferenceFile('strong.refl'))
         # TODO: Add confirmation step that SetOfSpots format and values are correct
 
-    def test_index(self):
+    def test_all(self):
         # Run import
         protImport = self._runDialsImportImages(
             '{TS}/SMV/data/{TI}.img', skipImages=10, rotationAxis='-0.6204,-0.7843,0')
@@ -174,16 +188,16 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 detectorFixOrientation=False,
                 detectorFixdistance=False,
             )
-            outputset = getattr(protIndex, 'outputIndexedSpots', None)
+            indexedset = getattr(protIndex, 'outputIndexedSpots', None)
             self.assertIsNotNone(protIndex.outputIndexedSpots)
-            self.assertIsNotNone(outputset.getDialsModel())
-            self.assertIsNotNone(outputset.getDialsRefl())
+            self.assertIsNotNone(indexedset.getDialsModel())
+            self.assertIsNotNone(indexedset.getDialsRefl())
             with self.subTest(msg="Testing model in SetOfIndexedSpots"):
-                self.assertSameModel(outputset.getDialsModel(),
+                self.assertSameModel(indexedset.getDialsModel(),
                                      self.getReferenceFile('indexed.expt'))
             with self.subTest(msg="Testing reflections in SetOfIndexedSpots"):
                 self.skipTest("Need to fix errors from paths")
-                self.assertSameRefl(outputset.getDialsRefl(),
+                self.assertSameRefl(indexedset.getDialsRefl(),
                                     self.getReferenceFile('indexed.refl'))
 
         with self.subTest(msg="Refine Bravais settings but do not reindex"):
@@ -196,16 +210,16 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 detectorFixOrientation=False,
                 detectorFixdistance=False,
             )
-            outputset = getattr(protIndex, 'outputIndexedSpots', None)
+            indexedset = getattr(protIndex, 'outputIndexedSpots', None)
             self.assertIsNotNone(protIndex.outputIndexedSpots)
-            self.assertIsNotNone(outputset.getDialsModel())
-            self.assertIsNotNone(outputset.getDialsRefl())
+            self.assertIsNotNone(indexedset.getDialsModel())
+            self.assertIsNotNone(indexedset.getDialsRefl())
             with self.subTest(msg="Testing model in SetOfIndexedSpots"):
-                self.assertSameModel(outputset.getDialsModel(),
+                self.assertSameModel(indexedset.getDialsModel(),
                                      self.getReferenceFile('indexed.expt'))
             with self.subTest(msg="Testing reflections in SetOfIndexedSpots"):
                 self.skipTest("Need to fix errors from paths")
-                self.assertSameRefl(outputset.getDialsRefl(),
+                self.assertSameRefl(indexedset.getDialsRefl(),
                                     self.getReferenceFile('indexed.refl'))
 
         with self.subTest(msg="Refine Bravais settings and reindex"):
@@ -219,17 +233,76 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 detectorFixOrientation=False,
                 detectorFixdistance=False,
             )
-            outputset = getattr(protIndex, 'outputIndexedSpots', None)
+            indexedset = getattr(protIndex, 'outputIndexedSpots', None)
             self.assertIsNotNone(protIndex.outputIndexedSpots)
-            self.assertIsNotNone(outputset.getDialsModel())
-            self.assertIsNotNone(outputset.getDialsRefl())
+            self.assertIsNotNone(indexedset.getDialsModel())
+            self.assertIsNotNone(indexedset.getDialsRefl())
             with self.subTest(msg="Testing model in SetOfIndexedSpots"):
-                self.assertSameModel(outputset.getDialsModel(),
-                                     self.getReferenceFile('indexed.expt'))
+                self.assertSameModel(indexedset.getDialsModel(),
+                                     self.getReferenceFile('bravais_setting_12.expt'))
             with self.subTest(msg="Testing reflections in SetOfIndexedSpots"):
                 self.skipTest("Need to fix errors from paths")
-                self.assertSameRefl(outputset.getDialsRefl(),
-                                    self.getReferenceFile('indexed.refl'))
+                self.assertSameRefl(indexedset.getDialsRefl(),
+                                    self.getReferenceFile('reindexed.refl'))
+
+        # Run refinement
+        protRefine = self._runRefine(
+            inputSet=protIndex.outputIndexedSpots,
+            scanVarying=False,
+        )
+        refinedset = getattr(protRefine, 'outputRefinedSpots', None)
+        self.assertIsNotNone(protRefine.outputRefinedSpots)
+        self.assertIsNotNone(refinedset.getDialsModel())
+        self.assertIsNotNone(refinedset.getDialsRefl())
+        with self.subTest(msg="Testing model in SetOfRefinedSpots"):
+            self.assertSameModel(refinedset.getDialsModel(),
+                                 self.getReferenceFile('refined.expt'))
+        with self.subTest(msg="Testing reflections in SetOfRefinedSpots"):
+            self.skipTest("Need to fix errors from paths")
+            self.assertSameRefl(refinedset.getDialsRefl(),
+                                self.getReferenceFile('refined.refl'))
+
+        # Run scan-varying refinement
+        protSvRefine = self._runRefine(
+            inputSet=protRefine.outputRefinedSpots,
+            scanVarying=True,
+            beamFixAll=False,
+            beamFixInSpindlePlane=False,
+            beamFixOutSpindlePlane=False,
+            beamFixWavelength=True,
+            beamForceStatic=False,
+            crystalFix=None,
+            detectorFixAll=True,
+            goniometerFix=None
+        )
+        svrefinedset = getattr(protSvRefine, 'outputRefinedSpots', None)
+        self.assertIsNotNone(protSvRefine.outputRefinedSpots)
+        self.assertIsNotNone(svrefinedset.getDialsModel())
+        self.assertIsNotNone(svrefinedset.getDialsRefl())
+        with self.subTest(msg="Testing scan-varying model in SetOfRefinedSpots"):
+            self.assertSameModel(svrefinedset.getDialsModel(),
+                                 self.getReferenceFile('sv_refined.expt'))
+        with self.subTest(msg="Testing scan-varying reflections in SetOfRefinedSpots"):
+            self.skipTest("Need to fix errors from paths")
+            self.assertSameRefl(svrefinedset.getDialsRefl(),
+                                self.getReferenceFile('sv_refined.refl'))
+
+        # Run integration
+        protIntegrate = self._runIntegrate(
+            inputSet=protSvRefine.outputRefinedSpots,
+            nproc=8,
+        )
+        integratedset = getattr(protIntegrate, 'outputIntegratedSpots', None)
+        self.assertIsNotNone(protIntegrate.outputIntegratedSpots)
+        self.assertIsNotNone(integratedset.getDialsModel())
+        self.assertIsNotNone(integratedset.getDialsRefl())
+        with self.subTest(msg="Testing model in SetOfIntegratedSpots"):
+            self.assertSameModel(integratedset.getDialsModel(),
+                                 self.getReferenceFile('integrated.expt'))
+        with self.subTest(msg="Testing reflections in SetOfIntegratedSpots"):
+            self.skipTest("Need to fix errors from paths")
+            self.assertSameRefl(integratedset.getDialsRefl(),
+                                self.getReferenceFile('integrated.refl'))
 
       # Test of I/O utilities
     def test_writeJson(self):
