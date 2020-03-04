@@ -264,30 +264,11 @@ class DialsProtIndexSpots(EdProtIndexSpots):
         inputSpots = self.inputSpots.get()
         self.info("Number of images: %s" % inputImages.getSize())
         self.info("Number of spots: %s" % inputSpots.getSpots())
-        # Make a model and reflections available
-        if self.getSetModel() is None:
-            try:
-                writeJson(inputImages, fn=self.getInputModelFile())
-            except:
-                inputStrongPath = self.inputStrongPath.get()
-                self.info("Using workaround")
-                self.info("Input path: %s" % inputStrongPath)
-                copyInput(os.path.join(inputStrongPath, 'imported.expt'),
-                          fn=self.getInputModelFile())
-        else:
-            copyInput(self.getSetModel(), fn=self.getInputModelFile())
-
-        if self.getSetRefl() is None:
-            try:
-                writeJson(inputImages, fn=self.getInputReflFile())
-            except:
-                inputStrongPath = self.inputStrongPath.get()
-                self.info("Using workaround")
-                self.info("Input path: %s" % inputStrongPath)
-                writeRefl(os.path.join(inputStrongPath, 'strong.refl'),
-                          fn=self.getInputReflFile())
-        else:
-            copyInput(self.getSetRefl(), fn=self.getInputReflFile())
+        # Write new model and/or reflection file if no was supplied from set
+        if self._checkWriteModel():
+            self.writeJson(inputImages, self.getInputModelFile())
+        if self._checkWriteRefl():
+            self.writeRefl(inputSpots, self.getInputReflFile())
 
     def indexStep(self):
         program = 'dials.index'
@@ -300,12 +281,18 @@ class DialsProtIndexSpots(EdProtIndexSpots):
     def refineBravaisStep(self):
         program = 'dials.refine_bravais_settings'
         arguments = self._prepBravaisCommandline(program)
-        self.runJob(program, arguments)
+        try:
+            self.runJob(program, arguments)
+        except:
+            self.info(self.getError())
 
     def reindexStep(self):
         program = 'dials.reindex'
         arguments = self._prepReindexCommandline(program)
-        self.runJob(program, arguments)
+        try:
+            self.runJob(program, arguments)
+        except:
+            self.info(self.getError())
 
     # TODO: Create a temporary "SetOfIndexedSpotsFile" that only saves the file location
     def createOutputStep(self):
@@ -352,16 +339,22 @@ class DialsProtIndexSpots(EdProtIndexSpots):
 
     # -------------------------- UTILS functions ------------------------------
     def getInputModelFile(self):
-        return self._getExtraPath('imported.expt')
+        if self.getSetModel():
+            return self.getSetModel()
+        else:
+            return self._getExtraPath('imported.expt')
 
     def getInputReflFile(self):
-        return self._getExtraPath('strong.refl')
+        if self.getSetRefl():
+            return self.getSetRefl()
+        else:
+            return self._getExtraPath('strong.refl')
 
     def getOutputModelFile(self):
-        return self._getExtraPath('indexed.expt')
+        return self._getExtraPath('indexed_model.expt')
 
     def getOutputReflFile(self):
-        return self._getExtraPath('indexed.refl')
+        return self._getExtraPath('indexed_reflections.refl')
 
     def getPhilPath(self):
         return self._getTmpPath('index.phil')
@@ -378,7 +371,6 @@ class DialsProtIndexSpots(EdProtIndexSpots):
             return inputImages.getDialsModel()
         else:
             return None
-        return os.path.exists(path)
 
     def getSetRefl(self):
         inputImages = self.inputImages.get()
@@ -394,6 +386,12 @@ class DialsProtIndexSpots(EdProtIndexSpots):
         # TODO: extract change of basis op from result in refineBravaisStep
         change_of_basis_op = 'a,b,c'
         return change_of_basis_op
+
+    def _checkWriteModel(self):
+        return self.getSetModel() != self.getInputModelFile()
+
+    def _checkWriteRefl(self):
+        return self.getSetRefl() != self.getInputReflFile()
 
     def _prepIndexCommandline(self, program):
         "Create the command line input to run dials programs"
@@ -480,9 +478,6 @@ class DialsProtIndexSpots(EdProtIndexSpots):
 
         if self.detectorFixdistance.get() not in (None, False):
             params += " refinement.parameterisation.detector.fix=distance"
-
-        """ writeRefinementPhil(fn=self.getPhilPath())
-        params += " {}".format(self.getPhilPath()) """
 
         if self.refineryMaxIterations.get() is not None:
             params += " refinery.max_iterations={}".format(
