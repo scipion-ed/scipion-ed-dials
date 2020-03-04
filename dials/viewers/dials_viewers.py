@@ -26,8 +26,8 @@
 
 import pyworkflow.protocol.params as params
 from pyworkflow.viewer import CommandView, ProtocolViewer, DESKTOP_TKINTER
-from pwed.objects import SetOfDiffractionImages, SetOfSpots
-from ..protocols import DialsProtFindSpots
+from pwed.objects import SetOfDiffractionImages, SetOfSpots, SetOfIndexedSpots
+from ..protocols import DialsProtFindSpots, DialsProtIndexSpots, DialsProtImportDiffractionImages
 
 # Base on https://github.com/scipion-em/scipion-em-bsoft/blob/devel/bsoft/viewers/bsoft_viewers.py
 # ProtocolView in Gautomat
@@ -55,10 +55,11 @@ RECIPROCAL_VIEWER = 1
 
 
 class DialsFoundSpotsViewer(ProtocolViewer):
-    ''' Vizualisation of Dials spotfinding results '''
+    ''' Vizualisation of Dials imported images and results from spotfinding and indexing '''
 
     _environments = [DESKTOP_TKINTER]
-    _targets = [DialsProtFindSpots]
+    _targets = [DialsProtFindSpots, DialsProtIndexSpots,
+                DialsProtImportDiffractionImages]
 
     def _defineParams(self, form):
         form.addSection(label='Pick viewer')
@@ -66,7 +67,7 @@ class DialsFoundSpotsViewer(ProtocolViewer):
         form.addParam('viewSelection', params.EnumParam, choices=['image viewer', 'reciprocal lattice viewer'],
                       default=IMAGE_VIEWER, label='Display data with', display=params.EnumParam.DISPLAY_HLIST,
                       help='*image viewer*: Display the images used in spotfinding. Option to show the found spots on the images\n'
-                      '*reciprocal viewer*: View the found spots in reciprocal space.')
+                      '*reciprocal viewer*: View the found spots in reciprocal space. Does not work if the protocol is importing diffraction images.')
 
         form.addParam('viewSpotsOnImage', params.BooleanParam,
                       default=True, label='View the found spots on the images?', condition='viewSelection==%d' % IMAGE_VIEWER)
@@ -105,7 +106,13 @@ class DialsFoundSpotsViewer(ProtocolViewer):
         try:
             return self.protocol.getReflFile()
         except AttributeError:
-            try:
-                return self.protocol.getOutputReflFile()
-            except AttributeError:
-                return self.protocol.getInputReflFile()
+            pass
+        try:
+            return self.protocol.getOutputReflFile()
+        except AttributeError:
+            pass
+        try:
+            return self.protocol.getInputReflFile()
+        except AttributeError:
+            pass
+        return None
