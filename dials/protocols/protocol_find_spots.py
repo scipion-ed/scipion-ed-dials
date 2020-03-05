@@ -248,6 +248,7 @@ class DialsProtFindSpots(EdProtFindSpots):
             params += " spotfinder.filter.max_strong_pixel_fraction={}".format(
                 self.maxStrongPixelFraction.get())
 
+        # FIXME: Untrusted rectangle probably has syntax error
         if self.untrustedAreas.get():
             params += " spotfinder.filter.untrusted.circle={}".format(
                 self.untrustedCircle.get())

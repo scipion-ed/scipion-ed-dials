@@ -113,33 +113,38 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots):
         assert(os.path.exists(self.getOutputReflFile()))
         assert(os.path.exists(self.getOutputModelFile()))
 
-        reflectionData = readRefl(self.getOutputReflFile())
         outputSet = self._createSetOfIntegratedSpots()
-        iSpot = IntegratedSpot()
-        numberOfSpots = reflectionData[2]
-        reflDict = reflectionData[4]
-
-        outputSet.setSpots(numberOfSpots)
         outputSet.setDialsModel(self.getOutputModelFile())
         outputSet.setDialsRefl(self.getOutputReflFile())
 
-        for i in range(0, numberOfSpots):
-            iSpot.setObjId(i+1)
-            iSpot.setSpotId(reflDict['id'][i])
-            iSpot.setBbox(reflDict['bbox'][i])
-            iSpot.setFlag(reflDict['flags'][i])
-            iSpot.setIntensitySumValue(reflDict['intensity.sum.value'][i])
-            iSpot.setIntensitySumVariance(
-                reflDict['intensity.sum.variance'][i])
-            iSpot.setNSignal(reflDict['n_signal'][i])
-            iSpot.setPanel(reflDict['panel'][i])
-            try:
-                iSpot.setShoebox(reflDict['shoebox'][i])
-            except IndexError:
-                pass
-            iSpot.setXyzobsPxValue(reflDict['xyzobs.px.value'][i])
-            iSpot.setXyzobsPxVariance(reflDict['xyzobs.px.variance'][i])
-            outputSet.append(iSpot)
+        try:
+            reflectionData = readRefl(self.getOutputReflFile())
+            iSpot = IntegratedSpot()
+            numberOfSpots = reflectionData[2]
+            reflDict = reflectionData[4]
+
+            outputSet.setSpots(numberOfSpots)
+
+            for i in range(0, numberOfSpots):
+                iSpot.setObjId(i+1)
+                iSpot.setSpotId(reflDict['id'][i])
+                iSpot.setBbox(reflDict['bbox'][i])
+                iSpot.setFlag(reflDict['flags'][i])
+                iSpot.setIntensitySumValue(reflDict['intensity.sum.value'][i])
+                iSpot.setIntensitySumVariance(
+                    reflDict['intensity.sum.variance'][i])
+                iSpot.setNSignal(reflDict['n_signal'][i])
+                iSpot.setPanel(reflDict['panel'][i])
+                try:
+                    iSpot.setShoebox(reflDict['shoebox'][i])
+                except IndexError:
+                    pass
+                iSpot.setXyzobsPxValue(reflDict['xyzobs.px.value'][i])
+                iSpot.setXyzobsPxVariance(reflDict['xyzobs.px.variance'][i])
+                outputSet.append(iSpot)
+        except Exception as e:
+            self.info(
+                "createOutputStep created an exception with the message {}".format(e))
 
         outputSet.write()
 
@@ -229,12 +234,3 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots):
             params += " {}".format(self.commandLineInput.get())
 
         return params
-
-    def _createScanRanges(self):
-        # Go through the
-        images = [image.getObjId() for image in self.inputSet.get()
-                  if image.getIgnore() is not True]
-        scanranges = find_subranges(images)
-        scanrange = ' '.join('spotfinder.scan_range={},{}'.format(i, j)
-                             for i, j in scanranges)
-        return scanrange

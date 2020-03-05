@@ -65,66 +65,12 @@ class DialsProtRefineSpots(EdProtRefineSpots):
 
         # Help messages are copied from the DIALS documentation at
         # https://dials.github.io/documentation/programs/dials_index.html
-        form.addParam('indexNproc', pwprot.IntParam,
+        form.addParam('Nproc', pwprot.IntParam,
                       label="How many processors do you want to use?",
-                      default=1,
-                      help="The number of processes to use.")
-
-        form.addParam('enterSpaceGroup', pwprot.BooleanParam,
-                      default=False, label='Use a known space group?')
-
-        form.addParam('knownSpaceGroup', pwprot.StringParam,
-                      condition='enterSpaceGroup', default='', label='Space group:')
-
-        form.addParam('enterUnitCell', pwprot.BooleanParam,
-                      default=False, label='Use a known unit cell?')
-
-        form.addParam('knownUnitCell', pwprot.StringParam,
-                      condition='enterUnitCell', default='', label='Unit cell:')
-
-        form.addParam('indexMmSearchScope', pwprot.FloatParam, default=4.0,
-                      help="Global radius of origin offset search.",
-                      label='mm search scope',
-                      expertLevel=pwprot.LEVEL_ADVANCED)
-
-        form.addParam('indexWideSearchBinning', pwprot.FloatParam, default=2,
-                      help="Modify the coarseness of the wide grid search for the beam centre.",
-                      label='Wide search binning',
-                      expertLevel=pwprot.LEVEL_ADVANCED)
-
-        form.addParam('indexMinCellVolume', pwprot.FloatParam, default=25,
-                      help="Minimum unit cell volume (in Angstrom^3).",
-                      label='Min cell volume',
-                      expertLevel=pwprot.LEVEL_ADVANCED)
-
-        form.addParam('indexMinCell', pwprot.FloatParam, default=3,
-                      help="Minimum length of candidate unit cell basis vectors (in Angstrom).",
-                      label='Min_cell',
-                      expertLevel=pwprot.LEVEL_ADVANCED)
-
-        form.addParam('indexMaxCell', pwprot.FloatParam, default=None,
-                      label='Max_cell', allowsNull=True,
-                      help="Maximum length of candidate unit cell basis vectors (in Angstrom).",
-                      expertLevel=pwprot.LEVEL_ADVANCED)
-
-        form.addParam('misindexCheckGridScope', pwprot.IntParam, default=0,
-                      help="Search scope for testing misindexing on h, k, l.",
-                      label='Misindexing check grid scope',
-                      expertLevel=pwprot.LEVEL_ADVANCED)
-
-        form.addParam('doFilter_ice', pwprot.BooleanParam, default=False,
-                      label='Filter ice?', expertLevel=pwprot.LEVEL_ADVANCED,
-                      help="Filter out reflections at typical ice ring resolutions before max_cell estimation.")
-
-        form.addSection('Refinement parameter configuration')
-
-        form.addParam('refineNproc', pwprot.IntParam,
-                      default=1, label='nproc',
-                      help='The number of processes to use. Not all choices of refinement engine support nproc > 1.'
+                      default=1, help='The number of processes to use. Not all choices of refinement engine support nproc > 1.'
                       'Where multiprocessing is possible, it is helpful only in certain circumstances,'
                       'so this is not recommended for typical use.',
-                      expertLevel=pwprot.LEVEL_ADVANCED
-                      )
+                      expertLevel=pwprot.LEVEL_ADVANCED)
 
         group = form.addGroup('Parametrisation')
 
@@ -175,22 +121,28 @@ class DialsProtRefineSpots(EdProtRefineSpots):
                        help="Fix crystal parameters",
                        )
 
-        group.addParam('detectorFixPosition', pwprot.BooleanParam,
-                       label='Fix detector position?', default=True,
+        group.addParam('detectorFixAll', pwprot.BooleanParam,
+                       label='Fix all detector parameters?', default=False,
                        help="Fix detector parameters. The translational parameters (position) may be set"
                        "separately to the orientation.",
+                       )
+
+        group.addParam('detectorFixPosition', pwprot.BooleanParam,
+                       label='Fix detector position?', default=False,
+                       help="Fix detector parameters. The translational parameters (position) may be set"
+                       "separately to the orientation.", condition="detectorFixAll==False",
                        )
 
         group.addParam('detectorFixOrientation', pwprot.BooleanParam,
-                       label='Fix detector orientation?', default=True,
+                       label='Fix detector orientation?', default=False,
                        help="Fix detector parameters. The translational parameters (position) may be set"
-                       "separately to the orientation.",
+                       "separately to the orientation.", condition="detectorFixAll==False",
                        )
 
         group.addParam('detectorFixdistance', pwprot.BooleanParam,
-                       label='Fix detector distance?', default=True,
+                       label='Fix detector distance?', default=False,
                        help="Fix detector parameters. The translational parameters (position) may be set"
-                       "separately to the orientation.",
+                       "separately to the orientation.", condition="detectorFixAll==False",
                        )
 
         group = form.addGroup('Refinery')
@@ -207,24 +159,6 @@ class DialsProtRefineSpots(EdProtRefineSpots):
                        "None implies the engine supplies its own default.",
                        label='Max iterations', condition="doSetMaxIterations",
                        )
-
-        # Allow some options if the Bravais settings are to be refined
-        form.addSection(label='Refine Bravais settings',
-                        condition='doRefineBravaisSettings')
-
-        form.addParam('refineBravNproc', pwprot.IntParam,
-                      default=4, label="How many processors do you want to use?",
-                      help="The number of processes to use.")
-
-        # Allow some options that are only relevant for reindexing
-        form.addSection(label='Reindex',
-                        condition='doReindex')
-
-        form.addParam('doReindexModel', pwprot.BooleanParam,
-                      default=False, label="Do you want to reindex the experimental model?")
-
-        form.addParam('doReindexReflections', pwprot.BooleanParam,
-                      default=False, label="Do you want to reindex the experimental reflections?")
 
         # Allow adding anything else with command line syntax
         form.addSection('Plain command line input')
@@ -265,15 +199,16 @@ class DialsProtRefineSpots(EdProtRefineSpots):
         assert(os.path.exists(self.getOutputReflFile()))
         assert(os.path.exists(self.getOutputModelFile()))
 
-        reflectionData = readRefl(self.getOutputReflFile())
         outputSet = self._createSetOfRefinedSpots()
+        outputSet.setDialsModel(self.getOutputModelFile())
+        outputSet.setDialsRefl(self.getOutputReflFile())
+
+        reflectionData = readRefl(self.getOutputReflFile())
         iSpot = RefinedSpot()
         numberOfSpots = reflectionData[2]
         reflDict = reflectionData[4]
 
         outputSet.setSpots(numberOfSpots)
-        outputSet.setDialsModel(self.getOutputModelFile())
-        outputSet.setDialsRefl(self.getOutputReflFile())
 
         for i in range(0, numberOfSpots):
             iSpot.setObjId(i+1)
@@ -307,50 +242,36 @@ class DialsProtRefineSpots(EdProtRefineSpots):
         if self.getSetModel():
             return self.getSetModel()
         else:
-            return self._getExtraPath('imported.expt')
+            return self._getExtraPath('indexed.expt')
 
     def getInputReflFile(self):
         if self.getSetRefl():
             return self.getSetRefl()
         else:
-            return self._getExtraPath('strong.refl')
+            return self._getExtraPath('indexed.refl')
 
     def getOutputModelFile(self):
-        return self._getExtraPath('indexed_model.expt')
+        return self._getExtraPath('refined.expt')
 
     def getOutputReflFile(self):
-        return self._getExtraPath('indexed_reflections.refl')
-
-    def getPhilPath(self):
-        return self._getTmpPath('index.phil')
+        return self._getExtraPath('refined.refl')
 
     def existsPath(self, path):
         return os.path.exists(path)
 
     def getSetModel(self):
         inputSet = self.inputSet.get()
-        inputSet = self.inputSet.get()
         if self.existsPath(inputSet.getDialsModel()):
-            return inputSet.getDialsModel()
-        elif self.existsPath(inputSet.getDialsModel()):
             return inputSet.getDialsModel()
         else:
             return None
 
     def getSetRefl(self):
         inputSet = self.inputSet.get()
-        inputSet = self.inputSet.get()
         if self.existsPath(inputSet.getDialsRefl()):
-            return inputSet.getDialsRefl()
-        elif self.existsPath(inputSet.getDialsRefl()):
             return inputSet.getDialsRefl()
         else:
             return None
-
-    def getChangeOfBasisOp(self):
-        # TODO: extract change of basis op from result in refineBravaisStep
-        change_of_basis_op = 'a,b,c'
-        return change_of_basis_op
 
     def _checkWriteModel(self):
         return self.getSetModel() != self.getInputModelFile()
@@ -373,82 +294,60 @@ class DialsProtRefineSpots(EdProtRefineSpots):
 
         # Update the command line with additional parameters
 
-        if self.indexNproc.get() not in (None, 1):
-            params += " indexing.nproc={}".format(self.indexNproc.get())
+        if self.Nproc.get() not in (None, 1):
+            params += " nproc={}".format(self.Nproc.get())
 
-        if self.enterSpaceGroup.get():
-            params += " indexing.known_symmetry.space_group={}".format(
-                self.knownSpaceGroup.get())
+        if self.scanVarying:
+            params += " scan_varying=True"
 
-        if self.enterUnitCell.get():
-            params += " indexing.known_symmetry.unit_cell={}".format(
-                self.knownUnitCell.get())
-
-        if self.indexMmSearchScope.get() not in (None, 4.0):
-            params += " index.mm_search_scope={}".format(
-                self.indexMmSearchScope.get())
-
-        if self.indexWideSearchBinning.get() not in (None, 2):
-            params += " index.wide_search_binning={}".format(
-                self.indexWideSearchBinning.get())
-
-        if self.indexMinCellVolume.get() not in (None, 25):
-            params += " index.min_cell_volume={}".format(
-                self.indexMinCellVolume.get())
-
-        if self.indexMinCell.get() not in (None, 3.0):
-            params += " index.min_cell={}".format(self.indexMinCell.get())
-
-        if self.indexMaxCell.get() is not None:
-            params += " index.max_cell={}".format(self.indexMaxCell.get())
-
-        if self.misindexCheckGridScope.get() not in (None, 0):
-            params += " check_misindexing.grid_search_scope={}".format(
-                self.misindexCheckGridScope.get())
-
-        if self.doFilter_ice.get():
-            params += " indexing.max_cell_estimation.filter_ice={}".format(
-                self.doFilter_ice.get())
-
-        if self.refineNproc.get() not in (None, 1):
-            params += " refinement.nproc={}".format(self.refineNproc.get())
-
-        if self.beamFixInSpindlePlane.get() is True:
-            params += " beam.fix=all"
-        """ # FIXME: make all beamfix one block
-        if True in (self.beamFixInSpindlePlane.get(), self.beamFixOutSpindlePlane.get(), self.beamFixWavelength.get()):
+        if self.beamFixAll:
+            params += " beam.fix='*all in_spindle_plane out_spindle_plane wavelength'"
+        else:
             beamfix = []
-            if self.beamFixInSpindlePlane.get() is True:
-                beamfix += ["in_spindle_plane"]
-            if self.beamFixOutSpindlePlane.get() is True:
-                beamfix += ["out_spindle_plane"]
-            if self.beamFixWavelength.get() is True:
-                beamfix += ["wavelength"]
-            params += " refinement.parameterisation.beam.fix={}".format(
-                " ".join(beamfix)) """
+            beamfix += "'all "
+            if self.beamFixInSpindlePlane:
+                beamfix += "*"
+            beamfix += "in_spindle_plane "
+            if self.beamFixOutSpindlePlane:
+                beamfix += "*"
+            beamfix += "out_spindle_plane "
+            if self.beamFixWavelength:
+                beamfix += "*"
+            beamfix += "wavelength'"
+            params += " beam.fix={}".format("".join(beamfix))
 
         if self.beamForceStatic.get() not in (None, True):
             params += " beam.force_static={}".format(
                 self.beamForceStatic.get())
 
-        # FIXME: Combine in one line
-        if self.crystalFixCell.get() not in (None, True):
-            params += " refinement.parameterisation.crystal.fix.cell={}".format(
-                self.crystalFixCell.get())
+        crystalfix = []
+        if self.crystalFixCell and self.crystalFixOrientation:
+            crystalfix += "'*all cell orientation'"
+        else:
+            crystalfix += "'all "
+            if self.crystalFixCell:
+                crystalfix += "*"
+            crystalfix += "cell "
+            if self.crystalFixOrientation:
+                crystalfix += "*"
+            crystalfix += "orientation'"
+            params += " crystal.fix={}".format(''.join(crystalfix))
 
-        if self.crystalFixOrientation.get() not in (None, True):
-            params += " refinement.parameterisation.crystal.fix.orientation={}".format(
-                self.crystalFixOrientation.get())
-
-        # FIXME: Convert to one line
-        if self.detectorFixPosition.get() not in (None, False):
-            params += " detector.fix=position"
-
-        if self.detectorFixOrientation.get() not in (None, False):
-            params += " refinement.parameterisation.detector.fix=orientation"
-
-        if self.detectorFixdistance.get() not in (None, False):
-            params += " refinement.parameterisation.detector.fix=distance"
+        detectorfix = []
+        if self.detectorFixAll:
+            detectorfix += "'*all position orientation distance'"
+        else:
+            detectorfix += "'all "
+            if self.detectorFixPosition:
+                detectorfix += "*"
+            detectorfix += "position "
+            if self.detectorFixOrientation:
+                detectorfix += "*"
+            detectorfix += "orientation "
+            if self.detectorFixdistance:
+                detectorfix += "*"
+            detectorfix += "distance'"
+        params += " detector.fix={}".format(''.join(detectorfix))
 
         if self.refineryMaxIterations.get() is not None:
             params += " refinery.max_iterations={}".format(
@@ -458,12 +357,3 @@ class DialsProtRefineSpots(EdProtRefineSpots):
             params += " {}".format(self.commandLineInput.get())
 
         return params
-
-    def _createScanRanges(self):
-        # Go through the
-        images = [image.getObjId() for image in self.inputSet.get()
-                  if image.getIgnore() is not True]
-        scanranges = find_subranges(images)
-        scanrange = ' '.join('spotfinder.scan_range={},{}'.format(i, j)
-                             for i, j in scanranges)
-        return scanrange

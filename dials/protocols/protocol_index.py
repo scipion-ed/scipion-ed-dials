@@ -181,19 +181,19 @@ class DialsProtIndexSpots(EdProtIndexSpots):
                        )
 
         group.addParam('detectorFixPosition', pwprot.BooleanParam,
-                       label='Fix detector position?', default=True,
+                       label='Fix detector position?', default=False,
                        help="Fix detector parameters. The translational parameters (position) may be set"
                        "separately to the orientation.",
                        )
 
         group.addParam('detectorFixOrientation', pwprot.BooleanParam,
-                       label='Fix detector orientation?', default=True,
+                       label='Fix detector orientation?', default=False,
                        help="Fix detector parameters. The translational parameters (position) may be set"
                        "separately to the orientation.",
                        )
 
-        group.addParam('detectorFixdistance', pwprot.BooleanParam,
-                       label='Fix detector distance?', default=True,
+        group.addParam('detectorFixDistance', pwprot.BooleanParam,
+                       label='Fix detector distance?', default=False,
                        help="Fix detector parameters. The translational parameters (position) may be set"
                        "separately to the orientation.",
                        )
@@ -524,36 +524,53 @@ class DialsProtIndexSpots(EdProtIndexSpots):
         if self.refineNproc.get() not in (None, 1):
             params += " refinement.nproc={}".format(self.refineNproc.get())
 
-        """ # FIXME: make all beamfix one block
-        if True in (self.beamFixInSpindlePlane.get(), self.beamFixOutSpindlePlane.get(), self.beamFixWavelength.get()):
-            beamfix = []
-            if self.beamFixInSpindlePlane.get() is True:
-                beamfix += ["in_spindle_plane"]
-            if self.beamFixOutSpindlePlane.get() is True:
-                beamfix += ["out_spindle_plane"]
-            if self.beamFixWavelength.get() is True:
-                beamfix += ["wavelength"]
-            params += " refinement.parameterisation.beam.fix={}".format(
-                " ".join(beamfix)) """
+        beamfix = []
+        if self.beamFixInSpindlePlane and self.beamFixOutSpindlePlane and self.beamFixWavelength:
+            beamfix += "'*all in_spindle_plane out_spindle_plane wavelength'"
+        else:
+            beamfix += "'all "
+            if self.beamFixInSpindlePlane:
+                beamfix += "*"
+            beamfix += "in_spindle_plane "
+            if self.beamFixOutSpindlePlane:
+                beamfix += "*"
+            beamfix += "out_spindle_plane "
+            if self.beamFixWavelength:
+                beamfix += "*"
+            beamfix += "wavelength'"
+        params += " refinement.parameterisation.beam.fix={}".format(
+            "".join(beamfix))
 
-        # FIXME: Combine in one line
-        if self.crystalFixCell.get() not in (None, True):
-            params += " refinement.parameterisation.crystal.fix.cell={}".format(
-                self.crystalFixCell.get())
+        crystalfix = []
+        if self.crystalFixCell and self.crystalFixOrientation:
+            crystalfix += "'*all cell orientation'"
+        else:
+            crystalfix += "'all "
+            if self.crystalFixCell:
+                crystalfix += "*"
+            crystalfix += "cell "
+            if self.crystalFixOrientation:
+                crystalfix += "*"
+            crystalfix += "orientation'"
+            params += " refinement.parameterisation.crystal.fix={}".format(
+                ''.join(crystalfix))
 
-        if self.crystalFixOrientation.get() not in (None, True):
-            params += " refinement.parameterisation.crystal.fix.orientation={}".format(
-                self.crystalFixOrientation.get())
-
-        # FIXME: Convert to one line
-        if self.detectorFixPosition.get() not in (None, False):
-            params += " detector.fix=position"
-
-        if self.detectorFixOrientation.get() not in (None, False):
-            params += " refinement.parameterisation.detector.fix=orientation"
-
-        if self.detectorFixdistance.get() not in (None, False):
-            params += " refinement.parameterisation.detector.fix=distance"
+        detectorfix = []
+        if self.detectorFixPosition and self.detectorFixOrientation and self.detectorFixDistance:
+            detectorfix += "'*all position orientation distance'"
+        else:
+            detectorfix += "'all "
+            if self.detectorFixPosition:
+                detectorfix += "*"
+            detectorfix += "position "
+            if self.detectorFixOrientation:
+                detectorfix += "*"
+            detectorfix += "orientation "
+            if self.detectorFixDistance:
+                detectorfix += "*"
+            detectorfix += "distance'"
+        params += " refinement.parameterisation.detector.fix={}".format(
+            ''.join(detectorfix))
 
         if self.refineryMaxIterations.get() is not None:
             params += " refinery.max_iterations={}".format(
