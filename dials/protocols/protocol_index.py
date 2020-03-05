@@ -322,34 +322,37 @@ class DialsProtIndexSpots(EdProtIndexSpots):
         assert(self.existsPath(self.getOutputModelFile()))
 
         # TODO: Add Diffraction images as well
-
-        reflectionData = readRefl(self.getOutputReflFile())
         outputSet = self._createSetOfIndexedSpots()
-        iSpot = IndexedSpot()
-        numberOfSpots = reflectionData[2]
-        reflDict = reflectionData[4]
-
-        outputSet.setSpots(numberOfSpots)
         outputSet.setDialsModel(self.getOutputModelFile())
         outputSet.setDialsRefl(self.getOutputReflFile())
+        try:
+            # FIXME: readRefl does not work when reading reindexed.refl. Complains about "Extra data"
+            reflectionData = readRefl(self.getOutputReflFile())
+            iSpot = IndexedSpot()
+            numberOfSpots = reflectionData[2]
+            reflDict = reflectionData[4]
 
-        for i in range(0, numberOfSpots):
-            iSpot.setObjId(i+1)
-            iSpot.setSpotId(reflDict['id'][i])
-            iSpot.setBbox(reflDict['bbox'][i])
-            iSpot.setFlag(reflDict['flags'][i])
-            iSpot.setIntensitySumValue(reflDict['intensity.sum.value'][i])
-            iSpot.setIntensitySumVariance(
-                reflDict['intensity.sum.variance'][i])
-            iSpot.setNSignal(reflDict['n_signal'][i])
-            iSpot.setPanel(reflDict['panel'][i])
-            try:
-                iSpot.setShoebox(reflDict['shoebox'][i])
-            except IndexError:
-                pass
-            iSpot.setXyzobsPxValue(reflDict['xyzobs.px.value'][i])
-            iSpot.setXyzobsPxVariance(reflDict['xyzobs.px.variance'][i])
-            outputSet.append(iSpot)
+            outputSet.setSpots(numberOfSpots)
+
+            for i in range(0, numberOfSpots):
+                iSpot.setObjId(i+1)
+                iSpot.setSpotId(reflDict['id'][i])
+                iSpot.setBbox(reflDict['bbox'][i])
+                iSpot.setFlag(reflDict['flags'][i])
+                iSpot.setIntensitySumValue(reflDict['intensity.sum.value'][i])
+                iSpot.setIntensitySumVariance(
+                    reflDict['intensity.sum.variance'][i])
+                iSpot.setNSignal(reflDict['n_signal'][i])
+                iSpot.setPanel(reflDict['panel'][i])
+                try:
+                    iSpot.setShoebox(reflDict['shoebox'][i])
+                except IndexError:
+                    pass
+                iSpot.setXyzobsPxValue(reflDict['xyzobs.px.value'][i])
+                iSpot.setXyzobsPxVariance(reflDict['xyzobs.px.variance'][i])
+                outputSet.append(iSpot)
+        except Exception as e:
+            self.info(e)
 
         outputSet.write()
 
@@ -381,32 +384,35 @@ class DialsProtIndexSpots(EdProtIndexSpots):
 
     def getBravaisPath(self, fn=None):
         if fn is None:
-            return self._getExtraPath()
+            return self._getTmpPath()
         else:
-            return self._getExtraPath(fn)
+            return self._getTmpPath(fn)
 
     def getBravaisId(self):
-        # FIXME: sortlist is NoneType
         summary = self.getBravaisSummary()
         if summary is None:
             return None
         else:
-            keys = summary.keys()
-            keylist = list(keys)
-            sortlist = keylist.sort(key=float, reverse=True)
-            return sortlist[0]
+            # Use highest ranked suggestion
+            keys = list(summary.keys())
+            return keys[0]
 
     def getBravaisModelFile(self, fileId):
         fn = "bravais_setting_{}.expt".format(fileId)
         return self.getBravaisPath(fn)
 
     def getChangeOfBasisOp(self, fileId):
-        # TODO: extract change of basis op from result in refineBravaisStep
         summary = self.getBravaisSummary()
         if summary is None:
+            # TODO: Add parameter to manually supply default
             change_of_basis_op = 'a,b,c'
-        else:
+        elif fileId is None:
             cbop = summary[self.getBravaisId()]["cb_op"]
+            change_of_basis_op = cbop
+        else:
+            # TODO: Optionally output table from find_bravais_settings
+            # and let the user choose which to use
+            cbop = summary[fileId]["cb_op"]
             change_of_basis_op = cbop
         return change_of_basis_op
 
