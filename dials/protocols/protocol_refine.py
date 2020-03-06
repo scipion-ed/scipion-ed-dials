@@ -53,7 +53,7 @@ class DialsProtRefineSpots(EdProtRefineSpots):
         form.addSection(label='Refinement basics')
 
         form.addParam('inputSet', pwprot.PointerParam,
-                      pointerClass='SetOfRefinedSpots',
+                      pointerClass='SetOfIndexedSpots',
                       label="Input indexed spots",
                       help="")
 

@@ -29,3 +29,4 @@ from .protocol_find_spots import DialsProtFindSpots
 from .protocol_index import DialsProtIndexSpots
 from .protocol_refine import DialsProtRefineSpots
 from .protocol_integrate import DialsProtIntegrateSpots
+from .protocol_export import DialsProtExport

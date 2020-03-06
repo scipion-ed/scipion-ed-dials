@@ -37,7 +37,7 @@ import pwed
 from pwed.objects import DiffractionImage, SetOfDiffractionImages, DiffractionSpot, SetOfSpots, IndexedSpot, SetOfIndexedSpots, RefinedSpot, SetOfRefinedSpots, IntegratedSpot, SetOfIntegratedSpots
 from pwed.protocols import ProtImportDiffractionImages
 
-from dials.protocols import DialsProtImportDiffractionImages, DialsProtFindSpots, DialsProtIndexSpots, DialsProtRefineSpots, DialsProtIntegrateSpots
+from dials.protocols import DialsProtImportDiffractionImages, DialsProtFindSpots, DialsProtIndexSpots, DialsProtRefineSpots, DialsProtIntegrateSpots, DialsProtExport
 from dials.convert import writeJson, readRefl, writeRefl
 
 
@@ -102,6 +102,13 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                                          **kwargs)
         self.launchProtocol(protIntegrate)
         return protIntegrate
+
+    def _runExport(self, inputSet, **kwargs):
+        protExport = self.newProtocol(DialsProtExport,
+                                      inputSet=inputSet,
+                                      **kwargs)
+        self.launchProtocol(protExport)
+        return protExport
 
     # Helper functions
     def assertSameModel(self, model1, model2):
@@ -272,7 +279,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
 
         # Run integration
         with self.subTest(msg="Integration"):
-            #self.skipTest("Not implemented yet")
+            # self.skipTest("Not implemented yet")
             protIntegrate = self._runIntegrate(
                 inputSet=protSvRefine.outputRefinedSpots,
                 nproc=8,
@@ -289,6 +296,26 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 self.skipTest("Need to fix errors from paths")
                 self.assertSameRefl(integratedset.getDialsRefl(),
                                     self.getReferenceFile('integrated.refl'))
+
+        MTZ = 0
+        SADABS = 1
+        NXS = 2
+        MMCIF = 3
+        MOSFLM = 4
+        XDS = 5
+        XDS_ASCII = 6
+        JSON = 7
+
+        with self.subTest(msg="Export mtz"):
+            protMtzExport = self._runExport(
+                inputSet=protIntegrate.outputIntegratedSpots,
+                exportFormat=MTZ
+            )
+        with self.subTest(msg="Export xds_ascii"):
+            protXdsExport = self._runExport(
+                inputSet=protIntegrate.outputIntegratedSpots,
+                exportFormat=XDS_ASCII
+            )
 
       # Test of I/O utilities
     def test_writeJson(self):

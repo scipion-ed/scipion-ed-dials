@@ -234,3 +234,12 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots):
             params += " {}".format(self.commandLineInput.get())
 
         return params
+
+    def _createScanRanges(self):
+        # Go through the
+        images = [image.getObjId() for image in self.inputImages.get()
+                  if image.getIgnore() is not True]
+        scanranges = find_subranges(images)
+        scanrange = ' '.join('spotfinder.scan_range={},{}'.format(i, j)
+                             for i, j in scanranges)
+        return scanrange
