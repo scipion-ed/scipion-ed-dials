@@ -71,7 +71,7 @@ class DialsProtExport(EdProtExport):
         form.addParam('exportFormat', pwprot.EnumParam,
                       label='Which format do you want to export?',
                       choice=[
-                          'mtz' 'sadabs' 'nxs' 'mmcif' 'mosflm' 'xds' 'xds_ascii' 'json'],
+                          'mtz', 'sadabs', 'nxs', 'mmcif', 'mosflm', 'xds', 'xds_ascii', 'json'],
                       default=MTZ, display=pwprot.EnumParam.DISPLAY_HLIST,
                       help="The output file format",
                       )

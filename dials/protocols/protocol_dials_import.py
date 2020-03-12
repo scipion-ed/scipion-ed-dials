@@ -188,6 +188,7 @@ class DialsProtImportDiffractionImages(EdBaseProtocol):
         outputSet.setSkipImages(self.skipImages.get())
 
         # Run dials import on the images
+        # FIXME: use ts from self.getMatchingFiles() to create multiple experiments
         program = 'dials.import'
         arguments = self._prepareCommandLineArguments(program)
         self.runJob(program, arguments)

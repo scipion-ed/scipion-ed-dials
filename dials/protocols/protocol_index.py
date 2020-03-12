@@ -52,7 +52,7 @@ class DialsProtIndexSpots(EdProtIndexSpots):
 
         # Check which parts of indexing to perform. Reindexing is probably to small to warrant
         # its own protocol.
-        form.addSection(label='Processing steps')
+        form.addSection(label='Basic input')
 
         form.addParam('doIndex', pwprot.BooleanParam,
                       default=True, label='Do you want to index from start?')
@@ -63,7 +63,6 @@ class DialsProtIndexSpots(EdProtIndexSpots):
                       condition='doRefineBravaisSettings')
 
         # The start of the actually relevant part.
-        form.addSection(label='Indexing basics', condition='doIndex')
 
         form.addParam('inputImages', pwprot.PointerParam,
                       pointerClass='SetOfDiffractionImages',
@@ -74,12 +73,6 @@ class DialsProtIndexSpots(EdProtIndexSpots):
                       pointerClass='SetOfSpots',
                       label='Input strong spots',
                       help="")
-
-        form.addParam('inputStrongPath', pwprot.StringParam,
-                      label='Give the absolute path to the directory of strong.refl and import.expt',
-                      default='',
-                      help="",
-                      )
 
         # Help messages are copied from the DIALS documentation at
         # https://dials.github.io/documentation/programs/dials_index.html
