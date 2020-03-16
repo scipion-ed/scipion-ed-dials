@@ -50,7 +50,7 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots):
         # EdProtIndexSpots._defineParams(self, form)
 
         # The start of the actually relevant part.
-        form.addSection(label='Integration parameters')
+        form.addSection(label='Input')
 
         form.addParam('inputSet', pwprot.PointerParam,
                       pointerClass='SetOfDiffractionImages',
@@ -74,11 +74,11 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots):
                       )
 
         # Allow adding anything else with command line syntax
-        form.addSection('Plain command line input')
-        form.addParam('commandLineInput', pwprot.StringParam,
-                      expertLevel=pwprot.LEVEL_ADVANCED,
-                      default='',
-                      help="Anything added here will be added at the end of the command line")
+        group = form.addGroup('Raw command line input parameters',
+                              expertLevel=pwprot.LEVEL_ADVANCED)
+        group.addParam('commandLineInput', pwprot.StringParam,
+                       default='',
+                       help="Anything added here will be added at the end of the command line")
 
    # -------------------------- INSERT functions ------------------------------
 

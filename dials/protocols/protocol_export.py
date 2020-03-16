@@ -37,19 +37,19 @@ from pwed.objects import IntegratedSpot, SetOfIntegratedSpots
 from pwed.protocols import EdProtExport
 from dials.convert import writeJson, readRefl, writeRefl
 
-MTZ = 0
-SADABS = 1
-NXS = 2
-MMCIF = 3
-MOSFLM = 4
-XDS = 5
-XDS_ASCII = 6
-JSON = 7
-
 
 class DialsProtExport(EdProtExport):
     """ Protocol for exporting results using Dials
     """
+    MTZ = 0
+    SADABS = 1
+    NXS = 2
+    MMCIF = 3
+    MOSFLM = 4
+    XDS = 5
+    XDS_ASCII = 6
+    JSON = 7
+
     _label = 'export'
 
     # -------------------------- DEFINE param functions -----------------------
@@ -58,7 +58,7 @@ class DialsProtExport(EdProtExport):
         # EdProtIndexSpots._defineParams(self, form)
 
         # The start of the actually relevant part.
-        form.addSection(label='Export parameters')
+        form.addSection(label='Input')
 
         form.addParam('inputSet', pwprot.PointerParam,
                       pointerClass='SetOfIntegratedSpots',
@@ -70,13 +70,14 @@ class DialsProtExport(EdProtExport):
 
         form.addParam('exportFormat', pwprot.EnumParam,
                       label='Which format do you want to export?',
-                      choice=[
-                          'mtz', 'sadabs', 'nxs', 'mmcif', 'mosflm', 'xds', 'xds_ascii', 'json'],
-                      default=MTZ, display=pwprot.EnumParam.DISPLAY_HLIST,
-                      help="The output file format",
+                      choices=['mtz', 'sadabs', 'nxs', 'mmcif',
+                               'mosflm', 'xds', 'xds_ascii', 'json'],
+                      default=self.MTZ,
+                      display=pwprot.EnumParam.DISPLAY_HLIST,
+                      help="The output file format"
                       )
 
-        group = form.addGroup('mtz')
+        group = form.addGroup('mtz', condition="exportFormat==MTZ")
 
         group.addParam('mtzCombinePartials', pwprot.BooleanParam,
                        label='Combine partial reflections?', default=True,
@@ -122,7 +123,7 @@ class DialsProtExport(EdProtExport):
                        help="The name of the crystal, for the mtz file metadata",
                        )
 
-        group = form.addGroup('sadabs')
+        group = form.addGroup('sadabs', condition="exportFormat==SADABS")
 
         group.addParam('sadabsHklout', pwprot.StringParam,
                        label='Output filename',
@@ -135,12 +136,14 @@ class DialsProtExport(EdProtExport):
                        default=1, allowsNull=True,
                        help="Batch number / run number for output file",
                        )
+
         group.addParam('sadabsPredict', pwprot.BooleanParam,
                        label='Predict from static model', default=False,
                        help="Compute centroids with static model, not observations",
                        )
 
-        group = form.addGroup('XDS_ASCII')
+        group = form.addGroup(
+            'XDS_ASCII', condition="exportFormat==XDS_ASCII")
 
         group.addParam('xdsAsciiHklout', pwprot.StringParam,
                        label='Output name',
@@ -148,7 +151,7 @@ class DialsProtExport(EdProtExport):
                        help="The output raw hkl file",
                        )
 
-        group = form.addGroup('Nexus')
+        group = form.addGroup('Nexus', condition="exportFormat==NXS")
         group.addParam('nxsHklout', pwprot.StringParam,
                        label='Output filename',
                        default='integrated.nxs',
@@ -179,7 +182,7 @@ class DialsProtExport(EdProtExport):
                        help="Short name for source, perhaps the acronym",
                        )
 
-        group = form.addGroup('mmcif')
+        group = form.addGroup('mmcif', condition="exportFormat==MMCIF")
 
         group.addParam('mmcifHklout', pwprot.StringParam,
                        label='Output name',
@@ -187,7 +190,7 @@ class DialsProtExport(EdProtExport):
                        help="The output CIF file, defaults to <jobID>_integrated.cif.",
                        )
 
-        group = form.addGroup('json')
+        group = form.addGroup('json', condition="exportFormat==JSON")
         group.addParam('jsonFilename', pwprot.StringParam,
                        label='Filename',
                        default='rlp.json',
@@ -204,11 +207,11 @@ class DialsProtExport(EdProtExport):
                        )
 
         # Allow adding anything else with command line syntax
-        form.addSection('Plain command line input')
-        form.addParam('commandLineInput', pwprot.StringParam,
-                      expertLevel=pwprot.LEVEL_ADVANCED,
-                      default='',
-                      help="Anything added here will be added at the end of the command line")
+        group = form.addGroup('Raw command line input parameters',
+                              expertLevel=pwprot.LEVEL_ADVANCED)
+        group.addParam('commandLineInput', pwprot.StringParam,
+                       default='',
+                       help="Anything added here will be added at the end of the command line")
 
    # -------------------------- INSERT functions ------------------------------
 
@@ -284,9 +287,6 @@ class DialsProtExport(EdProtExport):
         else:
             return None
 
-    def getFormat(self):
-        return self.exportFormat.get()
-
     def outDir(self, fn=None):
         if fn is None:
             return self._getExtraPath()
@@ -294,7 +294,7 @@ class DialsProtExport(EdProtExport):
             return self._getExtraPath(fn)
 
     def getOutput(self):
-        if self.getFormat() is MTZ:
+        if self.exportFormat.get() is self.MTZ:
             if self.mtzHklout.get() is "":
                 name = "integrated_{}.mtz".format(self.getObjId())
             else:
@@ -309,7 +309,7 @@ class DialsProtExport(EdProtExport):
         nxsStr = "nxs.hklout={}".format(
             self.outDir(self.nxsHklout.get()))
 
-        if self.getFormat() is MMCIF:
+        if self.exportFormat.get() is self.MMCIF:
             if self.mmcifHklout.get() is "":
                 name = "integrated_{}.cif".format(self.getObjId())
             else:
@@ -323,16 +323,46 @@ class DialsProtExport(EdProtExport):
         xdsStr = "xds.directory={}".format(self.outDir())
 
         xdsAsciiStr = "xds_ascii.hklout={}".format(
-            self.outDir(self.xdsAsciiHklout.get(self.xdsAsciiHklout.get())))
+            self.outDir(self.xdsAsciiHklout.get()))
 
         jsonStr = "json.filename={}".format(
             self.outDir(self.jsonFilename.get()))
 
-        idx = self.getFormat()
-        formats = ['mtz', 'sadabs', 'nxs', 'mmcif',
-                   'mosflm', 'xds', 'xds_ascii', 'json']
-        nameStr = [mtzStr, sadabsStr, nxsStr, mmcifStr,
-                   mosflmStr, xdsStr, xdsAsciiStr, jsonStr]
+        self.info("export format is {}".format(self.exportFormat.get()))
+
+        idx = 0
+        if self.exportFormat.get() is self.MTZ:
+            idx = self.MTZ
+        elif self.exportFormat.get() is self.SADABS:
+            idx = self.SADABS
+        elif self.exportFormat.get() is self.NXS:
+            idx = self.NXS
+        elif self.exportFormat.get() is self.MMCIF:
+            idx = self.MMCIF
+        elif self.exportFormat.get() is self.MOSFLM:
+            idx = self.MOSFLM
+        elif self.exportFormat.get() is self.XDS:
+            idx = self.XDS
+        elif self.exportFormat.get() is self.XDS_ASCII:
+            idx = self.XDS_ASCII
+        elif self.exportFormat.get() is self.JSON:
+            idx = self.JSON
+        formats = ['mtz',
+                   'sadabs',
+                   'nxs',
+                   'mmcif',
+                   'mosflm',
+                   'xds',
+                   'xds_ascii',
+                   'json']
+        nameStr = [mtzStr,
+                   sadabsStr,
+                   nxsStr,
+                   mmcifStr,
+                   mosflmStr,
+                   xdsStr,
+                   xdsAsciiStr,
+                   jsonStr]
         outputString = "format={} {}".format(formats[idx], nameStr[idx])
         return outputString
 
@@ -355,7 +385,7 @@ class DialsProtExport(EdProtExport):
         )
 
         # Update the command line with additional parameters
-        if self.getFormat() is MTZ:
+        if self.exportFormat.get() is self.MTZ:
             if self.mtzCombinePartials:
                 params += " mtz.combine_partials=True"
 
@@ -377,14 +407,14 @@ class DialsProtExport(EdProtExport):
             params += " mtz.crystal_name={}".format(
                 self.mtzCrystalName.get())
 
-        elif self.getFormat() is SADABS:
+        elif self.exportFormat.get() is self.SADABS:
             if self.sadabsRun.get() is not 1:
                 params += " sadabs.run={}".format(self.sadabsRun.get())
 
             if self.sadabsPredict:
                 params += " sadabs.predict=True"
 
-        elif self.getFormat() is NXS:
+        elif self.exportFormat.get() is self.NXS:
             params += " nxs.instrument_name={}".format(
                 self.nxsInstrumentName.get())
 
@@ -397,7 +427,7 @@ class DialsProtExport(EdProtExport):
             params += " nxs.source_short_name={}".format(
                 self.nxsSourceShortName.get())
 
-        elif self.getFormat() is JSON:
+        elif self.exportFormat.get() is self.JSON:
             if self.jsonCompact is False:
                 params += " json.compact=False"
 

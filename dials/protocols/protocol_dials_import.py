@@ -66,7 +66,7 @@ class DialsProtImportDiffractionImages(EdBaseProtocol):
 
     # -------------------------- DEFINE param functions -----------------------
     def _defineParams(self, form):
-        form.addSection(label='Import')
+        form.addSection(label='Input')
 
         form.addParam('filesPath', pwprot.PathParam,
                       label="Files directory",
@@ -106,72 +106,75 @@ class DialsProtImportDiffractionImages(EdBaseProtocol):
                       label="Rotation axis",
                       help="The goniometer rotation axis relative to the image.")
 
-        form.addSection(label='Overwrite header file')
+        group = form.addGroup('Overwrite header file',
+                              expertLevel=pwprot.LEVEL_ADVANCED,)
 
-        form.addParam('overwriteWavelength', pwprot.StringParam,
-                      default=None,
-                      allowsNull=True,
-                      label="Set wavelength",
-                      help="Overwrites the wavelength found from the headerfile.")
+        group.addParam('overwriteWavelength', pwprot.StringParam,
+                       default=None,
+                       allowsNull=True,
+                       label="Set wavelength",
+                       help="Overwrites the wavelength found from the headerfile.")
 
-        form.addParam('overwriteSize1', pwprot.StringParam,
-                      default=None,
-                      allowsNull=True,
-                      label="Set Size1",
-                      help="Overwrites the Size1 found from the headerfile.")
+        group.addParam('overwriteSize1', pwprot.StringParam,
+                       default=None,
+                       allowsNull=True,
+                       label="Set Size1",
+                       help="Overwrites the Size1 found from the headerfile.")
 
-        form.addParam('overwriteSize2', pwprot.StringParam,
-                      default=None,
-                      allowsNull=True,
-                      label="Set Size2",
-                      help="Overwrites the Size2 found from the headerfile.")
+        group.addParam('overwriteSize2', pwprot.StringParam,
+                       default=None,
+                       allowsNull=True,
+                       label="Set Size2",
+                       help="Overwrites the Size2 found from the headerfile.")
 
-        form.addParam('overwritePixelSize', pwprot.StringParam,
-                      default=None,
-                      allowsNull=True,
-                      label="Set pixel size",
-                      help="Overwrites the pixel size found from the headerfile.")
+        group.addParam('overwritePixelSize', pwprot.StringParam,
+                       default=None,
+                       allowsNull=True,
+                       label="Set pixel size",
+                       help="Overwrites the pixel size found from the headerfile.")
 
-        form.addParam('overwriteExposureTime', pwprot.StringParam,
-                      default=None,
-                      allowsNull=True,
-                      label="Set exposure time",
-                      help="Overwrites the exposure time found from the headerfile.")
+        group.addParam('overwriteExposureTime', pwprot.StringParam,
+                       default=None,
+                       allowsNull=True,
+                       label="Set exposure time",
+                       help="Overwrites the exposure time found from the headerfile.")
 
-        form.addParam('overwriteDetectorDistance', pwprot.StringParam,
-                      default=None,
-                      allowsNull=True,
-                      label="Set detector distance",
-                      help="Overwrites the detector distance found from the headerfile.")
+        group.addParam('overwriteDetectorDistance', pwprot.StringParam,
+                       default=None,
+                       allowsNull=True,
+                       label="Set detector distance",
+                       help="Overwrites the detector distance found from the headerfile.")
 
-        form.addParam('overwriteOscStart', pwprot.StringParam,
-                      default=None,
-                      allowsNull=True,
-                      label="Set starting angle",
-                      help="Overwrites the starting angle found from the headerfile.")
+        group.addParam('overwriteOscStart', pwprot.StringParam,
+                       default=None,
+                       allowsNull=True,
+                       label="Set starting angle",
+                       help="Overwrites the starting angle found from the headerfile.")
 
-        form.addParam('overwriteOscRange', pwprot.StringParam,
-                      default=None,
-                      allowsNull=True,
-                      label="Set oscillation range",
-                      help="Overwrites the oscillation range found from the headerfile.")
+        group.addParam('overwriteOscRange', pwprot.StringParam,
+                       default=None,
+                       allowsNull=True,
+                       label="Set oscillation range",
+                       help="Overwrites the oscillation range found from the headerfile.")
 
-        form.addParam('overwriteBeamCenterX', pwprot.StringParam,
-                      default=None,
-                      allowsNull=True,
-                      label="Set beam center X",
-                      help="Overwrites the beam center X found from the headerfile.")
+        group.addParam('overwriteBeamCenterX', pwprot.StringParam,
+                       default=None,
+                       allowsNull=True,
+                       label="Set beam center X",
+                       help="Overwrites the beam center X found from the headerfile.")
 
-        form.addParam('overwriteBeamCenterY', pwprot.StringParam,
-                      default=None,
-                      allowsNull=True,
-                      label="Set beam center Y",
-                      help="Overwrites the beam center Y found from the headerfile.")
+        group.addParam('overwriteBeamCenterY', pwprot.StringParam,
+                       default=None,
+                       allowsNull=True,
+                       label="Set beam center Y",
+                       help="Overwrites the beam center Y found from the headerfile.")
 
-        form.addSection('Plain command line input')
-        form.addParam('commandLineInput', pwprot.StringParam,
-                      expertLevel=pwprot.LEVEL_ADVANCED,
-                      default='')
+        # Allow adding anything else with command line syntax
+        group = form.addGroup('Raw command line input parameters',
+                              expertLevel=pwprot.LEVEL_ADVANCED)
+        group.addParam('commandLineInput', pwprot.StringParam,
+                       default='',
+                       help="Anything added here will be added at the end of the command line")
 
     # -------------------------- INSERT functions ------------------------------
     def _insertAllSteps(self):

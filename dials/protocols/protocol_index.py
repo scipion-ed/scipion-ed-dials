@@ -52,7 +52,7 @@ class DialsProtIndexSpots(EdProtIndexSpots):
 
         # Check which parts of indexing to perform. Reindexing is probably to small to warrant
         # its own protocol.
-        form.addSection(label='Basic input')
+        form.addSection(label='Input')
 
         form.addParam('doIndex', pwprot.BooleanParam,
                       default=True, label='Do you want to index from start?')
@@ -93,51 +93,55 @@ class DialsProtIndexSpots(EdProtIndexSpots):
         form.addParam('knownUnitCell', pwprot.StringParam,
                       condition='enterUnitCell', default='', label='Unit cell:')
 
-        form.addParam('indexMmSearchScope', pwprot.FloatParam, default=4.0,
-                      help="Global radius of origin offset search.",
-                      label='mm search scope',
-                      expertLevel=pwprot.LEVEL_ADVANCED)
+        group = form.addGroup('Other indexing parameters',
+                              condition='doIndex', expertLevel=pwprot.LEVEL_ADVANCED,)
 
-        form.addParam('indexWideSearchBinning', pwprot.FloatParam, default=2,
-                      help="Modify the coarseness of the wide grid search for the beam centre.",
-                      label='Wide search binning',
-                      expertLevel=pwprot.LEVEL_ADVANCED)
+        group.addParam('indexMmSearchScope', pwprot.FloatParam, default=4.0,
+                       help="Global radius of origin offset search.",
+                       label='mm search scope',
+                       expertLevel=pwprot.LEVEL_ADVANCED)
 
-        form.addParam('indexMinCellVolume', pwprot.FloatParam, default=25,
-                      help="Minimum unit cell volume (in Angstrom^3).",
-                      label='Min cell volume',
-                      expertLevel=pwprot.LEVEL_ADVANCED)
+        group.addParam('indexWideSearchBinning', pwprot.FloatParam, default=2,
+                       help="Modify the coarseness of the wide grid search for the beam centre.",
+                       label='Wide search binning',
+                       expertLevel=pwprot.LEVEL_ADVANCED)
 
-        form.addParam('indexMinCell', pwprot.FloatParam, default=3,
-                      help="Minimum length of candidate unit cell basis vectors (in Angstrom).",
-                      label='Min_cell',
-                      expertLevel=pwprot.LEVEL_ADVANCED)
+        group.addParam('indexMinCellVolume', pwprot.FloatParam, default=25,
+                       help="Minimum unit cell volume (in Angstrom^3).",
+                       label='Min cell volume',
+                       expertLevel=pwprot.LEVEL_ADVANCED)
 
-        form.addParam('indexMaxCell', pwprot.FloatParam, default=None,
-                      label='Max_cell', allowsNull=True,
-                      help="Maximum length of candidate unit cell basis vectors (in Angstrom).",
-                      expertLevel=pwprot.LEVEL_ADVANCED)
+        group.addParam('indexMinCell', pwprot.FloatParam, default=3,
+                       help="Minimum length of candidate unit cell basis vectors (in Angstrom).",
+                       label='Min_cell',
+                       expertLevel=pwprot.LEVEL_ADVANCED)
 
-        form.addParam('misindexCheckGridScope', pwprot.IntParam, default=0,
-                      help="Search scope for testing misindexing on h, k, l.",
-                      label='Misindexing check grid scope',
-                      expertLevel=pwprot.LEVEL_ADVANCED)
+        group.addParam('indexMaxCell', pwprot.FloatParam, default=None,
+                       label='Max_cell', allowsNull=True,
+                       help="Maximum length of candidate unit cell basis vectors (in Angstrom).",
+                       expertLevel=pwprot.LEVEL_ADVANCED)
 
-        form.addParam('doFilter_ice', pwprot.BooleanParam, default=False,
-                      label='Filter ice?', expertLevel=pwprot.LEVEL_ADVANCED,
-                      help="Filter out reflections at typical ice ring resolutions before max_cell estimation.")
+        group.addParam('misindexCheckGridScope', pwprot.IntParam, default=0,
+                       help="Search scope for testing misindexing on h, k, l.",
+                       label='Misindexing check grid scope',
+                       expertLevel=pwprot.LEVEL_ADVANCED)
 
-        form.addSection('Refinement parameter configuration')
+        group.addParam('doFilter_ice', pwprot.BooleanParam, default=False,
+                       label='Filter ice?', expertLevel=pwprot.LEVEL_ADVANCED,
+                       help="Filter out reflections at typical ice ring resolutions before max_cell estimation.")
 
-        form.addParam('refineNproc', pwprot.IntParam,
-                      default=1, label='nproc',
-                      help='The number of processes to use. Not all choices of refinement engine support nproc > 1.'
-                      'Where multiprocessing is possible, it is helpful only in certain circumstances,'
-                      'so this is not recommended for typical use.',
-                      expertLevel=pwprot.LEVEL_ADVANCED
-                      )
+        group = form.addGroup('Refinement parameter configuration',
+                              condition='doIndex', expertLevel=pwprot.LEVEL_ADVANCED)
 
-        group = form.addGroup('Parametrisation')
+        group.addParam('refineNproc', pwprot.IntParam,
+                       default=1, label='nproc',
+                       help='The number of processes to use. Not all choices of refinement engine support nproc > 1.'
+                       'Where multiprocessing is possible, it is helpful only in certain circumstances,'
+                       'so this is not recommended for typical use.'
+                       )
+
+        group = form.addGroup('Model parametrisation',
+                              condition='doIndex')
 
         group.addParam('beamFixInSpindlePlane', pwprot.BooleanParam,
                        label='Fix beam in spindle plane?', default=True,
@@ -191,11 +195,11 @@ class DialsProtIndexSpots(EdProtIndexSpots):
                        "separately to the orientation.",
                        )
 
-        group = form.addGroup('Refinery')
+        group = form.addGroup('Refinery',
+                              expertLevel=pwprot.LEVEL_ADVANCED)
 
         group.addParam('doSetMaxIterations', pwprot.BooleanParam,
                        label='Do you want to set the maximum number of iterations?', default=False,
-                       expertLevel=pwprot.LEVEL_ADVANCED,
                        help="Maximum number of iterations in refinement before termination.",
                        )
 
@@ -207,37 +211,39 @@ class DialsProtIndexSpots(EdProtIndexSpots):
                        )
 
         # Allow some options if the Bravais settings are to be refined
-        form.addSection(label='Refine Bravais settings',
-                        condition='doRefineBravaisSettings')
+        group = form.addGroup('Refine Bravais settings',
+                              condition='doRefineBravaisSettings')
 
-        form.addParam('refineBravNproc', pwprot.IntParam,
-                      default=4, label="How many processors do you want to use?",
-                      help="The number of processes to use.")
+        group.addParam('refineBravNproc', pwprot.IntParam,
+                       default=4, label="How many processors do you want to use?",
+                       help="The number of processes to use.")
 
         # Allow some options that are only relevant for reindexing
-        form.addSection(label='Reindex',
-                        condition='doReindex')
+        group = form.addGroup('Reindex',
+                              condition='doReindex')
 
-        form.addParam('doReindexModel', pwprot.BooleanParam,
-                      default=False, label="Do you want to reindex the experimental model?")
+        group.addParam('doReindexModel', pwprot.BooleanParam,
+                       default=False, label="Do you want to reindex the experimental model?")
 
-        form.addParam('doReindexReflections', pwprot.BooleanParam,
-                      default=False, label="Do you want to reindex the experimental reflections?")
+        group.addParam('doReindexReflections', pwprot.BooleanParam,
+                       default=False, label="Do you want to reindex the experimental reflections?")
 
         # Allow adding anything else with command line syntax
-        form.addSection('Plain command line input')
-        form.addParam('commandLineInputIndexing', pwprot.StringParam,
-                      expertLevel=pwprot.LEVEL_ADVANCED,
-                      default='', condition="doIndex==True",
-                      help="Anything added here will be added at the end of the command line")
-        form.addParam('commandLineInputBravais', pwprot.StringParam,
-                      expertLevel=pwprot.LEVEL_ADVANCED,
-                      default='', condition="doReindexReflections",
-                      help="Anything added here will be added at the end of the command line")
-        form.addParam('commandLineInputReindexing', pwprot.StringParam,
-                      expertLevel=pwprot.LEVEL_ADVANCED,
-                      default='', condition="doReindexModel==True",
-                      help="Anything added here will be added at the end of the command line")
+        # Allow adding anything else with command line syntax
+        group = form.addGroup('Raw command line input parameters',
+                              expertLevel=pwprot.LEVEL_ADVANCED)
+        group.addParam('commandLineInputIndexing', pwprot.StringParam,
+                       default='', condition="doIndex==True",
+                       label='Indexing command line',
+                       help="Anything added here will be added at the end of the command line for indexing")
+        group.addParam('commandLineInputBravais', pwprot.StringParam,
+                       default='', condition="doReindexReflections",
+                       label='Bravais setting command line',
+                       help="Anything added here will be added at the end of the command line for Bravais settings refinement")
+        group.addParam('commandLineInputReindexing', pwprot.StringParam,
+                       default='', condition="doReindexModel==True",
+                       label='Reindexing command line',
+                       help="Anything added here will be added at the end of the command line for reindexing")
 
    # -------------------------- INSERT functions ------------------------------
 

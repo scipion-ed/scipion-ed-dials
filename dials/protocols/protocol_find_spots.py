@@ -70,78 +70,80 @@ class DialsProtFindSpots(EdProtFindSpots):
                       help="The low resolution limit in Angstrom for a pixel to"
                       " be accepted by the filtering algorithm.")
 
-        form.addSection(label='Filtering')
+        group = form.addGroup('Filtering')
 
-        form.addParam('gain', pwprot.FloatParam,
-                      default=None,
-                      allowsNull=True,
-                      label="Gain")
+        group.addParam('gain', pwprot.FloatParam,
+                       default=None,
+                       allowsNull=True,
+                       label="Gain")
 
-        form.addParam('kernelSize', pwprot.IntParam,
-                      default=3,
-                      label="Kernel size",
-                      help="The size of the local area around the spot in which to"
-                      "calculate the mean and variance. The kernel is given as a box"
-                      "of size (2 * nx + 1, 2 * ny + 1) centred at the pixel.")
+        group.addParam('kernelSize', pwprot.IntParam,
+                       default=3,
+                       label="Kernel size",
+                       help="The size of the local area around the spot in which to"
+                       "calculate the mean and variance. The kernel is given as a box"
+                       "of size (2 * nx + 1, 2 * ny + 1) centred at the pixel.")
 
-        form.addParam('sigmaBackground', pwprot.FloatParam,
-                      default=6,
-                      label='sigma background',
-                      help="The number of standard deviations of the index of dispersion"
-                      "(variance / mean) in the local area below which the pixel"
-                      "will be classified as background.")
+        group.addParam('sigmaBackground', pwprot.FloatParam,
+                       default=6,
+                       label='sigma background',
+                       help="The number of standard deviations of the index of dispersion"
+                       "(variance / mean) in the local area below which the pixel"
+                       "will be classified as background.")
 
-        form.addParam('sigmaStrong', pwprot.FloatParam,
-                      default=3,
-                      label="sigma strong",
-                      help="The number of standard deviations above the mean in the local"
-                      "area above which the pixel will be classified as strong.")
+        group.addParam('sigmaStrong', pwprot.FloatParam,
+                       default=3,
+                       label="sigma strong",
+                       help="The number of standard deviations above the mean in the local"
+                       "area above which the pixel will be classified as strong.")
 
-        form.addParam('iceRings', pwprot.BooleanParam,
-                      default=False, label='Filter out ice rings? ')
+        group.addParam('iceRings', pwprot.BooleanParam,
+                       default=False, label='Filter out ice rings? ')
 
-        form.addParam('untrustedAreas', pwprot.BooleanParam,
-                      default=False, label='Are there untrusted areas? ',
-                      expertLevel=pwprot.LEVEL_ADVANCED)
+        group.addParam('untrustedAreas', pwprot.BooleanParam,
+                       default=False, label='Are there untrusted areas? ',
+                       expertLevel=pwprot.LEVEL_ADVANCED)
 
-        form.addParam('untrustedCircle', pwprot.StringParam,
-                      condition='untrustedAreas', default='', help="An untrusted circle (xc, yc, r)")
+        group.addParam('untrustedCircle', pwprot.StringParam,
+                       condition='untrustedAreas', default='', help="An untrusted circle (xc, yc, r)")
 
-        form.addParam('untrustedRectangle_1', pwprot.StringParam,
-                      condition='untrustedAreas', default='', help="An untrusted rectangle (x0, x1, y0, y1)")
+        group.addParam('untrustedRectangle_1', pwprot.StringParam,
+                       condition='untrustedAreas', default='', help="An untrusted rectangle (x0, x1, y0, y1)")
 
-        form.addParam('untrustedRectangle_2', pwprot.StringParam,
-                      condition='untrustedAreas', default='', help="A second untrusted rectangle (x0, x1, y0, y1)")
-        form.addParam('minSpotSize', pwprot.IntParam,
-                      default=None,
-                      allowsNull=True,
-                      label="Minimum spot size (pixels)", help="The minimum "
-                      "number of contiguous pixels for a spot to be accepted by the filtering algorithm.",
-                      expertLevel=pwprot.LEVEL_ADVANCED)
+        group.addParam('untrustedRectangle_2', pwprot.StringParam,
+                       condition='untrustedAreas', default='', help="A second untrusted rectangle (x0, x1, y0, y1)")
+        group.addParam('minSpotSize', pwprot.IntParam,
+                       default=None,
+                       allowsNull=True,
+                       label="Minimum spot size (pixels)", help="The minimum "
+                       "number of contiguous pixels for a spot to be accepted by the filtering algorithm.",
+                       expertLevel=pwprot.LEVEL_ADVANCED)
 
-        form.addParam('maxSpotSize', pwprot.IntParam,
-                      default=1000,
-                      label="Maximum spot size (pixels)", help="The maximum "
-                      "number of contiguous pixels for a spot to be accepted by the filtering algorithm.",
-                      expertLevel=pwprot.LEVEL_ADVANCED)
+        group.addParam('maxSpotSize', pwprot.IntParam,
+                       default=1000,
+                       label="Maximum spot size (pixels)", help="The maximum "
+                       "number of contiguous pixels for a spot to be accepted by the filtering algorithm.",
+                       expertLevel=pwprot.LEVEL_ADVANCED)
 
-        form.addParam('maxStrongPixelFraction', pwprot.FloatParam,
-                      default=0.25,
-                      label='Max fraction strong pixels',
-                      help="If the fraction of pixels in an image marked as strong is"
-                      "greater than this value, throw an exception",
-                      expertLevel=pwprot.LEVEL_ADVANCED)
+        group.addParam('maxStrongPixelFraction', pwprot.FloatParam,
+                       default=0.25,
+                       label='Max fraction strong pixels',
+                       help="If the fraction of pixels in an image marked as strong is"
+                       "greater than this value, throw an exception",
+                       expertLevel=pwprot.LEVEL_ADVANCED)
 
-        form.addParam('thresholdIntensity', pwprot.FloatParam,
-                      default=0,
-                      label='Minimum pixel intensity',
-                      help='All pixels with a lower value will be considered part of the background',
-                      expertLevel=pwprot.LEVEL_ADVANCED)
+        group.addParam('thresholdIntensity', pwprot.FloatParam,
+                       default=0,
+                       label='Minimum pixel intensity',
+                       help='All pixels with a lower value will be considered part of the background',
+                       expertLevel=pwprot.LEVEL_ADVANCED)
 
-        form.addSection('Plain command line input')
-        form.addParam('commandLineInput', pwprot.StringParam,
-                      expertLevel=pwprot.LEVEL_ADVANCED,
-                      default='')
+        # Allow adding anything else with command line syntax
+        group = form.addGroup('Raw command line input parameters',
+                              expertLevel=pwprot.LEVEL_ADVANCED)
+        group.addParam('commandLineInput', pwprot.StringParam,
+                       default='',
+                       help="Anything added here will be added at the end of the command line")
 
     # -------------------------- INSERT functions ------------------------------
 
