@@ -131,9 +131,13 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                                                      "$SCIPION_ED_TESTDATA")
         return m
 
-    def getReferenceFile(self, reffile=None):
+    def getReferenceFile(self, reffile=None, lyso=False):
         if reffile != None:
-            reference = os.path.join(self.dataPath, 'manual-test', reffile)
+            if lyso:
+                reference = os.path.join(
+                    self.dataPath, 'lyso', 'reference', reffile)
+            else:
+                reference = os.path.join(self.dataPath, 'manual-test', reffile)
             try:
                 self.updateImagePath(reference)
             except UnicodeDecodeError:
@@ -141,7 +145,6 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             return reference
 
     # Tests of protocols
-    # TODO: Make tests independent of each other
     def test_find_spots(self):
         self.skipTest("Skip this test until it can be made independent")
         protImport = self._runDialsImportImages(
@@ -159,7 +162,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                                 self.getReferenceFile('strong.refl'))
         # TODO: Add confirmation step that SetOfSpots format and values are correct
 
-    def test_all(self):
+    def test_standard_pipeline(self):
         # Run import
         protImport = self._runDialsImportImages(
             '{TS}/SMV/data/{TI}.img', skipImages=10, rotationAxis='-0.6204,-0.7843,0')
@@ -317,7 +320,160 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 exportFormat=XDS_ASCII
             )
 
-      # Test of I/O utilities
+    def test_lyso_pipeline(self):
+        # Run import
+        protImport = self._runDialsImportImages(
+            'lyso/{TS}/SMV/data/{TI}.img',
+            objLabel="Lyso: dials import",
+            rotationAxis='-0.6204,-0.7843,0',
+            commandLineInput='geometry.detector.distance=2562')
+        self.assertIsNotNone(protImport.getOutputModelFile())
+        importedset = getattr(protImport, 'outputDiffractionImages', None)
+        self.assertIsNotNone(importedset)
+        self.assertIsNotNone(importedset.getDialsModel())
+        with self.subTest(msg="Testing model in SetOfDiffractionImages"):
+            self.assertSameModel(importedset.getDialsModel(),
+                                 self.getReferenceFile('imported.expt', lyso=True))
+        # Run find spots
+        protFindSpots = self._runFindSpots(protImport.outputDiffractionImages,
+                                           objLabel="Lyso: find spots",
+                                           dMin=3.5,
+                                           untrustedAreas=True,
+                                           untrustedRectangle_1='0,516,255,261',
+                                           untrustedRectangle_2='255,261,0,516',
+                                           )
+        foundspotset = getattr(protFindSpots, 'outputDiffractionSpots', None)
+        self.assertIsNotNone(foundspotset)
+        self.assertEqual(foundspotset.getSpots(), 785)
+        self.assertIsNotNone(foundspotset.getDialsModel())
+        with self.subTest(msg="Testing model in SetOfDiffractionSpots"):
+            self.assertSameModel(foundspotset.getDialsModel(),
+                                 self.getReferenceFile('imported.expt', lyso=True))
+        self.assertIsNotNone(foundspotset.getDialsRefl())
+        with self.subTest(msg="Testing reflections in SetOfDiffractionSpots"):
+            self.skipTest("Need to fix errors from paths")
+            self.assertSameRefl(foundspotset.getDialsRefl(),
+                                self.getReferenceFile('strong.refl', lyso=True))
+        # Run indexing
+        with self.subTest(msg="Refine Bravais settings and reindex"):
+            protIndex = self._runIndex(
+                objLabel="Lyso: index and reindex",
+                inputImages=protImport.outputDiffractionImages,
+                inputSpots=protFindSpots.outputDiffractionSpots,
+                doRefineBravaisSettings=True,
+                doReindex=True,
+                doReindexReflections=True,
+                detectorFixPosition=True,
+                detectorFixOrientation=True,
+                detectorFixDistance=True,
+                beamFixInSpindlePlane=True,
+                beamFixOutSpindlePlane=True,
+                beamFixWavelength=True,
+            )
+            indexedset = getattr(protIndex, 'outputIndexedSpots', None)
+            self.assertIsNotNone(protIndex.outputIndexedSpots)
+            self.assertIsNotNone(indexedset.getDialsModel())
+            self.assertIsNotNone(indexedset.getDialsRefl())
+            with self.subTest(msg="Testing model after reindexing"):
+                self.assertSameModel(indexedset.getDialsModel(),
+                                     self.getReferenceFile('bravais_setting_9.expt', lyso=True))
+            with self.subTest(msg="Testing reflections after reindexing"):
+                self.skipTest("Need to fix errors from paths")
+                self.assertSameRefl(indexedset.getDialsRefl(),
+                                    self.getReferenceFile('reindexed.refl', lyso=True))
+
+        # Run refinement
+        with self.subTest(msg="Static refinement"):
+            # self.skipTest("Not implemented")
+            protRefine = self._runRefine(
+                objLabel="Lyso: static refinement",
+                inputSet=protIndex.outputIndexedSpots,
+                scanVarying=False,
+                detectorFixAll=True,
+            )
+            refinedset = getattr(protRefine, 'outputRefinedSpots', None)
+            self.assertIsNotNone(protRefine.outputRefinedSpots)
+            self.assertIsNotNone(refinedset.getDialsModel())
+            self.assertIsNotNone(refinedset.getDialsRefl())
+            with self.subTest(msg="Testing model after refinement"):
+                self.assertSameModel(refinedset.getDialsModel(),
+                                     self.getReferenceFile('refined.expt', lyso=True))
+            with self.subTest(msg="Testing reflections after refinement"):
+                self.skipTest("Need to fix errors from paths")
+                self.assertSameRefl(refinedset.getDialsRefl(),
+                                    self.getReferenceFile('refined.refl', lyso=True))
+
+        # Run scan-varying refinement
+        with self.subTest(msg="Scan-varying refinement"):
+            # self.skipTest("Not implemented")
+            protSvRefine = self._runRefine(
+                objLabel="Lyso: scan-varying refinement",
+                inputSet=protRefine.outputRefinedSpots,
+                scanVarying=True,
+                beamFixAll=False,
+                beamFixInSpindlePlane=False,
+                beamFixOutSpindlePlane=False,
+                beamFixWavelength=True,
+                beamForceStatic=False,
+                detectorFixAll=True,
+            )
+            svrefinedset = getattr(protSvRefine, 'outputRefinedSpots', None)
+            self.assertIsNotNone(protSvRefine.outputRefinedSpots)
+            self.assertIsNotNone(svrefinedset.getDialsModel())
+            self.assertIsNotNone(svrefinedset.getDialsRefl())
+            with self.subTest(msg="Testing model after scan-varying refinement"):
+                self.assertSameModel(svrefinedset.getDialsModel(),
+                                     self.getReferenceFile('sv_refined.expt', lyso=True))
+            with self.subTest(msg="Testing reflections after scan-varying refinement"):
+                self.skipTest("Need to fix errors from paths")
+                self.assertSameRefl(svrefinedset.getDialsRefl(),
+                                    self.getReferenceFile('sv_refined.refl', lyso=True))
+
+        # Run integration
+        with self.subTest(msg="Integration"):
+            # self.skipTest("Not implemented yet")
+            protIntegrate = self._runIntegrate(
+                objLabel="Lyso: integration",
+                inputSet=protSvRefine.outputRefinedSpots,
+                nproc=8,
+                commandLineInput='prediction.d_min=3.5',
+            )
+            integratedset = getattr(
+                protIntegrate, 'outputIntegratedSpots', None)
+            self.assertIsNotNone(protIntegrate.outputIntegratedSpots)
+            self.assertIsNotNone(integratedset.getDialsModel())
+            self.assertIsNotNone(integratedset.getDialsRefl())
+            with self.subTest(msg="Testing model after integration"):
+                self.assertSameModel(integratedset.getDialsModel(),
+                                     self.getReferenceFile('integrated.expt', lyso=True))
+            with self.subTest(msg="Testing reflections after integration"):
+                self.skipTest("Need to fix errors from paths")
+                self.assertSameRefl(integratedset.getDialsRefl(),
+                                    self.getReferenceFile('integrated.refl', lyso=True))
+
+        MTZ = 0
+        SADABS = 1
+        NXS = 2
+        MMCIF = 3
+        MOSFLM = 4
+        XDS = 5
+        XDS_ASCII = 6
+        JSON = 7
+
+        with self.subTest(msg="Export mtz"):
+            protMtzExport = self._runExport(
+                objLabel="Lyso: export mtz",
+                inputSet=protIntegrate.outputIntegratedSpots,
+                exportFormat=MTZ
+            )
+        with self.subTest(msg="Export xds_ascii"):
+            protXdsExport = self._runExport(
+                objLabel="Lyso: export XDS_ASCII",
+                inputSet=protIntegrate.outputIntegratedSpots,
+                exportFormat=XDS_ASCII
+            )
+
+    # Test of I/O utilities
     def test_writeJson(self):
 
         template = os.path.join(self.dataPath, 'IO-test', 'imported.expt')
