@@ -33,7 +33,7 @@ from pathlib import Path
 
 import pyworkflow.protocol as pwprot
 
-from pwed.objects import IntegratedSpot, SetOfIntegratedSpots
+from pwed.objects import IntegratedSpot, SetOfIntegratedSpots, ExportFile, SetOfExportFiles
 from pwed.protocols import EdProtExport
 from dials.convert import writeJson, readRefl, writeRefl
 
@@ -45,10 +45,8 @@ class DialsProtExport(EdProtExport):
     SADABS = 1
     NXS = 2
     MMCIF = 3
-    MOSFLM = 4
-    XDS = 5
-    XDS_ASCII = 6
-    JSON = 7
+    XDS_ASCII = 4
+    JSON = 5
 
     _label = 'export'
 
@@ -71,7 +69,7 @@ class DialsProtExport(EdProtExport):
         form.addParam('exportFormat', pwprot.EnumParam,
                       label='Which format do you want to export?',
                       choices=['mtz', 'sadabs', 'nxs', 'mmcif',
-                               'mosflm', 'xds', 'xds_ascii', 'json'],
+                               'xds_ascii', 'json'],
                       default=self.MTZ,
                       display=pwprot.EnumParam.DISPLAY_HLIST,
                       help="The output file format"
@@ -114,7 +112,7 @@ class DialsProtExport(EdProtExport):
         group.addParam('mtzHklout', pwprot.StringParam,
                        label='Output file',
                        default="",
-                       help="The output MTZ filename, defaults to <jobID>_integrated.mtz",
+                       help="The output MTZ filename, defaults to integrated_<jobID>.mtz",
                        )
 
         group.addParam('mtzCrystalName', pwprot.StringParam,
@@ -219,12 +217,12 @@ class DialsProtExport(EdProtExport):
         self._insertFunctionStep(
             'convertInputStep', self.inputSet.getObjId())
         self._insertFunctionStep('exportStep')
+        self._insertFunctionStep('createOutputStep')
 
     # -------------------------- STEPS functions -------------------------------
     def convertInputStep(self, inputSpotId):
         inputSet = self.inputSet.get()
-        self.info("Number of images: %s" % inputSet.getSize())
-        self.info("Number of spots: %s" % inputSet.getSpots())
+        self.info("Number of spots: %s" % inputSet.getSize())
         # Write new model and/or reflection file if no was supplied from set
         if self._checkWriteModel():
             self.writeJson(inputSet, self.getInputModelFile())
@@ -240,14 +238,13 @@ class DialsProtExport(EdProtExport):
             self.info(self.getError())
 
     def createOutputStep(self):
-        # TODO: define a SetOfExports
-        try:
-            outputSet = self._createSetOfExports()
-            outputSet.setExported(self.getExportFile())
-            outputSet.write()
-            self._defineOutputs(exportedFileSet=outputSet)
-        except Exception as e:
-            self.info(e)
+        outputSet = self._createSetOfExportFiles()
+        eFile = ExportFile()
+        eFile.setExportFile(self.getExport())
+        eFile.setFileType(self.getFileType())
+        outputSet.append(eFile)
+        outputSet.write()
+        self._defineOutputs(exportedFileSet=outputSet)
 
         # -------------------------- INFO functions -------------------------------
     def _validate(self):
@@ -267,8 +264,56 @@ class DialsProtExport(EdProtExport):
         else:
             return self._getExtraPath('integrated_reflections.refl')
 
-    def getExportFile(self):
-        pass
+    def getFormat(self):
+        return self.exportFormat.get()
+
+    def getFileType(self):
+        if self.getFormat() is self.MTZ:
+            filetype = "mtz"
+
+        if self.getFormat() is self.SADABS:
+            filetype = "sad"
+
+        if self.getFormat() is self.NXS:
+            filetype = "nxs"
+
+        if self.getFormat() is self.MMCIF:
+            filetype = "cif"
+
+        if self.getFormat() is self.XDS_ASCII:
+            filetype = "XDS_ASCII"
+
+        if self.getFormat() is self.JSON:
+            filetype = "json"
+
+        return filetype
+
+    def getExport(self):
+        if self.getFormat() is self.MTZ:
+            if self.mtzHklout.get() is "":
+                name = "integrated_{}.mtz".format(self.getObjId())
+            else:
+                name = self.mtzHklout.get()
+
+        if self.getFormat() is self.SADABS:
+            name = self.sadabsHklout.get()
+
+        if self.getFormat() is self.NXS:
+            name = self.nxsHklout.get()
+
+        if self.getFormat() is self.MMCIF:
+            if self.mmcifHklout.get() is "":
+                name = "integrated_{}.cif".format(self.getObjId())
+            else:
+                name = self.mmcifHklout.get()
+
+        if self.getFormat() is self.XDS_ASCII:
+            name = self.xdsAsciiHklout.get()
+
+        if self.getFormat() is self.JSON:
+            name = self.jsonFilename.get()
+
+        return self.outDir(name)
 
     def existsPath(self, path):
         return os.path.exists(path)
@@ -294,48 +339,24 @@ class DialsProtExport(EdProtExport):
             return self._getExtraPath(fn)
 
     def getOutput(self):
-        if self.exportFormat.get() is self.MTZ:
-            if self.mtzHklout.get() is "":
-                name = "integrated_{}.mtz".format(self.getObjId())
-            else:
-                name = self.mtzHklout.get()
-            mtzStr = "mtz.hklout={}".format(self.outDir(name))
-        else:
-            mtzStr = ""
+        mtzStr = "mtz.hklout={}".format(self.getExport())
 
-        sadabsStr = "sadabs.hklout={}".format(
-            self.outDir(self.sadabsHklout.get()))
+        sadabsStr = "sadabs.hklout={}".format(self.getExport())
 
-        nxsStr = "nxs.hklout={}".format(
-            self.outDir(self.nxsHklout.get()))
+        nxsStr = "nxs.hklout={}".format(self.getExport())
 
-        if self.exportFormat.get() is self.MMCIF:
-            if self.mmcifHklout.get() is "":
-                name = "integrated_{}.cif".format(self.getObjId())
-            else:
-                name = self.mmcifHklout.get()
-            mmcifStr = "mmcif.hklout={}".format(self.outDir(name))
-        else:
-            mmcifStr = ""
+        mmcifStr = "mmcif.hklout={}".format(self.getExport())
 
-        mosflmStr = "mosflm.directory={}".format(self.outDir())
+        xdsAsciiStr = "xds_ascii.hklout={}".format(self.getExport())
 
-        xdsStr = "xds.directory={}".format(self.outDir())
+        jsonStr = "json.filename={}".format(self.getExport())
 
-        xdsAsciiStr = "xds_ascii.hklout={}".format(
-            self.outDir(self.xdsAsciiHklout.get()))
-
-        jsonStr = "json.filename={}".format(
-            self.outDir(self.jsonFilename.get()))
-
-        self.info("export format is {}".format(self.exportFormat.get()))
-
-        idx = self.exportFormat.get()
+        idx = self.getFormat()
 
         formats = ['mtz', 'sadabs', 'nxs', 'mmcif',
-                   'mosflm', 'xds', 'xds_ascii', 'json']
+                   'xds_ascii', 'json']
         nameStr = [mtzStr, sadabsStr, nxsStr, mmcifStr,
-                   mosflmStr, xdsStr, xdsAsciiStr, jsonStr]
+                   xdsAsciiStr, jsonStr]
         outputString = "format={} {}".format(formats[idx], nameStr[idx])
         return outputString
 

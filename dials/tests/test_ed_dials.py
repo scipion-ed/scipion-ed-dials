@@ -301,13 +301,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                                     self.getReferenceFile('integrated.refl'))
 
         MTZ = 0
-        SADABS = 1
-        NXS = 2
-        MMCIF = 3
-        MOSFLM = 4
-        XDS = 5
-        XDS_ASCII = 6
-        JSON = 7
+        XDS_ASCII = 4
 
         with self.subTest(msg="Export mtz"):
             protMtzExport = self._runExport(
@@ -455,10 +449,8 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         SADABS = 1
         NXS = 2
         MMCIF = 3
-        MOSFLM = 4
-        XDS = 5
-        XDS_ASCII = 6
-        JSON = 7
+        XDS_ASCII = 4
+        JSON = 5
 
         with self.subTest(msg="Export mtz"):
             protMtzExport = self._runExport(
@@ -466,11 +458,35 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 inputSet=protIntegrate.outputIntegratedSpots,
                 exportFormat=MTZ
             )
+        with self.subTest(msg="Export sadabs"):
+            protSadabsExport = self._runExport(
+                objLabel="Lyso: export sadabs",
+                inputSet=protIntegrate.outputIntegratedSpots,
+                exportFormat=SADABS
+            )
+        with self.subTest(msg="Export nxs"):
+            protNxsExport = self._runExport(
+                objLabel="Lyso: export nxs",
+                inputSet=protIntegrate.outputIntegratedSpots,
+                exportFormat=NXS
+            )
+        with self.subTest(msg="Export mmcif"):
+            protMmcifExport = self._runExport(
+                objLabel="Lyso: export mmcif",
+                inputSet=protIntegrate.outputIntegratedSpots,
+                exportFormat=MMCIF
+            )
         with self.subTest(msg="Export xds_ascii"):
             protXdsExport = self._runExport(
                 objLabel="Lyso: export XDS_ASCII",
                 inputSet=protIntegrate.outputIntegratedSpots,
                 exportFormat=XDS_ASCII
+            )
+        with self.subTest(msg="Export json"):
+            protJsonExport = self._runExport(
+                objLabel="Lyso: export json",
+                inputSet=protIntegrate.outputIntegratedSpots,
+                exportFormat=JSON
             )
 
     # Test of I/O utilities

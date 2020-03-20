@@ -133,12 +133,7 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots):
                 iSpot.setIntensitySumValue(reflDict['intensity.sum.value'][i])
                 iSpot.setIntensitySumVariance(
                     reflDict['intensity.sum.variance'][i])
-                iSpot.setNSignal(reflDict['n_signal'][i])
                 iSpot.setPanel(reflDict['panel'][i])
-                try:
-                    iSpot.setShoebox(reflDict['shoebox'][i])
-                except IndexError:
-                    pass
                 iSpot.setXyzobsPxValue(reflDict['xyzobs.px.value'][i])
                 iSpot.setXyzobsPxVariance(reflDict['xyzobs.px.variance'][i])
                 outputSet.append(iSpot)
