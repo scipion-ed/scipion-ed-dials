@@ -330,39 +330,12 @@ class DialsProtExport(EdProtExport):
 
         self.info("export format is {}".format(self.exportFormat.get()))
 
-        idx = 0
-        if self.exportFormat.get() is self.MTZ:
-            idx = self.MTZ
-        elif self.exportFormat.get() is self.SADABS:
-            idx = self.SADABS
-        elif self.exportFormat.get() is self.NXS:
-            idx = self.NXS
-        elif self.exportFormat.get() is self.MMCIF:
-            idx = self.MMCIF
-        elif self.exportFormat.get() is self.MOSFLM:
-            idx = self.MOSFLM
-        elif self.exportFormat.get() is self.XDS:
-            idx = self.XDS
-        elif self.exportFormat.get() is self.XDS_ASCII:
-            idx = self.XDS_ASCII
-        elif self.exportFormat.get() is self.JSON:
-            idx = self.JSON
-        formats = ['mtz',
-                   'sadabs',
-                   'nxs',
-                   'mmcif',
-                   'mosflm',
-                   'xds',
-                   'xds_ascii',
-                   'json']
-        nameStr = [mtzStr,
-                   sadabsStr,
-                   nxsStr,
-                   mmcifStr,
-                   mosflmStr,
-                   xdsStr,
-                   xdsAsciiStr,
-                   jsonStr]
+        idx = self.exportFormat.get()
+
+        formats = ['mtz', 'sadabs', 'nxs', 'mmcif',
+                   'mosflm', 'xds', 'xds_ascii', 'json']
+        nameStr = [mtzStr, sadabsStr, nxsStr, mmcifStr,
+                   mosflmStr, xdsStr, xdsAsciiStr, jsonStr]
         outputString = "format={} {}".format(formats[idx], nameStr[idx])
         return outputString
 
