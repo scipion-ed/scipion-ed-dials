@@ -119,16 +119,26 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         return self.assertEqual(m1m, m2m)
 
     def assertSameRefl(self, refl1, refl2):
-        with io.open(refl1, 'rb') as r1:
-            with io.open(refl2, 'rb') as r2:
-                return self.assertEqual(r1, r2)
+        with open(refl1, 'rb') as r1, open(refl2, 'rb') as r2:
+            return self.assertEqual(r1.read(), r2.read())
+
+    def assertSameExport(self, export1, export2):
+        if export1.endswith('.mtz'):
+            with open(export1, 'rb') as e1, open(export2, 'rb') as e2:
+                return self.assertEqual(e1.read(), e2.read())
+        else:
+            with open(export1, 'r') as e1, open(export2, 'r') as e2:
+                return self.assertEqual(e1.read(), e2.read())
 
     def updateImagePath(self, modelPath):
         with open(modelPath) as mf:
             m = json.load(mf)
-            p = m['imageset'][0]['template']
-            m['imageset'][0]['template'] = p.replace(pwed.Config.SCIPION_ED_TESTDATA,
-                                                     "$SCIPION_ED_TESTDATA")
+            try:
+                p = m['imageset'][0]['template']
+                m['imageset'][0]['template'] = p.replace(pwed.Config.SCIPION_ED_TESTDATA,
+                                                         "$SCIPION_ED_TESTDATA")
+            except KeyError:
+                pass
         return m
 
     def getReferenceFile(self, reffile=None, lyso=False):
@@ -140,7 +150,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 reference = os.path.join(self.dataPath, 'manual-test', reffile)
             try:
                 self.updateImagePath(reference)
-            except UnicodeDecodeError:
+            except (UnicodeDecodeError, json.decoder.JSONDecodeError):
                 pass
             return reference
 
@@ -157,7 +167,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         self.assertIsNotNone(outputset.getDialsModel())
         self.assertIsNotNone(outputset.getDialsRefl())
         with self.subTest(msg="Testing reflections in SetOfDiffractionSpots"):
-            self.skipTest("Need to fix errors from paths")
+            #self.skipTest("Need to fix errors from paths")
             self.assertSameRefl(outputset.getDialsRefl(),
                                 self.getReferenceFile('strong.refl'))
         # TODO: Add confirmation step that SetOfSpots format and values are correct
@@ -184,7 +194,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                                  self.getReferenceFile('imported.expt'))
         self.assertIsNotNone(foundspotset.getDialsRefl())
         with self.subTest(msg="Testing reflections in SetOfDiffractionSpots"):
-            self.skipTest("Need to fix errors from paths")
+            #self.skipTest("Need to fix errors from paths")
             self.assertSameRefl(foundspotset.getDialsRefl(),
                                 self.getReferenceFile('strong.refl'))
         # Run indexing
@@ -206,7 +216,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 self.assertSameModel(indexedset.getDialsModel(),
                                      self.getReferenceFile('indexed.expt'))
             with self.subTest(msg="Testing reflections in SetOfIndexedSpots"):
-                self.skipTest("Need to fix errors from paths")
+                #self.skipTest("Need to fix errors from paths")
                 self.assertSameRefl(indexedset.getDialsRefl(),
                                     self.getReferenceFile('indexed.refl'))
 
@@ -230,7 +240,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 self.assertSameModel(indexedset.getDialsModel(),
                                      self.getReferenceFile('bravais_setting_12.expt'))
             with self.subTest(msg="Testing reflections after reindexing"):
-                self.skipTest("Need to fix errors from paths")
+                #self.skipTest("Need to fix errors from paths")
                 self.assertSameRefl(indexedset.getDialsRefl(),
                                     self.getReferenceFile('reindexed.refl'))
 
@@ -250,7 +260,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 self.assertSameModel(refinedset.getDialsModel(),
                                      self.getReferenceFile('refined.expt'))
             with self.subTest(msg="Testing reflections after refinement"):
-                self.skipTest("Need to fix errors from paths")
+                #self.skipTest("Need to fix errors from paths")
                 self.assertSameRefl(refinedset.getDialsRefl(),
                                     self.getReferenceFile('refined.refl'))
 
@@ -276,7 +286,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 self.assertSameModel(svrefinedset.getDialsModel(),
                                      self.getReferenceFile('sv_refined.expt'))
             with self.subTest(msg="Testing reflections after scan-varying refinement"):
-                self.skipTest("Need to fix errors from paths")
+                #self.skipTest("Need to fix errors from paths")
                 self.assertSameRefl(svrefinedset.getDialsRefl(),
                                     self.getReferenceFile('sv_refined.refl'))
 
@@ -296,7 +306,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 self.assertSameModel(integratedset.getDialsModel(),
                                      self.getReferenceFile('integrated.expt'))
             with self.subTest(msg="Testing reflections after integration"):
-                self.skipTest("Need to fix errors from paths")
+                #self.skipTest("Need to fix errors from paths")
                 self.assertSameRefl(integratedset.getDialsRefl(),
                                     self.getReferenceFile('integrated.refl'))
 
@@ -308,11 +318,24 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 inputSet=protIntegrate.outputIntegratedSpots,
                 exportFormat=MTZ
             )
+            exportedSet = getattr(protMtzExport, 'exportedFileSet', None)
+            for ef in exportedSet:
+                self.assertSameExport(
+                    ef.getExportFile(),
+                    self.getReferenceFile('integrated.mtz')
+                )
+
         with self.subTest(msg="Export xds_ascii"):
             protXdsExport = self._runExport(
                 inputSet=protIntegrate.outputIntegratedSpots,
                 exportFormat=XDS_ASCII
             )
+            exportedSet = getattr(protXdsExport, 'exportedFileSet', None)
+            for ef in exportedSet:
+                self.assertSameExport(
+                    ef.getExportFile(),
+                    self.getReferenceFile('DIALS.HKL')
+                )
 
     def test_lyso_pipeline(self):
         # Run import
@@ -320,7 +343,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             'lyso/{TS}/SMV/data/{TI}.img',
             objLabel="Lyso: dials import",
             rotationAxis='-0.6204,-0.7843,0',
-            commandLineInput='geometry.detector.distance=2562')
+        )
         self.assertIsNotNone(protImport.getOutputModelFile())
         importedset = getattr(protImport, 'outputDiffractionImages', None)
         self.assertIsNotNone(importedset)
@@ -338,14 +361,14 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                                            )
         foundspotset = getattr(protFindSpots, 'outputDiffractionSpots', None)
         self.assertIsNotNone(foundspotset)
-        self.assertEqual(foundspotset.getSpots(), 785)
+        self.assertEqual(foundspotset.getSpots(), 847)
         self.assertIsNotNone(foundspotset.getDialsModel())
         with self.subTest(msg="Testing model in SetOfDiffractionSpots"):
             self.assertSameModel(foundspotset.getDialsModel(),
                                  self.getReferenceFile('imported.expt', lyso=True))
         self.assertIsNotNone(foundspotset.getDialsRefl())
         with self.subTest(msg="Testing reflections in SetOfDiffractionSpots"):
-            self.skipTest("Need to fix errors from paths")
+            #self.skipTest("Need to fix errors from paths")
             self.assertSameRefl(foundspotset.getDialsRefl(),
                                 self.getReferenceFile('strong.refl', lyso=True))
         # Run indexing
@@ -363,6 +386,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 beamFixInSpindlePlane=True,
                 beamFixOutSpindlePlane=True,
                 beamFixWavelength=True,
+                commandLineInputBravais='beam.fix=all detector.fix=all',
             )
             indexedset = getattr(protIndex, 'outputIndexedSpots', None)
             self.assertIsNotNone(protIndex.outputIndexedSpots)
@@ -372,7 +396,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 self.assertSameModel(indexedset.getDialsModel(),
                                      self.getReferenceFile('bravais_setting_9.expt', lyso=True))
             with self.subTest(msg="Testing reflections after reindexing"):
-                self.skipTest("Need to fix errors from paths")
+                #self.skipTest("Need to fix errors from paths")
                 self.assertSameRefl(indexedset.getDialsRefl(),
                                     self.getReferenceFile('reindexed.refl', lyso=True))
 
@@ -393,7 +417,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 self.assertSameModel(refinedset.getDialsModel(),
                                      self.getReferenceFile('refined.expt', lyso=True))
             with self.subTest(msg="Testing reflections after refinement"):
-                self.skipTest("Need to fix errors from paths")
+                #self.skipTest("Need to fix errors from paths")
                 self.assertSameRefl(refinedset.getDialsRefl(),
                                     self.getReferenceFile('refined.refl', lyso=True))
 
@@ -419,7 +443,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 self.assertSameModel(svrefinedset.getDialsModel(),
                                      self.getReferenceFile('sv_refined.expt', lyso=True))
             with self.subTest(msg="Testing reflections after scan-varying refinement"):
-                self.skipTest("Need to fix errors from paths")
+                #self.skipTest("Need to fix errors from paths")
                 self.assertSameRefl(svrefinedset.getDialsRefl(),
                                     self.getReferenceFile('sv_refined.refl', lyso=True))
 
@@ -441,13 +465,13 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 self.assertSameModel(integratedset.getDialsModel(),
                                      self.getReferenceFile('integrated.expt', lyso=True))
             with self.subTest(msg="Testing reflections after integration"):
-                self.skipTest("Need to fix errors from paths")
+                ##self.skipTest("Need to fix errors from paths")
                 self.assertSameRefl(integratedset.getDialsRefl(),
                                     self.getReferenceFile('integrated.refl', lyso=True))
 
+        # Exports
         MTZ = 0
         SADABS = 1
-        NXS = 2
         MMCIF = 3
         XDS_ASCII = 4
         JSON = 5
@@ -458,36 +482,64 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 inputSet=protIntegrate.outputIntegratedSpots,
                 exportFormat=MTZ
             )
+            exportedSet = getattr(protMtzExport, 'exportedFileSet', None)
+            for ef in exportedSet:
+                self.assertSameExport(
+                    ef.getExportFile(),
+                    self.getReferenceFile('integrated.mtz', lyso=True)
+                )
+
         with self.subTest(msg="Export sadabs"):
             protSadabsExport = self._runExport(
                 objLabel="Lyso: export sadabs",
                 inputSet=protIntegrate.outputIntegratedSpots,
                 exportFormat=SADABS
             )
-        with self.subTest(msg="Export nxs"):
-            protNxsExport = self._runExport(
-                objLabel="Lyso: export nxs",
-                inputSet=protIntegrate.outputIntegratedSpots,
-                exportFormat=NXS
-            )
+            exportedSet = getattr(protSadabsExport, 'exportedFileSet', None)
+            for ef in exportedSet:
+                self.assertSameExport(
+                    ef.getExportFile(),
+                    self.getReferenceFile('integrated.sad', lyso=True)
+                )
+
         with self.subTest(msg="Export mmcif"):
             protMmcifExport = self._runExport(
                 objLabel="Lyso: export mmcif",
                 inputSet=protIntegrate.outputIntegratedSpots,
                 exportFormat=MMCIF
             )
+            exportedSet = getattr(protMmcifExport, 'exportedFileSet', None)
+            for ef in exportedSet:
+                self.assertSameExport(
+                    ef.getExportFile(),
+                    self.getReferenceFile('integrated.cif', lyso=True)
+                )
+
         with self.subTest(msg="Export xds_ascii"):
             protXdsExport = self._runExport(
                 objLabel="Lyso: export XDS_ASCII",
                 inputSet=protIntegrate.outputIntegratedSpots,
                 exportFormat=XDS_ASCII
             )
+            exportedSet = getattr(protXdsExport, 'exportedFileSet', None)
+            for ef in exportedSet:
+                self.assertSameExport(
+                    ef.getExportFile(),
+                    self.getReferenceFile('DIALS.HKL', lyso=True)
+                )
+
         with self.subTest(msg="Export json"):
             protJsonExport = self._runExport(
                 objLabel="Lyso: export json",
                 inputSet=protIntegrate.outputIntegratedSpots,
                 exportFormat=JSON
             )
+            exportedSet = getattr(protJsonExport, 'exportedFileSet', None)
+            for ef in exportedSet:
+                self.assertSameExport(
+                    ef.getExportFile(),
+                    self.getReferenceFile('rlp.json', lyso=True)
+                )
 
     # Test of I/O utilities
     def test_writeJson(self):

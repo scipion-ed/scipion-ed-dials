@@ -237,11 +237,11 @@ class DialsProtIndexSpots(EdProtIndexSpots):
                        label='Indexing command line',
                        help="Anything added here will be added at the end of the command line for indexing")
         group.addParam('commandLineInputBravais', pwprot.StringParam,
-                       default='', condition="doReindexReflections",
+                       default='', condition="doRefineBravaisSettings",
                        label='Bravais setting command line',
                        help="Anything added here will be added at the end of the command line for Bravais settings refinement")
         group.addParam('commandLineInputReindexing', pwprot.StringParam,
-                       default='', condition="doReindexModel==True",
+                       default='', condition="doReindex",
                        label='Reindexing command line',
                        help="Anything added here will be added at the end of the command line for reindexing")
 
