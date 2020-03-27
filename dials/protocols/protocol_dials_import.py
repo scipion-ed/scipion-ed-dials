@@ -48,25 +48,10 @@ class DialsProtImportDiffractionImages(ProtImportDiffractionImages):
       - For each file a function to process it will be called
         (_importFile(fileName, fileId))
     """
-    IMPORT_FROM_FILES = 0
-
-    # How to handle the input files into the project
-    IMPORT_COPY_FILES = 0
-    IMPORT_LINK_ABS = 1
-    IMPORT_LINK_REL = 2
-
-    IMPORT_TYPE_MICS = 0
-    IMPORT_TYPE_MOVS = 1
-
-    ANGLES_FROM_FILES = 0
-    ANGLES_FROM_HEADER = 1
-    ANGLES_FROM_MDOC = 2
-
-    _label = 'import diffraction images'
 
     # -------------------------- DEFINE param functions -----------------------
     def _defineParams(self, form):
-        ProtImportDiffractionImages._defineParams()
+        ProtImportDiffractionImages._defineParams(self, form)
 
         # Allow adding anything else with command line syntax
         group = form.addGroup('Raw command line input parameters',
@@ -77,51 +62,23 @@ class DialsProtImportDiffractionImages(ProtImportDiffractionImages):
 
     # -------------------------- INSERT functions ------------------------------
     def _insertAllSteps(self):
-        ProtImportDiffractionImages._insertAllSteps()
+        self.loadPatterns()
+        super()._insertFunctionStep(
+            'convertInputStep', self._pattern)
+        self._insertFunctionStep('importStep')
+        self._insertFunctionStep('createOutputStep')
 
     # -------------------------- STEPS functions -------------------------------
-    def importStep(self, pattern):
+    def importStep(self):
         # Run dials import on the images
+        self.info("Rotation axis is {}".format(self.getRotationAxis()))
         program = 'dials.import'
         arguments = self._prepareCommandLineArguments(program)
         self.runJob(program, arguments)
+        assert(os.path.exists(self.getOutputModelFile()))
 
-        outputSet = self._createSetOfDiffractionImages()
-        outputSet.setSkipImages(self.skipImages.get())
-
-        outputSet.setDialsModel(self.getOutputModelFile())
-
-        dImg = DiffractionImage()
-
-        for f, ts, ti in self.getMatchingFiles():
-            dImg.setFileName(f)
-            dImg.setObjId(int(ti))
-            if self.skipImages.get() is not None:
-                dImg.setIgnore(true_or_false=bool(int(ti) %
-                                                  self.skipImages.get() == 0))
-            dImg.setRotationAxis(rotAxis)
-
-            try:
-                if f.endswith('.img'):
-                    h = self.readSmvHeader(f)
-                    dImg.setPixelSize(float(h.get('PIXEL_SIZE')))
-                    dImg.setDim(int(h.get('SIZE1')))
-                    dImg.setWavelength(float(h.get('WAVELENGTH')))
-                    dImg.setDistance(float(h.get('DISTANCE')))
-                    dImg.setOscillation(float(h.get('OSC_START')),
-                                        float(h.get('OSC_RANGE')))
-                    dImg.setBeamCenter(float(h.get('BEAM_CENTER_X')),
-                                       float(h.get('BEAM_CENTER_Y')))
-                    dImg.setExposureTime(float(h.get('TIME')))
-                    dImg.setTwoTheta(float(h.get('TWOTHETA')))
-            except Exception as e:
-                print(e)
-
-            outputSet.append(dImg)
-
-        outputSet.write()
-
-        self._defineOutputs(outputDiffractionImages=outputSet)
+    def createOutputStep(self):
+        super().createOutputStep(dialsModel=self.getOutputModelFile())
 
     # -------------------------- INFO functions -------------------------------
     # def _validate(self)
@@ -154,8 +111,9 @@ class DialsProtImportDiffractionImages(ProtImportDiffractionImages):
         cmdparams += " output.log={} output.experiments={}".format(
             logPath, self.getOutputModelFile())
 
-        if type(self.getRotationAxis()) is str:
-            cmdparams += " goniometer.axes={}".format(self.getRotationAxis())
+        if self.getRotationAxis():
+            cmdparams += " goniometer.axes={}".format(
+                ",".join(map(str, self.getRotationAxis())))
 
         if self.commandLineInput.get():
             cmdparams += " {}".format(self.commandLineInput.get())
