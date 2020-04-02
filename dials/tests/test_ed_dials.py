@@ -4,7 +4,7 @@
 # *              Viktor E.G. Bengtsson (viktor.bengtsson@mmk.su.se)    [2]
 # *
 # * [1] SciLifeLab, Stockholm University
-# * [2] Department of Materials and Enviromental Chemistry, Stockholm University
+# * [2] Department of Materials and Environmental Chemistry, Stockholm University
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@ import pwed
 from pwed.objects import DiffractionImage, SetOfDiffractionImages, DiffractionSpot, SetOfSpots, IndexedSpot, SetOfIndexedSpots, RefinedSpot, SetOfRefinedSpots, IntegratedSpot, SetOfIntegratedSpots
 from pwed.protocols import ProtImportDiffractionImages
 
-from dials.protocols import DialsProtImportDiffractionImages, DialsProtFindSpots, DialsProtIndexSpots, DialsProtRefineSpots, DialsProtIntegrateSpots, DialsProtExport
+from dials.protocols import DialsProtImportDiffractionImages, DialsProtFindSpots, DialsProtIndexSpots, DialsProtRefineSpots, DialsProtIntegrateSpots, DialsProtExport, DialsProtSymmetry, DialsProtScaling
 from dials.convert import writeJson, readRefl, writeRefl
 
 
@@ -105,6 +105,20 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         self.launchProtocol(protIntegrate)
         return protIntegrate
 
+    def _runSymmetry(self, inputSet, **kwargs):
+        protSymmetry = self.newProtocol(DialsProtSymmetry,
+                                        inputSet=inputSet,
+                                        **kwargs)
+        self.launchProtocol(protSymmetry)
+        return protSymmetry
+
+    def _runScaling(self, inputSet, **kwargs):
+        protScaling = self.newProtocol(DialsProtScaling,
+                                       inputSet=inputSet,
+                                       **kwargs)
+        self.launchProtocol(protScaling)
+        return protScaling
+
     def _runExport(self, inputSet, **kwargs):
         protExport = self.newProtocol(DialsProtExport,
                                       inputSet=inputSet,
@@ -113,6 +127,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         return protExport
 
     # Helper functions
+
     def assertSameModel(self, model1, model2):
         with io.open(model1) as m1:
             m1m = [s[s.find('extra/'):] for s in list(m1)]
@@ -143,11 +158,11 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 pass
         return m
 
-    def getReferenceFile(self, reffile=None, lyso=False):
+    def getReferenceFile(self, reffile=None, lyso=False, experiment=None):
         if reffile != None:
             if lyso:
                 reference = os.path.join(
-                    self.dataPath, 'lyso', 'reference', reffile)
+                    self.dataPath, 'lyso', 'reference', experiment, reffile)
             else:
                 reference = os.path.join(self.dataPath, 'manual-test', reffile)
             try:
@@ -155,6 +170,16 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             except (UnicodeDecodeError, json.decoder.JSONDecodeError):
                 pass
             return reference
+
+    def getTestExperiments(self):
+        experiments = []
+        experiment_14 = {'location': 'lyso/experiment_14',
+                         'd_min': 2.5, 'found_spots': 1322, 'distance': 1480.56}
+        experiment_24 = {'location': 'lyso/experiment_24',
+                         'd_min': 3.5, 'found_spots': 847, 'distance': None}
+        experiments.append(experiment_14)
+        experiments.append(experiment_24)
+        return experiments
 
     def test_standard_pipeline(self):
         # Run import
@@ -324,10 +349,10 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             )
 
             exportedSet = getattr(protMtzExport, 'exportedFileSet', None)
-            #self.skipTest("Do not test mtz")
+            # self.skipTest("Do not test mtz")
             for ef in exportedSet:
                 self.assertSameExport(
-                    ef.getExportFile(),
+                    ef.getFilePath(),
                     self.getReferenceFile('integrated.mtz')
                 )
 
@@ -343,234 +368,470 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             exportedSet = getattr(protXdsExport, 'exportedFileSet', None)
             for ef in exportedSet:
                 self.assertSameExport(
-                    ef.getExportFile(),
+                    ef.getFilePath(),
                     self.getReferenceFile('DIALS.HKL')
                 )
 
     def test_lyso_pipeline(self):
-        experiment = 'lyso/experiment_24'
-        with self.subTest(msg='Pipeline using {}'.format(experiment), experiment=experiment):
-            # Run import
-            protImport = self._runDialsImportImages(
-                "/".join([experiment, 'SMV/data/{TI}.img']),
-                objLabel="Lyso: dials import",
-                rotationAxis='-0.6204,-0.7843,0',
-            )
-            self.assertIsNotNone(protImport.getOutputModelFile())
-            importedset = getattr(protImport, 'outputDiffractionImages', None)
-            self.assertIsNotNone(importedset)
-            self.assertIsNotNone(importedset.getDialsModel())
-            with self.subTest(msg="Testing model in SetOfDiffractionImages"):
-                self.assertSameModel(importedset.getDialsModel(),
-                                     self.getReferenceFile('imported.expt', lyso=True))
-            # Run find spots
-            protFindSpots = self._runFindSpots(protImport.outputDiffractionImages,
-                                               objLabel="Lyso: find spots",
-                                               dMin=3.5,
-                                               untrustedAreas=True,
-                                               untrustedRectangle_1='0,516,255,261',
-                                               untrustedRectangle_2='255,261,0,516',
-                                               )
-            foundspotset = getattr(
-                protFindSpots, 'outputDiffractionSpots', None)
-            self.assertIsNotNone(foundspotset)
-            self.assertEqual(foundspotset.getSpots(), 847)
-            self.assertIsNotNone(foundspotset.getDialsModel())
-            with self.subTest(msg="Testing model in SetOfDiffractionSpots"):
-                self.assertSameModel(foundspotset.getDialsModel(),
-                                     self.getReferenceFile('imported.expt', lyso=True))
-            self.assertIsNotNone(foundspotset.getDialsRefl())
-            with self.subTest(msg="Testing reflections in SetOfDiffractionSpots"):
-                self.skipTest(
-                    "Test fails but does not seem to influence exported results")
-                self.assertSameRefl(foundspotset.getDialsRefl(),
-                                    self.getReferenceFile('strong.refl', lyso=True))
-            # Run indexing
-            protIndex = self._runIndex(
-                objLabel="Lyso: index and reindex",
-                inputImages=protImport.outputDiffractionImages,
-                inputSpots=protFindSpots.outputDiffractionSpots,
-                doRefineBravaisSettings=True,
-                doReindex=True,
-                doReindexReflections=True,
-                detectorFixPosition=True,
-                detectorFixOrientation=True,
-                detectorFixDistance=True,
-                beamFixInSpindlePlane=True,
-                beamFixOutSpindlePlane=True,
-                beamFixWavelength=True,
-                commandLineInputBravais='beam.fix=all detector.fix=all',
-            )
-            indexedset = getattr(protIndex, 'outputIndexedSpots', None)
-            self.assertIsNotNone(protIndex.outputIndexedSpots)
-            self.assertIsNotNone(indexedset.getDialsModel())
-            self.assertIsNotNone(indexedset.getDialsRefl())
-            self.assertSameModel(indexedset.getDialsModel(),
-                                 self.getReferenceFile('bravais_setting_9.expt', lyso=True))
-            with self.subTest(msg="Testing reflections after reindexing"):
-                self.skipTest(
-                    "Test fails but does not seem to influence exported results")
-                self.assertSameRefl(indexedset.getDialsRefl(),
-                                    self.getReferenceFile('reindexed.refl', lyso=True))
+        self.lyso_pipeline(experiments=self.getTestExperiments())
 
-            # Run refinement
-            protRefine = self._runRefine(
-                objLabel="Lyso: static refinement",
-                inputSet=protIndex.outputIndexedSpots,
-                scanVarying=False,
-                detectorFixAll=True,
-            )
-            refinedset = getattr(protRefine, 'outputRefinedSpots', None)
-            self.assertIsNotNone(protRefine.outputRefinedSpots)
-            self.assertIsNotNone(refinedset.getDialsModel())
-            self.assertIsNotNone(refinedset.getDialsRefl())
-            self.assertSameModel(refinedset.getDialsModel(),
-                                 self.getReferenceFile('refined.expt', lyso=True))
-            with self.subTest(msg="Testing reflections after refinement"):
-                self.skipTest(
-                    "Test fails but does not seem to influence exported results")
-                self.assertSameRefl(refinedset.getDialsRefl(),
-                                    self.getReferenceFile('refined.refl', lyso=True))
+    def test_scaling_pipeline(self):
+        self.scaling_pipeline(experiments=self.getTestExperiments())
 
-            # Run scan-varying refinement
-            protSvRefine = self._runRefine(
-                objLabel="Lyso: scan-varying refinement",
-                inputSet=protRefine.outputRefinedSpots,
-                scanVarying=True,
-                beamFixAll=False,
-                beamFixInSpindlePlane=False,
-                beamFixOutSpindlePlane=False,
-                beamFixWavelength=True,
-                beamForceStatic=False,
-                detectorFixAll=True,
-            )
-            svrefinedset = getattr(
-                protSvRefine, 'outputRefinedSpots', None)
-            self.assertIsNotNone(protSvRefine.outputRefinedSpots)
-            self.assertIsNotNone(svrefinedset.getDialsModel())
-            self.assertIsNotNone(svrefinedset.getDialsRefl())
-            self.assertSameModel(svrefinedset.getDialsModel(),
-                                 self.getReferenceFile('sv_refined.expt', lyso=True))
-            with self.subTest(msg="Testing reflections after scan-varying refinement"):
-                self.skipTest(
-                    "Test fails but does not seem to influence exported results")
-                self.assertSameRefl(svrefinedset.getDialsRefl(),
-                                    self.getReferenceFile('sv_refined.refl', lyso=True))
-
-            # Run integration
-            protIntegrate = self._runIntegrate(
-                objLabel="Lyso: integration",
-                inputSet=protSvRefine.outputRefinedSpots,
-                nproc=8,
-                commandLineInput='prediction.d_min=3.5',
-            )
-            integratedset = getattr(
-                protIntegrate, 'outputIntegratedSpots', None)
-            self.assertIsNotNone(protIntegrate.outputIntegratedSpots)
-            self.assertIsNotNone(integratedset.getDialsModel())
-            self.assertIsNotNone(integratedset.getDialsRefl())
-            self.assertSameModel(integratedset.getDialsModel(),
-                                 self.getReferenceFile('integrated.expt', lyso=True))
-            with self.subTest(msg="Testing reflections after integration"):
-                self.skipTest(
-                    "Test fails but does not seem to influence exported results")
-                self.assertSameRefl(integratedset.getDialsRefl(),
-                                    self.getReferenceFile('integrated.refl', lyso=True))
-
-            # Exports
-            MTZ = 0
-            SADABS = 1
-            MMCIF = 3
-            XDS_ASCII = 4
-            JSON = 5
-
-            skipExport = False
-            try:
-                exportSpots = protIntegrate.outputIntegratedSpots
-            except UnboundLocalError as e:
-                self.info(e)
-                self.info(protIntegrate.outputIntegratedSpots)
-                skipExport = True
-
-            with self.subTest(msg="Export mtz"):
-                if skipExport:
-                    self.skipTest("Nothing to export")
-                else:
-                    self.skipTest("mtz export fails on different date")
-                protMtzExport = self._runExport(
-                    objLabel="Lyso: export mtz",
-                    inputSet=exportSpots,
-                    exportFormat=MTZ
+    def lyso_pipeline(self, experiments=None):
+        for experiment in experiments:
+            with self.subTest(msg='Pipeline using {}'.format(experiment['location']), experiment=experiment['location']):
+                # Run import
+                protImport = self._runDialsImportImages(
+                    "/".join([experiment['location'], 'SMV/data/{TI}.img']),
+                    objLabel="Lyso: dials import",
+                    rotationAxis='-0.6204,-0.7843,0',
+                    overwriteDetectorDistance=experiment['distance'],
                 )
-                exportedSet = getattr(protMtzExport, 'exportedFileSet', None)
-                for ef in exportedSet:
-                    self.assertSameExport(
-                        ef.getExportFile(),
-                        self.getReferenceFile('integrated.mtz', lyso=True)
-                    )
-
-            with self.subTest(msg="Export sadabs"):
-                if skipExport:
-                    self.skipTest("Nothing to export")
-                protSadabsExport = self._runExport(
-                    objLabel="Lyso: export sadabs",
-                    inputSet=exportSpots,
-                    exportFormat=SADABS
+                self.assertIsNotNone(protImport.getOutputModelFile())
+                importedset = getattr(
+                    protImport, 'outputDiffractionImages', None)
+                self.assertIsNotNone(importedset)
+                self.assertIsNotNone(importedset.getDialsModel())
+                with self.subTest(msg="Testing model in SetOfDiffractionImages"):
+                    self.assertSameModel(importedset.getDialsModel(),
+                                         self.getReferenceFile('imported.expt', lyso=True, experiment=experiment['location']))
+                # Run find spots
+                protFindSpots = self._runFindSpots(protImport.outputDiffractionImages,
+                                                   objLabel="Lyso: find spots",
+                                                   dMin=experiment['d_min'],
+                                                   untrustedAreas=True,
+                                                   untrustedRectangle_1='0,516,255,261',
+                                                   untrustedRectangle_2='255,261,0,516',
+                                                   )
+                foundspotset = getattr(
+                    protFindSpots, 'outputDiffractionSpots', None)
+                self.assertIsNotNone(foundspotset)
+                self.assertEqual(foundspotset.getSpots(),
+                                 experiment['found_spots'])
+                self.assertIsNotNone(foundspotset.getDialsModel())
+                with self.subTest(msg="Testing model in SetOfDiffractionSpots"):
+                    self.assertSameModel(foundspotset.getDialsModel(),
+                                         self.getReferenceFile('imported.expt', lyso=True, experiment=experiment['location']))
+                self.assertIsNotNone(foundspotset.getDialsRefl())
+                with self.subTest(msg="Testing reflections in SetOfDiffractionSpots"):
+                    self.skipTest(
+                        "Test fails but does not seem to influence exported results")
+                    self.assertSameRefl(foundspotset.getDialsRefl(),
+                                        self.getReferenceFile('strong.refl', lyso=True, experiment=experiment['location']))
+                # Run indexing
+                protIndex = self._runIndex(
+                    objLabel="Lyso: index and reindex",
+                    inputImages=protImport.outputDiffractionImages,
+                    inputSpots=protFindSpots.outputDiffractionSpots,
+                    doRefineBravaisSettings=True,
+                    doReindex=True,
+                    doReindexReflections=True,
+                    detectorFixPosition=True,
+                    detectorFixOrientation=True,
+                    detectorFixDistance=True,
+                    beamFixInSpindlePlane=True,
+                    beamFixOutSpindlePlane=True,
+                    beamFixWavelength=True,
+                    commandLineInputBravais='beam.fix=all detector.fix=all',
                 )
-                exportedSet = getattr(
-                    protSadabsExport, 'exportedFileSet', None)
-                for ef in exportedSet:
-                    self.assertSameExport(
-                        ef.getExportFile(),
-                        self.getReferenceFile('integrated.sad', lyso=True)
-                    )
+                indexedset = getattr(protIndex, 'outputIndexedSpots', None)
+                self.assertIsNotNone(protIndex.outputIndexedSpots)
+                self.assertIsNotNone(indexedset.getDialsModel())
+                self.assertIsNotNone(indexedset.getDialsRefl())
+                self.assertSameModel(indexedset.getDialsModel(),
+                                     self.getReferenceFile('bravais_setting_9.expt', lyso=True, experiment=experiment['location']))
+                with self.subTest(msg="Testing reflections after reindexing"):
+                    self.skipTest(
+                        "Test fails but does not seem to influence exported results")
+                    self.assertSameRefl(indexedset.getDialsRefl(),
+                                        self.getReferenceFile('reindexed.refl', lyso=True, experiment=experiment['location']))
 
-            with self.subTest(msg="Export mmcif"):
-                if skipExport:
-                    self.skipTest("Nothing to export")
-                else:
-                    self.skipTest("mmcif export fails on different date")
-                protMmcifExport = self._runExport(
-                    objLabel="Lyso: export mmcif",
-                    inputSet=exportSpots,
-                    exportFormat=MMCIF
+                # Run refinement
+                protRefine = self._runRefine(
+                    objLabel="Lyso: static refinement",
+                    inputSet=protIndex.outputIndexedSpots,
+                    scanVarying=False,
+                    detectorFixAll=True,
                 )
-                exportedSet = getattr(protMmcifExport, 'exportedFileSet', None)
-                for ef in exportedSet:
-                    self.assertSameExport(
-                        ef.getExportFile(),
-                        self.getReferenceFile('integrated.cif', lyso=True)
-                    )
+                refinedset = getattr(protRefine, 'outputRefinedSpots', None)
+                self.assertIsNotNone(protRefine.outputRefinedSpots)
+                self.assertIsNotNone(refinedset.getDialsModel())
+                self.assertIsNotNone(refinedset.getDialsRefl())
+                self.assertSameModel(refinedset.getDialsModel(),
+                                     self.getReferenceFile('refined.expt', lyso=True, experiment=experiment['location']))
+                with self.subTest(msg="Testing reflections after refinement"):
+                    self.skipTest(
+                        "Test fails but does not seem to influence exported results")
+                    self.assertSameRefl(refinedset.getDialsRefl(),
+                                        self.getReferenceFile('refined.refl', lyso=True, experiment=experiment['location']))
 
-            with self.subTest(msg="Export xds_ascii"):
-                if skipExport:
-                    self.skipTest("Nothing to export")
-                protXdsExport = self._runExport(
-                    objLabel="Lyso: export XDS_ASCII",
-                    inputSet=exportSpots,
-                    exportFormat=XDS_ASCII
+                # Run scan-varying refinement
+                protSvRefine = self._runRefine(
+                    objLabel="Lyso: scan-varying refinement",
+                    inputSet=protRefine.outputRefinedSpots,
+                    scanVarying=True,
+                    beamFixAll=False,
+                    beamFixInSpindlePlane=False,
+                    beamFixOutSpindlePlane=False,
+                    beamFixWavelength=True,
+                    beamForceStatic=False,
+                    detectorFixAll=True,
                 )
-                exportedSet = getattr(protXdsExport, 'exportedFileSet', None)
-                for ef in exportedSet:
-                    self.assertSameExport(
-                        ef.getExportFile(),
-                        self.getReferenceFile('DIALS.HKL', lyso=True)
-                    )
+                svrefinedset = getattr(
+                    protSvRefine, 'outputRefinedSpots', None)
+                self.assertIsNotNone(protSvRefine.outputRefinedSpots)
+                self.assertIsNotNone(svrefinedset.getDialsModel())
+                self.assertIsNotNone(svrefinedset.getDialsRefl())
+                self.assertSameModel(svrefinedset.getDialsModel(),
+                                     self.getReferenceFile('sv_refined.expt', lyso=True, experiment=experiment['location']))
+                with self.subTest(msg="Testing reflections after scan-varying refinement"):
+                    self.skipTest(
+                        "Test fails but does not seem to influence exported results")
+                    self.assertSameRefl(svrefinedset.getDialsRefl(),
+                                        self.getReferenceFile('sv_refined.refl', lyso=True, experiment=experiment['location']))
 
-            with self.subTest(msg="Export json"):
-                if skipExport:
-                    self.skipTest("Nothing to export")
-                protJsonExport = self._runExport(
-                    objLabel="Lyso: export json",
-                    inputSet=exportSpots,
-                    exportFormat=JSON
+                # Run integration
+                protIntegrate = self._runIntegrate(
+                    objLabel="Lyso: integration",
+                    inputSet=protSvRefine.outputRefinedSpots,
+                    nproc=8,
+                    commandLineInput='prediction.d_min=3.5',
                 )
-                exportedSet = getattr(protJsonExport, 'exportedFileSet', None)
-                for ef in exportedSet:
-                    self.assertSameExport(
-                        ef.getExportFile(),
-                        self.getReferenceFile('rlp.json', lyso=True)
+                integratedset = getattr(
+                    protIntegrate, 'outputIntegratedSpots', None)
+                self.assertIsNotNone(protIntegrate.outputIntegratedSpots)
+                self.assertIsNotNone(integratedset.getDialsModel())
+                self.assertIsNotNone(integratedset.getDialsRefl())
+                self.assertSameModel(integratedset.getDialsModel(),
+                                     self.getReferenceFile('integrated.expt', lyso=True, experiment=experiment['location']))
+                with self.subTest(msg="Testing reflections after integration"):
+                    self.skipTest(
+                        "Test fails but does not seem to influence exported results")
+                    self.assertSameRefl(integratedset.getDialsRefl(),
+                                        self.getReferenceFile('integrated.refl', lyso=True, experiment=experiment['location']))
+
+                # Exports
+                MTZ = 0
+                SADABS = 1
+                MMCIF = 3
+                XDS_ASCII = 4
+                JSON = 5
+
+                skipExport = False
+                try:
+                    exportSpots = protIntegrate.outputIntegratedSpots
+                except UnboundLocalError as e:
+                    self.info(e)
+                    self.info(protIntegrate.outputIntegratedSpots)
+                    skipExport = True
+
+                with self.subTest(msg="Export mtz"):
+                    if skipExport:
+                        self.skipTest("Nothing to export")
+                    else:
+                        self.skipTest("mtz export fails on different date")
+                    protMtzExport = self._runExport(
+                        objLabel="Lyso: export mtz",
+                        inputSet=exportSpots,
+                        exportFormat=MTZ
                     )
+                    exportedSet = getattr(
+                        protMtzExport, 'exportedFileSet', None)
+                    for ef in exportedSet:
+                        self.assertSameExport(
+                            ef.getFilePath(),
+                            self.getReferenceFile(
+                                'integrated.mtz', lyso=True, experiment=experiment['location'])
+                        )
+
+                with self.subTest(msg="Export sadabs"):
+                    if skipExport:
+                        self.skipTest("Nothing to export")
+                    protSadabsExport = self._runExport(
+                        objLabel="Lyso: export sadabs",
+                        inputSet=exportSpots,
+                        exportFormat=SADABS
+                    )
+                    exportedSet = getattr(
+                        protSadabsExport, 'exportedFileSet', None)
+                    for ef in exportedSet:
+                        self.assertSameExport(
+                            ef.getFilePath(),
+                            self.getReferenceFile(
+                                'integrated.sad', lyso=True, experiment=experiment['location'])
+                        )
+
+                with self.subTest(msg="Export mmcif"):
+                    if skipExport:
+                        self.skipTest("Nothing to export")
+                    else:
+                        self.skipTest("mmcif export fails on different date")
+                    protMmcifExport = self._runExport(
+                        objLabel="Lyso: export mmcif",
+                        inputSet=exportSpots,
+                        exportFormat=MMCIF
+                    )
+                    exportedSet = getattr(
+                        protMmcifExport, 'exportedFileSet', None)
+                    for ef in exportedSet:
+                        self.assertSameExport(
+                            ef.getFilePath(),
+                            self.getReferenceFile(
+                                'integrated.cif', lyso=True, experiment=experiment['location'])
+                        )
+
+                with self.subTest(msg="Export xds_ascii"):
+                    if skipExport:
+                        self.skipTest("Nothing to export")
+                    protXdsExport = self._runExport(
+                        objLabel="Lyso: export XDS_ASCII",
+                        inputSet=exportSpots,
+                        exportFormat=XDS_ASCII
+                    )
+                    exportedSet = getattr(
+                        protXdsExport, 'exportedFileSet', None)
+                    for ef in exportedSet:
+                        self.assertSameExport(
+                            ef.getFilePath(),
+                            self.getReferenceFile(
+                                'DIALS.HKL', lyso=True, experiment=experiment['location'])
+                        )
+
+                with self.subTest(msg="Export json"):
+                    if skipExport:
+                        self.skipTest("Nothing to export")
+                    protJsonExport = self._runExport(
+                        objLabel="Lyso: export json",
+                        inputSet=exportSpots,
+                        exportFormat=JSON
+                    )
+                    exportedSet = getattr(
+                        protJsonExport, 'exportedFileSet', None)
+                    for ef in exportedSet:
+                        self.assertSameExport(
+                            ef.getFilePath(),
+                            self.getReferenceFile(
+                                'rlp.json', lyso=True, experiment=experiment['location'])
+                        )
+
+    # Pipeline with scaling
+
+    def scaling_pipeline(self, experiments=None):
+        for experiment in experiments:
+            with self.subTest(msg='Pipeline using {}'.format(experiment['location']), experiment=experiment):
+                # Run import
+                protImport = self._runDialsImportImages(
+                    "/".join([experiment['location'], 'SMV/data/{TI}.img']),
+                    objLabel="Scaling: dials import",
+                    rotationAxis='-0.6204,-0.7843,0',
+                    overwriteDetectorDistance=experiment['distance'],
+                )
+                self.assertIsNotNone(protImport.getOutputModelFile())
+                importedset = getattr(
+                    protImport, 'outputDiffractionImages', None)
+                self.assertIsNotNone(importedset)
+                self.assertIsNotNone(importedset.getDialsModel())
+                with self.subTest(msg="Testing model in SetOfDiffractionImages"):
+                    self.assertSameModel(importedset.getDialsModel(),
+                                         self.getReferenceFile('imported.expt', lyso=True, experiment=experiment['location']))
+                # Run find spots
+                protFindSpots = self._runFindSpots(protImport.outputDiffractionImages,
+                                                   objLabel="Scaling: find spots",
+                                                   dMin=experiment['d_min'],
+                                                   untrustedAreas=True,
+                                                   untrustedRectangle_1='0,516,255,261',
+                                                   untrustedRectangle_2='255,261,0,516',
+                                                   )
+                foundspotset = getattr(
+                    protFindSpots, 'outputDiffractionSpots', None)
+                self.assertIsNotNone(foundspotset)
+                self.assertEqual(foundspotset.getSpots(),
+                                 experiment['found_spots'])
+                self.assertIsNotNone(foundspotset.getDialsModel())
+                with self.subTest(msg="Testing model in SetOfDiffractionSpots"):
+                    self.assertSameModel(foundspotset.getDialsModel(),
+                                         self.getReferenceFile('imported.expt', lyso=True, experiment=experiment['location']))
+                self.assertIsNotNone(foundspotset.getDialsRefl())
+                with self.subTest(msg="Testing reflections in SetOfDiffractionSpots"):
+                    self.skipTest(
+                        "Test fails but does not seem to influence exported results")
+                    self.assertSameRefl(foundspotset.getDialsRefl(),
+                                        self.getReferenceFile('strong.refl', lyso=True, experiment=experiment['location']))
+                # Run indexing
+                protIndex = self._runIndex(
+                    objLabel="Scaling: index and reindex",
+                    inputImages=protImport.outputDiffractionImages,
+                    inputSpots=protFindSpots.outputDiffractionSpots,
+                    doRefineBravaisSettings=True,
+                    doReindex=True,
+                    doReindexReflections=True,
+                    detectorFixPosition=True,
+                    detectorFixOrientation=True,
+                    detectorFixDistance=True,
+                    beamFixInSpindlePlane=True,
+                    beamFixOutSpindlePlane=True,
+                    beamFixWavelength=True,
+                    commandLineInputBravais='beam.fix=all detector.fix=all',
+                )
+                indexedset = getattr(protIndex, 'outputIndexedSpots', None)
+                self.assertIsNotNone(protIndex.outputIndexedSpots)
+                self.assertIsNotNone(indexedset.getDialsModel())
+                self.assertIsNotNone(indexedset.getDialsRefl())
+                self.assertSameModel(indexedset.getDialsModel(),
+                                     self.getReferenceFile('bravais_setting_9.expt', lyso=True, experiment=experiment['location']))
+                with self.subTest(msg="Testing reflections after reindexing"):
+                    self.skipTest(
+                        "Test fails but does not seem to influence exported results")
+                    self.assertSameRefl(indexedset.getDialsRefl(),
+                                        self.getReferenceFile('reindexed.refl', lyso=True, experiment=experiment['location']))
+
+                # Run refinement
+                protRefine = self._runRefine(
+                    objLabel="Scaling: static refinement",
+                    inputSet=protIndex.outputIndexedSpots,
+                    scanVarying=False,
+                    detectorFixAll=True,
+                )
+                refinedset = getattr(protRefine, 'outputRefinedSpots', None)
+                self.assertIsNotNone(protRefine.outputRefinedSpots)
+                self.assertIsNotNone(refinedset.getDialsModel())
+                self.assertIsNotNone(refinedset.getDialsRefl())
+                self.assertSameModel(refinedset.getDialsModel(),
+                                     self.getReferenceFile('refined.expt', lyso=True, experiment=experiment['location']))
+                with self.subTest(msg="Testing reflections after refinement"):
+                    self.skipTest(
+                        "Test fails but does not seem to influence exported results")
+                    self.assertSameRefl(refinedset.getDialsRefl(),
+                                        self.getReferenceFile('refined.refl', lyso=True, experiment=experiment['location']))
+
+                # Run scan-varying refinement
+                protSvRefine = self._runRefine(
+                    objLabel="Scaling: scan-varying refinement",
+                    inputSet=protRefine.outputRefinedSpots,
+                    scanVarying=True,
+                    beamFixAll=False,
+                    beamFixInSpindlePlane=False,
+                    beamFixOutSpindlePlane=False,
+                    beamFixWavelength=True,
+                    beamForceStatic=False,
+                    detectorFixAll=True,
+                )
+                svrefinedset = getattr(
+                    protSvRefine, 'outputRefinedSpots', None)
+                self.assertIsNotNone(protSvRefine.outputRefinedSpots)
+                self.assertIsNotNone(svrefinedset.getDialsModel())
+                self.assertIsNotNone(svrefinedset.getDialsRefl())
+                self.assertSameModel(svrefinedset.getDialsModel(),
+                                     self.getReferenceFile('sv_refined.expt', lyso=True, experiment=experiment['location']))
+                with self.subTest(msg="Testing reflections after scan-varying refinement"):
+                    self.skipTest(
+                        "Test fails but does not seem to influence exported results")
+                    self.assertSameRefl(svrefinedset.getDialsRefl(),
+                                        self.getReferenceFile('sv_refined.refl', lyso=True, experiment=experiment['location']))
+
+                # Run integration
+                protIntegrate = self._runIntegrate(
+                    objLabel="Scaling: integration",
+                    inputSet=protSvRefine.outputRefinedSpots,
+                    nproc=8,
+                    commandLineInput='prediction.d_min=3.5',
+                )
+                integratedset = getattr(
+                    protIntegrate, 'outputIntegratedSpots', None)
+                self.assertIsNotNone(protIntegrate.outputIntegratedSpots)
+                self.assertIsNotNone(integratedset.getDialsModel())
+                self.assertIsNotNone(integratedset.getDialsRefl())
+                self.assertSameModel(integratedset.getDialsModel(),
+                                     self.getReferenceFile('integrated.expt', lyso=True, experiment=experiment['location']))
+                with self.subTest(msg="Testing reflections after integration"):
+                    self.skipTest(
+                        "Test fails but does not seem to influence exported results")
+                    self.assertSameRefl(integratedset.getDialsRefl(),
+                                        self.getReferenceFile('integrated.refl', lyso=True, experiment=experiment['location']))
+
+                # Check symmetry and scale
+                protSymmetry = self._runSymmetry(
+                    objLabel="Scaling: symmetry check",
+                    inputSet=protIntegrate.outputIntegratedSpots,
+                )
+                symmetrizedset = getattr(
+                    protSymmetry, 'outputSymmetrizedSpots', None)
+                self.assertIsNotNone(protSymmetry.outputSymmetrizedSpots)
+                self.assertIsNotNone(symmetrizedset.getDialsModel())
+                self.assertIsNotNone(symmetrizedset.getDialsRefl())
+                self.assertSameModel(symmetrizedset.getDialsModel(),
+                                     self.getReferenceFile('symmetrized.expt', lyso=True, experiment=experiment['location']))
+
+                protScaling = self._runScaling(
+                    objLabel="Scaling: Scaling",
+                    inputSet=protSymmetry.outputSymmetrizedSpots,
+                )
+                scaledset = getattr(
+                    protScaling, 'outputScaledSpots', None)
+                self.assertIsNotNone(protScaling.outputScaledSpots)
+                self.assertIsNotNone(scaledset.getDialsModel())
+                self.assertIsNotNone(scaledset.getDialsRefl())
+                self.assertSameModel(scaledset.getDialsModel(),
+                                     self.getReferenceFile('scaled.expt', lyso=True, experiment=experiment['location']))
+
+                # Exports
+                MTZ = 0
+
+                skipMtzExport = False
+                try:
+                    exportMtzSpots = protScaling.outputScaledSpots
+                except UnboundLocalError as e:
+                    self.info(e)
+                    self.info(protIntegrate.outputIntegratedSpots)
+                    skipMtzExport = True
+
+                XDS_ASCII = 4
+
+                skipXdsAsciiExport = False
+                try:
+                    exportXdsAsciiSpots = protSymmetry.outputSymmetrizedSpots
+                except UnboundLocalError as e:
+                    self.info(e)
+                    self.info(protIntegrate.outputIntegratedSpots)
+                    skipXdsAsciiExport = True
+
+                with self.subTest(msg="Export mtz"):
+                    if skipMtzExport:
+                        self.skipTest("Nothing to export")
+                    protMtzExport = self._runExport(
+                        objLabel="Lyso: export mtz",
+                        inputSet=exportMtzSpots,
+                        exportFormat=MTZ
+                    )
+                    exportedSet = getattr(
+                        protMtzExport, 'exportedFileSet', None)
+                    for ef in exportedSet:
+                        self.assertSameExport(
+                            ef.getFilePath(),
+                            self.getReferenceFile(
+                                'scaled.mtz', lyso=True, experiment=experiment['location'])
+                        )
+
+                with self.subTest(msg="Export xds_ascii"):
+                    if skipXdsAsciiExport:
+                        self.skipTest("Nothing to export")
+                    protXdsExport = self._runExport(
+                        objLabel="Lyso: export XDS_ASCII",
+                        inputSet=exportXdsAsciiSpots,
+                        exportFormat=XDS_ASCII
+                    )
+                    exportedSet = getattr(
+                        protXdsExport, 'exportedFileSet', None)
+                    for exportFile in exportedSet:
+                        self.assertSameExport(
+                            exportFile.getFilePath(),
+                            self.getReferenceFile(
+                                'SYMMETRIZED.HKL',
+                                lyso=True,
+                                experiment=experiment['location'],
+                            )
+                        )
 
     # Test of I/O utilities
     def test_writeJson(self):
