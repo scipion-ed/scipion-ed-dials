@@ -115,6 +115,10 @@ class DialsProtImportDiffractionImages(ProtImportDiffractionImages):
             cmdparams += " goniometer.axes={}".format(
                 ",".join(map(str, self.getRotationAxis())))
 
+        if self.overwriteDetectorDistance is not None:
+            cmdparams += " distance={}".format(
+                self.overwriteDetectorDistance)
+
         if self.commandLineInput.get():
             cmdparams += " {}".format(self.commandLineInput.get())
 
