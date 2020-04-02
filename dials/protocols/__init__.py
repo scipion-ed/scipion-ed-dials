@@ -1,8 +1,10 @@
 # **************************************************************************
 # *
 # * Authors:     J.M. De la Rosa Trevin (delarosatrevin@scilifelab.se) [1]
+# *              V. E.G. Bengtsson      (viktor.bengtsson@mmk.su.se)   [2]
 # *
 # * [1] SciLifeLab, Stockholm University
+# * [2] Department of Materials and Environmental Chemistry, Stockholm University
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
@@ -30,3 +32,5 @@ from .protocol_index import DialsProtIndexSpots
 from .protocol_refine import DialsProtRefineSpots
 from .protocol_integrate import DialsProtIntegrateSpots
 from .protocol_export import DialsProtExport
+from .protocol_symmetry import DialsProtSymmetry
+from .protocol_scaling import DialsProtScaling
