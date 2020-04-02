@@ -33,7 +33,7 @@ from pathlib import Path
 
 import pyworkflow.protocol as pwprot
 
-from pwed.objects import RefinedSpot, SetOfRefinedSpots, RefinedSpot, SetOfRefinedSpots
+from pwed.objects import IndexedSpot, SetOfIndexedSpots
 from pwed.protocols import EdProtRefineSpots
 from pwed.convert import find_subranges
 from dials.convert import writeJson, readRefl, writeRefl, writeRefinementPhil, copyDialsFile
@@ -199,12 +199,12 @@ class DialsProtRefineSpots(EdProtRefineSpots):
         assert(os.path.exists(self.getOutputReflFile()))
         assert(os.path.exists(self.getOutputModelFile()))
 
-        outputSet = self._createSetOfRefinedSpots()
+        outputSet = self._createSetOfIndexedSpots()
         outputSet.setDialsModel(self.getOutputModelFile())
         outputSet.setDialsRefl(self.getOutputReflFile())
 
         reflectionData = readRefl(self.getOutputReflFile())
-        iSpot = RefinedSpot()
+        iSpot = IndexedSpot()
         numberOfSpots = reflectionData[2]
         reflDict = reflectionData[4]
 

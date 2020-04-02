@@ -72,7 +72,7 @@ class DialsProtExport(EdProtExport):
                                'xds_ascii', 'json'],
                       default=self.MTZ,
                       display=pwprot.EnumParam.DISPLAY_HLIST,
-                      help="The output file format"
+                      help="The output file format. Please note that XDS_ASCII is incompatible with scaled data."
                       )
 
         group = form.addGroup('mtz', condition="exportFormat==MTZ")
@@ -240,7 +240,7 @@ class DialsProtExport(EdProtExport):
     def createOutputStep(self):
         outputSet = self._createSetOfExportFiles()
         eFile = ExportFile()
-        eFile.setExportFile(self.getExport())
+        eFile.setFilePath(self.getExport())
         eFile.setFileType(self.getFileType())
         outputSet.append(eFile)
         outputSet.write()

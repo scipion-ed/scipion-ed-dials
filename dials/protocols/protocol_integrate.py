@@ -33,7 +33,7 @@ from pathlib import Path
 
 import pyworkflow.protocol as pwprot
 
-from pwed.objects import RefinedSpot, SetOfRefinedSpots, IntegratedSpot, SetOfIntegratedSpots
+from pwed.objects import IndexedSpot, SetOfIndexedSpots, IndexedSpot, SetOfIndexedSpots
 from pwed.protocols import EdProtIntegrateSpots
 from pwed.convert import find_subranges
 from dials.convert import writeJson, readRefl, writeRefl, writeRefinementPhil, copyDialsFile
@@ -53,8 +53,8 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots):
         form.addSection(label='Input')
 
         form.addParam('inputSet', pwprot.PointerParam,
-                      pointerClass='SetOfDiffractionImages',
-                      label="Input diffraction images",
+                      pointerClass='SetOfIndexedSpots',
+                      label="Input spots",
                       help="")
 
         # Help messages are copied from the DIALS documentation at
@@ -113,13 +113,13 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots):
         assert(os.path.exists(self.getOutputReflFile()))
         assert(os.path.exists(self.getOutputModelFile()))
 
-        outputSet = self._createSetOfIntegratedSpots()
+        outputSet = self._createSetOfIndexedSpots()
         outputSet.setDialsModel(self.getOutputModelFile())
         outputSet.setDialsRefl(self.getOutputReflFile())
 
         try:
             reflectionData = readRefl(self.getOutputReflFile())
-            iSpot = IntegratedSpot()
+            iSpot = IndexedSpot()
             numberOfSpots = reflectionData[2]
             reflDict = reflectionData[4]
 
