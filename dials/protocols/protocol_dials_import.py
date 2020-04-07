@@ -99,12 +99,19 @@ class DialsProtImportDiffractionImages(ProtImportDiffractionImages):
         else:
             return uniquePaths
 
+    def getCmdparamStart(self):
+        self.loadPatterns()
+        if self.useTemplate:
+            return "template={}".format(self._templatePattern)
+        else:
+            return self.getFileParents(self.getMatchingFiles())
+
     def getOutputModelFile(self):
         return self._getExtraPath('imported.expt')
 
     def _prepareCommandLineArguments(self, program):
         # Make a string to append to
-        cmdparams = "{}".format(self.getFileParents(self.getMatchingFiles()))
+        cmdparams = "{}".format(self.getCmdparamStart())
 
         # Add standard output paths
         logPath = "{}/{}.log".format(self._getLogsPath(), program)
