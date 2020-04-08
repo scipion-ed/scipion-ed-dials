@@ -1,7 +1,7 @@
 # **************************************************************************
 # *
 # * Authors:     J.M. De la Rosa Trevin (delarosatrevin@scilifelab.se) [1]
-# *              Viktor E.G. Bengtsson (viktor.bengtsson@mmk.su.se)    [2]
+# *              V E.G. Bengtsson       (viktor.bengtsson@mmk.su.se)   [2]
 # *
 # * [1] SciLifeLab, Stockholm University
 # * [2] Department of Materials and Environmental Chemistry, Stockholm University
@@ -198,6 +198,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         protImport = self._runDialsImportImages(
             'experiment_12/SMV/data/{TI}.img',
             skipImages=10,
+            replaceRotationAxis=True,
             rotationAxis='-0.6204,-0.7843,0',
         )
         self.assertIsNotNone(protImport.getOutputModelFile())
@@ -405,6 +406,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                     "/".join([exptId, 'SMV/data/{TI}.img']),
                     objLabel="dials - import diffraction images\n"
                     "{}".format(exptId),
+                    replaceRotationAxis=True,
                     rotationAxis=experiment['rotation_axis'],
                     overwriteDetectorDistance=experiment['distance'],
                 )
@@ -731,6 +733,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         template = os.path.join(self.dataPath, 'IO-test', 'imported.expt')
         self.assertIsNotNone(template)
         protImport = self._runImportImages('{TS}/SMV/data/{TI}.img',
+                                           replaceRotationAxis=True,
                                            rotationAxis='-0.6204,-0.7843,0')
         inputImages = protImport.outputDiffractionImages
         modelPath = self.getOutputPath('model.expt')
