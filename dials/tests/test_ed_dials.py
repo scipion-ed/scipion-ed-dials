@@ -41,6 +41,7 @@ from pwed.protocols import ProtImportDiffractionImages
 
 from dials.protocols import DialsProtImportDiffractionImages, DialsProtFindSpots, DialsProtIndexSpots, DialsProtRefineSpots, DialsProtIntegrateSpots, DialsProtExport, DialsProtSymmetry, DialsProtScaling
 from dials.convert import writeJson, readRefl, writeRefl
+from dials.constants import *
 
 
 pw.Config.setDomain(pwed)
@@ -223,30 +224,19 @@ class TestEdDialsProtocols(pwtests.BaseTest):
     def onOff(self, test):
         if test is 'standard':
             skip = False
-            dateTestError = True
         elif test is 'lyso':
             skip = False
             # mmcif and mtz contain information about when the file was created.
             # dateTestError = True skips tests that will fail due to different date
             # FIXME: Overwrite the date and time in mtz and mmcif files during comparison.
-            dateTestError = True
         elif test is 'garnet':
             skip = False
-            dateTestError = True
         else:
             skip = False
+        dateTestError = True
         msg = "Skipped to speed up testing of other parts"
         return skip, msg, dateTestError
 
-    # Define constants
-    DISPERSION = 0
-    DISPERSION_EXTENDED = 1
-
-    MTZ = 0
-    SADABS = 1
-    MMCIF = 3
-    XDS_ASCII = 4
-    JSON = 5
 
     def test_standard_pipeline(self):
         tempSkip, skipMsg, dateTestError = self.onOff('standard')
@@ -270,7 +260,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             )
         # Run find spots
         protFindSpots = self._runFindSpots(protImport.outputDiffractionImages,
-                                           thresholdAlgorithm=self.DISPERSION_EXTENDED,
+                                           thresholdAlgorithm=DISPERSION_EXTENDED,
                                            )
         foundspotset = getattr(protFindSpots, 'outputDiffractionSpots', None)
         self.assertIsNotNone(foundspotset)
@@ -422,7 +412,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
 
             protMtzExport = self._runExport(
                 inputSet=exportSpots,
-                exportFormat=self.MTZ
+                exportFormat=MTZ
             )
 
             exportedSet = getattr(protMtzExport, 'exportedFileSet', None)
@@ -439,7 +429,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
 
             protXdsExport = self._runExport(
                 inputSet=exportSpots,
-                exportFormat=self.XDS_ASCII
+                exportFormat=XDS_ASCII
             )
 
             exportedSet = getattr(protXdsExport, 'exportedFileSet', None)
@@ -485,7 +475,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                     untrustedAreas=True,
                     untrustedRectangle_1='0,516,255,261',
                     untrustedRectangle_2='255,261,0,516',
-                    thresholdAlgorithm=self.DISPERSION_EXTENDED)
+                    thresholdAlgorithm=DISPERSION_EXTENDED)
                 foundspotset = getattr(
                     protFindSpots, 'outputDiffractionSpots', None)
                 self.assertIsNotNone(foundspotset)
@@ -627,7 +617,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                     protMtzExport = self._runExport(
                         objLabel="dials - export mtz",
                         inputSet=exportSpots,
-                        exportFormat=self.MTZ
+                        exportFormat=MTZ
                     )
                     exportedSet = getattr(
                         protMtzExport, 'exportedFileSet', None)
@@ -644,7 +634,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                     protSadabsExport = self._runExport(
                         objLabel="dials - export sadabs",
                         inputSet=exportSpots,
-                        exportFormat=self.SADABS
+                        exportFormat=SADABS
                     )
                     exportedSet = getattr(
                         protSadabsExport, 'exportedFileSet', None)
@@ -663,7 +653,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                     protMmcifExport = self._runExport(
                         objLabel="dials - export mmcif",
                         inputSet=exportSpots,
-                        exportFormat=self.MMCIF
+                        exportFormat=MMCIF
                     )
                     exportedSet = getattr(
                         protMmcifExport, 'exportedFileSet', None)
@@ -680,7 +670,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                     protXdsExport = self._runExport(
                         objLabel="dials - export XDS_ASCII",
                         inputSet=exportSpots,
-                        exportFormat=self.XDS_ASCII
+                        exportFormat=XDS_ASCII
                     )
                     exportedSet = getattr(
                         protXdsExport, 'exportedFileSet', None)
@@ -697,7 +687,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                     protJsonExport = self._runExport(
                         objLabel="dials - export json",
                         inputSet=exportSpots,
-                        exportFormat=self.JSON
+                        exportFormat=JSON
                     )
                     exportedSet = getattr(
                         protJsonExport, 'exportedFileSet', None)
@@ -743,7 +733,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                         protMtzExport = self._runExport(
                             objLabel="dials - export scaled mtz",
                             inputSet=protScaling.outputScaledSpots,
-                            exportFormat=self.MTZ
+                            exportFormat=MTZ
                         )
                         exportedSet = getattr(
                             protMtzExport, 'exportedFileSet', None)
@@ -761,7 +751,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                         protXdsExport = self._runExport(
                             objLabel="dials - export symmetrized XDS_ASCII",
                             inputSet=protSymmetry.outputSymmetrizedSpots,
-                            exportFormat=self.XDS_ASCII
+                            exportFormat=XDS_ASCII
                         )
                         exportedSet = getattr(
                             protXdsExport, 'exportedFileSet', None)
@@ -944,7 +934,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             protMtzExport = self._runExport(
                 objLabel="dials - export mtz",
                 inputSet=exportSpots,
-                exportFormat=self.MTZ
+                exportFormat=MTZ
             )
             exportedSet = getattr(
                 protMtzExport, 'exportedFileSet', None)
@@ -961,7 +951,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             protXdsExport = self._runExport(
                 objLabel="dials - export XDS_ASCII",
                 inputSet=exportSpots,
-                exportFormat=self.XDS_ASCII
+                exportFormat=XDS_ASCII
             )
             exportedSet = getattr(
                 protXdsExport, 'exportedFileSet', None)

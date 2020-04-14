@@ -36,17 +36,12 @@ import pyworkflow.protocol as pwprot
 from pwed.objects import IntegratedSpot, SetOfIntegratedSpots, ExportFile, SetOfExportFiles
 from pwed.protocols import EdProtExport
 from dials.convert import writeJson, readRefl, writeRefl
+from dials.constants import MTZ, SADABS, NXS, MMCIF, XDS_ASCII, JSON
 
 
 class DialsProtExport(EdProtExport):
     """ Protocol for exporting results using Dials
     """
-    MTZ = 0
-    SADABS = 1
-    NXS = 2
-    MMCIF = 3
-    XDS_ASCII = 4
-    JSON = 5
 
     _label = 'export'
 
@@ -70,7 +65,7 @@ class DialsProtExport(EdProtExport):
                       label='Which format do you want to export?',
                       choices=['mtz', 'sadabs', 'nxs', 'mmcif',
                                'xds_ascii', 'json'],
-                      default=self.MTZ,
+                      default=MTZ,
                       display=pwprot.EnumParam.DISPLAY_HLIST,
                       help="The output file format. Please note that XDS_ASCII is incompatible with scaled data."
                       )
@@ -268,49 +263,49 @@ class DialsProtExport(EdProtExport):
         return self.exportFormat.get()
 
     def getFileType(self):
-        if self.getFormat() is self.MTZ:
+        if self.getFormat() is MTZ:
             filetype = "mtz"
 
-        if self.getFormat() is self.SADABS:
+        if self.getFormat() is SADABS:
             filetype = "sad"
 
-        if self.getFormat() is self.NXS:
+        if self.getFormat() is NXS:
             filetype = "nxs"
 
-        if self.getFormat() is self.MMCIF:
+        if self.getFormat() is MMCIF:
             filetype = "cif"
 
-        if self.getFormat() is self.XDS_ASCII:
+        if self.getFormat() is XDS_ASCII:
             filetype = "XDS_ASCII"
 
-        if self.getFormat() is self.JSON:
+        if self.getFormat() is JSON:
             filetype = "json"
 
         return filetype
 
     def getExport(self):
-        if self.getFormat() is self.MTZ:
+        if self.getFormat() is MTZ:
             if self.mtzHklout.get() is "":
                 name = "integrated_{}.mtz".format(self.getObjId())
             else:
                 name = self.mtzHklout.get()
 
-        if self.getFormat() is self.SADABS:
+        if self.getFormat() is SADABS:
             name = self.sadabsHklout.get()
 
-        if self.getFormat() is self.NXS:
+        if self.getFormat() is NXS:
             name = self.nxsHklout.get()
 
-        if self.getFormat() is self.MMCIF:
+        if self.getFormat() is MMCIF:
             if self.mmcifHklout.get() is "":
                 name = "integrated_{}.cif".format(self.getObjId())
             else:
                 name = self.mmcifHklout.get()
 
-        if self.getFormat() is self.XDS_ASCII:
+        if self.getFormat() is XDS_ASCII:
             name = self.xdsAsciiHklout.get()
 
-        if self.getFormat() is self.JSON:
+        if self.getFormat() is JSON:
             name = self.jsonFilename.get()
 
         return self.outDir(name)
@@ -379,7 +374,7 @@ class DialsProtExport(EdProtExport):
         )
 
         # Update the command line with additional parameters
-        if self.exportFormat.get() is self.MTZ:
+        if self.exportFormat.get() is MTZ:
             if self.mtzCombinePartials:
                 params += " mtz.combine_partials=True"
 
@@ -401,14 +396,14 @@ class DialsProtExport(EdProtExport):
             params += " mtz.crystal_name={}".format(
                 self.mtzCrystalName.get())
 
-        elif self.exportFormat.get() is self.SADABS:
+        elif self.exportFormat.get() is SADABS:
             if self.sadabsRun.get() is not 1:
                 params += " sadabs.run={}".format(self.sadabsRun.get())
 
             if self.sadabsPredict:
                 params += " sadabs.predict=True"
 
-        elif self.exportFormat.get() is self.NXS:
+        elif self.exportFormat.get() is NXS:
             params += " nxs.instrument_name={}".format(
                 self.nxsInstrumentName.get())
 
@@ -421,7 +416,7 @@ class DialsProtExport(EdProtExport):
             params += " nxs.source_short_name={}".format(
                 self.nxsSourceShortName.get())
 
-        elif self.exportFormat.get() is self.JSON:
+        elif self.exportFormat.get() is JSON:
             if self.jsonCompact is False:
                 params += " json.compact=False"
 
