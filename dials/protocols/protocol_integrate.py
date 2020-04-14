@@ -58,7 +58,7 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots):
                       help="")
 
         # Help messages are copied from the DIALS documentation at
-        # https://dials.github.io/documentation/programs/dials_index.html
+        # https://dials.github.io/documentation/programs/dials_integrate.html
         form.addParam('nproc', pwprot.IntParam,
                       label="How many processors do you want to use?",
                       default=1,
@@ -72,6 +72,18 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots):
                       label='Cut out some images with scan_ranges?', default=False,
                       help="Explicitly specify the images to be processed. Only applicable when experiment list contains a single imageset.", expertLevel=pwprot.LEVEL_ADVANCED,
                       )
+
+        form.addParam('dMin', pwprot.FloatParam,
+                      default=None,
+                      allowsNull=True,
+                      label="High resolution limit",
+                      help="The maximum resolution limit")
+
+        form.addParam('dMax', pwprot.FloatParam,
+                      default=None,
+                      allowsNull=True,
+                      label="Low resolution limit",
+                      help="The minimum resolution limit")
 
         # Allow adding anything else with command line syntax
         group = form.addGroup('Raw command line input parameters',
@@ -224,6 +236,12 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots):
         if self.doFilter_ice.get():
             params += " filter.ice_rings={}".format(
                 self.doFilter_ice.get())
+
+        if self.dMin.get():
+            params += " prediction.d_min={}".format(self.dMin.get())
+
+        if self.dMax.get():
+            params += " prediction.d_max={}".format(self.dMax.get())
 
         if self.commandLineInput.get():
             params += " {}".format(self.commandLineInput.get())
