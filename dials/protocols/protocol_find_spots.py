@@ -42,9 +42,13 @@ class DialsProtFindSpots(EdProtFindSpots):
     """ Base class to all EM protocols.
     It will contains some common functionalities.
     """
+    DISPERSION = 0
+    DISPERSION_EXTENDED = 1
+
     _label = 'find spots'
 
     # -------------------------- DEFINE param functions -----------------------
+
     def _defineParams(self, form):
         # EdProtFindSpots._defineParams(self, form)
         form.addSection(label='Input')
@@ -137,6 +141,19 @@ class DialsProtFindSpots(EdProtFindSpots):
                        label='Minimum pixel intensity',
                        help='All pixels with a lower value will be considered part of the background',
                        expertLevel=pwprot.LEVEL_ADVANCED)
+
+        group.addParam('maxSeparation', pwprot.FloatParam,
+                       label='Max separation',
+                       default=2,
+                       help="The maximum peak-to-centroid separation (in pixels) for a spot to be accepted by the filtering algorithm.",
+                       expertLevel=pwprot.LEVEL_ADVANCED,
+                       )
+
+        group.addParam('thresholdAlgorithm', pwprot.EnumParam,
+                       label='threshold algorithm',
+                       choices=['dispersion' 'dispersion extended'], default=self.DISPERSION,
+                       help="",
+                       )
 
         # Allow adding anything else with command line syntax
         group = form.addGroup('Raw command line input parameters',
@@ -250,6 +267,10 @@ class DialsProtFindSpots(EdProtFindSpots):
             params += " spotfinder.filter.max_strong_pixel_fraction={}".format(
                 self.maxStrongPixelFraction.get())
 
+        if self.maxSeparation.get():
+            params += " spotfinder.filter.max_separation={}".format(
+                self.maxSeparation.get())
+
         if self.untrustedAreas.get():
             if self.untrustedCircle.get() is not '':
                 params += " spotfinder.filter.untrusted.circle={}".format(
@@ -260,6 +281,11 @@ class DialsProtFindSpots(EdProtFindSpots):
             if self.untrustedRectangle_2.get() is not '':
                 params += " spotfinder.filter.untrusted.rectangle={}".format(
                     self.untrustedRectangle_2.get())
+
+        if self.thresholdAlgorithm.get() is self.DISPERSION:
+            params += " spotfinder.threshold.algorithm=dispersion"
+        elif self.thresholdAlgorithm.get() is self.DISPERSION_EXTENDED:
+            params += " spotfinder.threshold.algorithm=dispersion_extended"
 
         if self.thresholdIntensity.get():
             params += " spotfinder.threshold.dispersion.global_threshold={}".format(
