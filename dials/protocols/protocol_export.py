@@ -70,7 +70,8 @@ class DialsProtExport(EdProtExport):
                       help="The output file format. Please note that XDS_ASCII is incompatible with scaled data."
                       )
 
-        group = form.addGroup('mtz', condition="exportFormat==MTZ")
+        # FIXME: Should be exportFormat==MTZ
+        group = form.addGroup('mtz', condition="exportFormat==0")
 
         group.addParam('mtzCombinePartials', pwprot.BooleanParam,
                        label='Combine partial reflections?', default=True,
@@ -115,8 +116,8 @@ class DialsProtExport(EdProtExport):
                        default='XTAL',
                        help="The name of the crystal, for the mtz file metadata",
                        )
-
-        group = form.addGroup('sadabs', condition="exportFormat==SADABS")
+        # FIXME: Should be exportFormat==SADABS
+        group = form.addGroup('sadabs', condition="exportFormat==1")
 
         group.addParam('sadabsHklout', pwprot.StringParam,
                        label='Output filename',
@@ -135,8 +136,8 @@ class DialsProtExport(EdProtExport):
                        help="Compute centroids with static model, not observations",
                        )
 
-        group = form.addGroup(
-            'XDS_ASCII', condition="exportFormat==XDS_ASCII")
+        # FIXME: Should be exportFormat==XDS_ASCII
+        group = form.addGroup('XDS_ASCII', condition="exportFormat==2")
 
         group.addParam('xdsAsciiHklout', pwprot.StringParam,
                        label='Output name',
@@ -144,7 +145,8 @@ class DialsProtExport(EdProtExport):
                        help="The output raw hkl file",
                        )
 
-        group = form.addGroup('Nexus', condition="exportFormat==NXS")
+        # FIXME: Should be exportFormat==NXS
+        group = form.addGroup('Nexus', condition="exportFormat==3")
         group.addParam('nxsHklout', pwprot.StringParam,
                        label='Output filename',
                        default='integrated.nxs',
@@ -175,7 +177,8 @@ class DialsProtExport(EdProtExport):
                        help="Short name for source, perhaps the acronym",
                        )
 
-        group = form.addGroup('mmcif', condition="exportFormat==MMCIF")
+        # FIXME: Should be exportFormat==MMCIF
+        group = form.addGroup('mmcif', condition="exportFormat==4")
 
         group.addParam('mmcifHklout', pwprot.StringParam,
                        label='Output name',
@@ -183,7 +186,8 @@ class DialsProtExport(EdProtExport):
                        help="The output CIF file, defaults to <jobID>_integrated.cif.",
                        )
 
-        group = form.addGroup('json', condition="exportFormat==JSON")
+        # FIXME: Should be exportFormat==JSON
+        group = form.addGroup('json', condition="exportFormat==5")
         group.addParam('jsonFilename', pwprot.StringParam,
                        label='Filename',
                        default='rlp.json',
