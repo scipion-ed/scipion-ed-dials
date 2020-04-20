@@ -52,8 +52,8 @@ class DialsProtSymmetry(EdBaseProtocol):
         form.addSection(label='Input')
 
         form.addParam('inputSet', pwprot.PointerParam,
-                      pointerClass='SetOfIntegratedSpots',
-                      label="Integrated spots to symmetry check",
+                      pointerClass='SetOfIndexedSpots',
+                      label="Indexed spots to symmetry check",
                       help="")
 
         # Allow adding anything else with command line syntax
