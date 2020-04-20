@@ -33,7 +33,7 @@ from pathlib import Path
 
 import pyworkflow.protocol as pwprot
 
-from pwed.objects import IntegratedSpot, SetOfIntegratedSpots, ExportFile, SetOfExportFiles
+from pwed.objects import IndexedSpot, SetOfIndexedSpots, ExportFile, SetOfExportFiles
 from pwed.protocols import EdProtExport
 from dials.convert import writeJson, readRefl, writeRefl
 from dials.constants import MTZ, SADABS, NXS, MMCIF, XDS_ASCII, JSON
@@ -54,7 +54,7 @@ class DialsProtExport(EdProtExport):
         form.addSection(label='Input')
 
         form.addParam('inputSet', pwprot.PointerParam,
-                      pointerClass='SetOfIntegratedSpots',
+                      pointerClass='SetOfIndexedSpots',
                       label="Integrated spots to export",
                       help="")
 
@@ -136,17 +136,8 @@ class DialsProtExport(EdProtExport):
                        help="Compute centroids with static model, not observations",
                        )
 
-        # FIXME: Should be exportFormat==XDS_ASCII
-        group = form.addGroup('XDS_ASCII', condition="exportFormat==2")
-
-        group.addParam('xdsAsciiHklout', pwprot.StringParam,
-                       label='Output name',
-                       default='DIALS.HKL',
-                       help="The output raw hkl file",
-                       )
-
         # FIXME: Should be exportFormat==NXS
-        group = form.addGroup('Nexus', condition="exportFormat==3")
+        group = form.addGroup('Nexus', condition="exportFormat==2")
         group.addParam('nxsHklout', pwprot.StringParam,
                        label='Output filename',
                        default='integrated.nxs',
@@ -178,12 +169,21 @@ class DialsProtExport(EdProtExport):
                        )
 
         # FIXME: Should be exportFormat==MMCIF
-        group = form.addGroup('mmcif', condition="exportFormat==4")
+        group = form.addGroup('mmcif', condition="exportFormat==3")
 
         group.addParam('mmcifHklout', pwprot.StringParam,
                        label='Output name',
                        default='',
                        help="The output CIF file, defaults to <jobID>_integrated.cif.",
+                       )
+
+        # FIXME: Should be exportFormat==XDS_ASCII
+        group = form.addGroup('XDS_ASCII', condition="exportFormat==4")
+
+        group.addParam('xdsAsciiHklout', pwprot.StringParam,
+                       label='Output name',
+                       default='DIALS.HKL',
+                       help="The output raw hkl file",
                        )
 
         # FIXME: Should be exportFormat==JSON
