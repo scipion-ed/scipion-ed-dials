@@ -73,6 +73,20 @@ class DialsProtFindSpots(EdProtFindSpots):
                       help="The low resolution limit in Angstrom for a pixel to"
                       " be accepted by the filtering algorithm.")
 
+        form.addParam('minImage', pwprot.IntParam,
+                      label='First image to use',
+                      default=None,
+                      allowsNull=True,
+                      help="Do not use images with lower index",
+                      )
+
+        form.addParam('maxImage', pwprot.IntParam,
+                      label='Last image to use',
+                      default=None,
+                      allowsNull=True,
+                      help="Cut images after this index. Useful for removing frames with too much beam damage.",
+                      )
+
         group = form.addGroup('Filtering')
 
         group.addParam('gain', pwprot.FloatParam,
@@ -236,12 +250,37 @@ class DialsProtFindSpots(EdProtFindSpots):
     def getOutputReflFile(self):
         return self._getExtraPath('strong.refl')
 
+    def getScanRanges(self):
+        # Get a list of object IDs for good images
+        objIds = [image.getObjId() for image in self.inputImages.get()
+                  if image.getIgnore() is not True]
+        # Get where to start the scan range
+        if self.minImage.get() is None:
+            first = min(objIds)
+        else:
+            first = self.minImage.get()
+        # Get where to stop the scan range
+        if self.maxImage.get() is None:
+            last = max(objIds)
+        else:
+            last = self.maxImage.get()
+        # Make a list of all images to include in the processing
+        images = []
+        for i in objIds:
+            if first <= i <= last:
+                images.append(i)
+        # Exclude skipped images from the scan range
+        scanranges = find_subranges(images)
+        scanrange = ' '.join('spotfinder.scan_range={},{}'.format(i, j)
+                             for i, j in scanranges)
+        return scanrange
+
     def _prepCommandline(self):
         "Create the command line input to run dials programs"
         # Input basic parameters
         logPath = "{}/{}.log".format(self._getLogsPath(), self.program)
         params = "{} output.log={} output.reflections={} {}".format(
-            self.getInputModelFile(), logPath, self.getOutputReflFile(), self._createScanRanges())
+            self.getInputModelFile(), logPath, self.getOutputReflFile(), self.getScanRanges())
 
         # Update the command line with additional parameters
         if self.dMin.get():
@@ -312,7 +351,7 @@ class DialsProtFindSpots(EdProtFindSpots):
         return params
 
     def _createScanRanges(self):
-        # Go through the
+        # FIXME: Remove if getScanRanges() works
         images = [image.getObjId() for image in self.inputImages.get()
                   if image.getIgnore() is not True]
         scanranges = find_subranges(images)
