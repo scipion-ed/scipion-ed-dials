@@ -237,7 +237,6 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         msg = "Skipped to speed up testing of other parts"
         return skip, msg, dateTestError
 
-
     def test_standard_pipeline(self):
         tempSkip, skipMsg, dateTestError = self.onOff('standard')
         if tempSkip:
@@ -284,9 +283,9 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 inputSpots=protFindSpots.outputDiffractionSpots,
                 doRefineBravaisSettings=False,
                 doReindex=False,
-                detectorFixPosition=True,
+                detectorFixPosition=False,
                 detectorFixOrientation=False,
-                detectorFixdistance=False,
+                detectorFixdistance=True,
             )
             indexedset = getattr(protIndex, 'outputIndexedSpots', None)
             self.assertIsNotNone(protIndex.outputIndexedSpots)
@@ -309,9 +308,9 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 doRefineBravaisSettings=True,
                 doReindex=True,
                 doReindexReflections=True,
-                detectorFixPosition=True,
+                detectorFixPosition=False,
                 detectorFixOrientation=False,
-                detectorFixdistance=False,
+                detectorFixdistance=True,
             )
             indexedset = getattr(protIndex, 'outputIndexedSpots', None)
             self.assertIsNotNone(protIndex.outputIndexedSpots)

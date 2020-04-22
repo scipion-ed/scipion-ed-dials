@@ -57,9 +57,9 @@ class DialsProtIndexSpots(EdProtIndexSpots):
         form.addParam('doIndex', pwprot.BooleanParam,
                       default=True, label='Do you want to index from start?')
         form.addParam('doRefineBravaisSettings', pwprot.BooleanParam,
-                      default=True, label='Do you want to refine the Bravais settings?')
+                      default=False, label='Do you want to refine the Bravais settings?')
         form.addParam('doReindex', pwprot.BooleanParam,
-                      default=True, label='Do you want to reindex after refining Bravais settings?',
+                      default=False, label='Do you want to reindex after refining Bravais settings?',
                       condition='doRefineBravaisSettings')
 
         # The start of the actually relevant part.
@@ -168,12 +168,12 @@ class DialsProtIndexSpots(EdProtIndexSpots):
                        )
 
         group.addParam('crystalFixCell', pwprot.BooleanParam,
-                       label='Crystal: Fix cell?', default=True,
+                       label='Crystal: Fix cell?', default=False,
                        help="Fix crystal parameters",
                        )
 
         group.addParam('crystalFixOrientation', pwprot.BooleanParam,
-                       label='Crystal: Fix orientation?', default=True,
+                       label='Crystal: Fix orientation?', default=False,
                        help="Fix crystal parameters",
                        )
 
@@ -190,7 +190,7 @@ class DialsProtIndexSpots(EdProtIndexSpots):
                        )
 
         group.addParam('detectorFixDistance', pwprot.BooleanParam,
-                       label='Fix detector distance?', default=False,
+                       label='Fix detector distance?', default=True,
                        help="Fix detector parameters. The translational parameters (position) may be set"
                        "separately to the orientation.",
                        )
