@@ -122,13 +122,26 @@ class DialsProtFindSpots(EdProtFindSpots):
                        expertLevel=pwprot.LEVEL_ADVANCED)
 
         group.addParam('untrustedCircle', pwprot.StringParam,
-                       condition='untrustedAreas', default='', help="An untrusted circle (xc, yc, r)")
+                       condition='untrustedAreas',
+                       label='Untrusted circle',
+                       default='',
+                       help="An untrusted circle (xc, yc, r)",
+                       )
 
         group.addParam('untrustedRectangle_1', pwprot.StringParam,
-                       condition='untrustedAreas', default='', help="An untrusted rectangle (x0, x1, y0, y1)")
+                       condition='untrustedAreas',
+                       label='Untrusted rectangle',
+                       default='',
+                       help="An untrusted rectangle (x0, x1, y0, y1)",
+                       )
 
         group.addParam('untrustedRectangle_2', pwprot.StringParam,
-                       condition='untrustedAreas', default='', help="A second untrusted rectangle (x0, x1, y0, y1)")
+                       condition='untrustedAreas',
+                       label='Untrusted rectangle',
+                       default='',
+                       help="An untrusted rectangle (x0, x1, y0, y1)",
+                       )
+
         group.addParam('minSpotSize', pwprot.IntParam,
                        default=None,
                        allowsNull=True,
