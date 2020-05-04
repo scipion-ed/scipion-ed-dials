@@ -33,7 +33,7 @@ from pathlib import Path
 
 import pyworkflow.protocol as pwprot
 
-from pwed.objects import IndexedSpot, SetOfIndexedSpots, IntegratedSpot, SetOfIntegratedSpots
+from pwed.objects import IndexedSpot, SetOfIndexedSpots
 from pwed.protocols import EdBaseProtocol
 from dials.convert import writeJson, readRefl, writeRefl, copyDialsFile
 
