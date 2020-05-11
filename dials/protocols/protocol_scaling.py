@@ -33,7 +33,7 @@ from pathlib import Path
 
 import pyworkflow.protocol as pwprot
 
-from pwed.objects import IndexedSpot, SetOfIndexedSpots
+from pwed.objects import IndexedSpot, SetOfIndexedSpots, ExportFile, SetOfExportFiles
 from pwed.protocols import EdBaseProtocol
 from dials.convert import writeJson, readRefl, writeRefl, copyDialsFile
 
@@ -178,7 +178,7 @@ class DialsProtMultipleScaling(EdBaseProtocol):
     """ Protocol for scaling and merging multiple sets of integrated experiments
     Development placeholder for DialsProtScaling with multiple inputs
     """
-    _label = 'scale'
+    _label = 'scale multiple'
 
     # -------------------------- DEFINE param functions -----------------------
 
@@ -188,37 +188,39 @@ class DialsProtMultipleScaling(EdBaseProtocol):
         # The start of the actually relevant part.
         form.addSection(label='Input')
 
-        form.addParam('inputSet', pwprot.PointerParam,
+        form.addParam('inputSet', pwprot.MultiPointerParam,
                       pointerClass='SetOfIndexedSpots',
                       label="Spots to scale",
+                      minNumObjects=1,
                       help="")
+
+        form.addParam('outputMergedMtz', pwprot.BooleanParam,
+                      label='Merge and export as mtz?', default=False,
+                      help="",
+                      )
+
+        form.addParam('mergedMtzName', pwprot.StringParam,
+                      label='Name of output mtz file',
+                      default='scaled.mtz',
+                      condition="outputMergedMtz",
+                      help="",
+                      )
 
         # Allow adding anything else with command line syntax
         group = form.addGroup('Raw command line input parameters',
                               expertLevel=pwprot.LEVEL_ADVANCED)
         group.addParam('commandLineInput', pwprot.StringParam,
+                       label='input',
                        default='',
                        help="Anything added here will be added at the end of the command line")
 
    # -------------------------- INSERT functions ------------------------------
 
     def _insertAllSteps(self):
-        self._insertFunctionStep(
-            'convertInputStep', self.inputSet.getObjId())
         self._insertFunctionStep('scaleStep')
         self._insertFunctionStep('createOutputStep')
 
     # -------------------------- STEPS functions -------------------------------
-    def convertInputStep(self, inputSpotId):
-        inputSet = self.inputSet.get()
-        self.info("Number of images: %s" % inputSet.getSize())
-        self.info("Number of spots: %s" % inputSet.getSpots())
-        # Write new model and/or reflection file if no was supplied from set
-        if self._checkWriteModel():
-            self.writeJson(inputSet, self.getInputModelFile())
-        if self._checkWriteRefl():
-            self.writeRefl(inputSet, self.getInputReflFile())
-
     def scaleStep(self):
         program = 'dials.scale'
         arguments = self._prepCommandline(program)
@@ -240,23 +242,33 @@ class DialsProtMultipleScaling(EdBaseProtocol):
 
         self._defineOutputs(outputScaledSpots=outputSet)
 
+        if self.getOutputMtzFile():
+            exportOutputSet = self._createSetOfExportFiles()
+            eFile = ExportFile()
+            eFile.setFilePath(self.getOutputMtzFile())
+            eFile.setFileType("mtz")
+            exportOutputSet.append(eFile)
+            exportOutputSet.write()
+            self._defineOutputs(exportedFileSet=exportOutputSet)
+
     # -------------------------- INFO functions -------------------------------
     def _validate(self):
         errors = []
         return errors
 
     # -------------------------- UTILS functions ------------------------------
-    def getInputModelFile(self):
-        if self.getSetModel():
-            return self.getSetModel()
-        else:
-            return self._getExtraPath('symmetrized.expt')
+    def getInputModelFiles(self):
+        modelFiles = []
+        for inputExperiment in self._iterExperiments():
+            modelFiles.append(inputExperiment.getDialsModel())
+        self.info("modelFiles list: {}".format(modelFiles))
+        return modelFiles
 
-    def getInputReflFile(self):
-        if self.getSetRefl():
-            return self.getSetRefl()
-        else:
-            return self._getExtraPath('symmetrized.refl')
+    def getInputReflFiles(self):
+        reflFiles = []
+        for inputExperiment in self._iterExperiments():
+            reflFiles.append(inputExperiment.getDialsRefl())
+        return reflFiles
 
     def getOutputModelFile(self):
         return self._getExtraPath('scaled.expt')
@@ -264,25 +276,19 @@ class DialsProtMultipleScaling(EdBaseProtocol):
     def getOutputReflFile(self):
         return self._getExtraPath('scaled.refl')
 
-    def getPhilPath(self):
-        return self._getTmpPath('scale.phil')
-
-    def existsPath(self, path):
-        return os.path.exists(path)
-
-    def getSetModel(self):
-        inputSet = self.inputSet.get()
-        if self.existsPath(inputSet.getDialsModel()):
-            return inputSet.getDialsModel()
+    def getOutputMtzFile(self):
+        if self.mergedMtzName.get():
+            return self._getExtraPath(self.mergedMtzName.get())
         else:
-            return None
+            return False
 
-    def getSetRefl(self):
-        inputSet = self.inputSet.get()
-        if self.existsPath(inputSet.getDialsRefl()):
-            return inputSet.getDialsRefl()
-        else:
-            return None
+    def _iterExperiments(self):
+        """ Iterate over all the input experiments. """
+        for pointer in self.inputSet:
+            item = pointer.get()
+            if item is None:
+                break
+            yield item
 
     def _checkWriteModel(self):
         return self.getSetModel() != self.getInputModelFile()
@@ -292,18 +298,21 @@ class DialsProtMultipleScaling(EdBaseProtocol):
 
     def _prepCommandline(self, program):
         "Create the command line input to run dials programs"
-
+        inputModelFiles = " ".join(self.getInputModelFiles())
+        inputReflFiles = " ".join(self.getInputReflFiles())
         # Input basic parameters
         logPath = "{}/{}.log".format(self._getLogsPath(), program)
         params = "{} {} output.log={} output.experiments={} output.reflections={}".format(
-            self.getInputModelFile(),
-            self.getInputReflFile(),
+            inputModelFiles,
+            inputReflFiles,
             logPath,
             self.getOutputModelFile(),
             self.getOutputReflFile(),
         )
 
         # Update the command line with additional parameters
+        if self.getOutputMtzFile():
+            params += " output.merged_mtz={}".format(self.getOutputMtzFile())
 
         if self.commandLineInput.get():
             params += " {}".format(self.commandLineInput.get())
