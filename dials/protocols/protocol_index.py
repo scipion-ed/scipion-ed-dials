@@ -495,22 +495,22 @@ class DialsProtIndexSpots(EdProtIndexSpots):
                 self.knownUnitCell.get())
 
         if self.indexMmSearchScope.get() not in (None, 4.0):
-            params += " index.mm_search_scope={}".format(
+            params += " indexing.mm_search_scope={}".format(
                 self.indexMmSearchScope.get())
 
         if self.indexWideSearchBinning.get() not in (None, 2):
-            params += " index.wide_search_binning={}".format(
+            params += " indexing.wide_search_binning={}".format(
                 self.indexWideSearchBinning.get())
 
         if self.indexMinCellVolume.get() not in (None, 25):
-            params += " index.min_cell_volume={}".format(
+            params += " indexing.min_cell_volume={}".format(
                 self.indexMinCellVolume.get())
 
         if self.indexMinCell.get() not in (None, 3.0):
-            params += " index.min_cell={}".format(self.indexMinCell.get())
+            params += " indexing.min_cell={}".format(self.indexMinCell.get())
 
         if self.indexMaxCell.get() is not None:
-            params += " index.max_cell={}".format(self.indexMaxCell.get())
+            params += " indexing.max_cell={}".format(self.indexMaxCell.get())
 
         if self.misindexCheckGridScope.get() not in (None, 0):
             params += " check_misindexing.grid_search_scope={}".format(
