@@ -98,6 +98,10 @@ class DialsProtScaling(EdBaseProtocol):
         outputSet = self._createSetOfIndexedSpots()
         outputSet.setDialsModel(self.getOutputModelFile())
         outputSet.setDialsRefl(self.getOutputReflFile())
+        try:
+            outputSet.setDialsHtml(self.getOutputHtmlFile())
+        except FileNotFoundError:
+            self.info(self.getError())
 
         outputSet.write()
 
@@ -126,6 +130,9 @@ class DialsProtScaling(EdBaseProtocol):
 
     def getOutputReflFile(self):
         return self._getExtraPath('scaled.refl')
+
+    def getOutputHtmlFile(self):
+        return self._getExtraPath('scale.html')
 
     def getPhilPath(self):
         return self._getTmpPath('scale.phil')
@@ -158,12 +165,13 @@ class DialsProtScaling(EdBaseProtocol):
 
         # Input basic parameters
         logPath = "{}/{}.log".format(self._getLogsPath(), program)
-        params = "{} {} output.log={} output.experiments={} output.reflections={}".format(
+        params = "{} {} output.log={} output.experiments={} output.reflections={} output.html={}".format(
             self.getInputModelFile(),
             self.getInputReflFile(),
             logPath,
             self.getOutputModelFile(),
             self.getOutputReflFile(),
+            self.getOutputHtmlFile(),
         )
 
         # Update the command line with additional parameters
