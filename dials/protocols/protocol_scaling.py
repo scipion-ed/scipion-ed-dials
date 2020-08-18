@@ -36,7 +36,10 @@ import pyworkflow.utils as pwutils
 
 from pwed.objects import IndexedSpot, SetOfIndexedSpots
 from pwed.protocols import EdBaseProtocol
+from dials.utils import _showHtmlReport
 from dials.convert import writeJson, readRefl, writeRefl, copyDialsFile
+from dials.constants import (
+    STANDARD, SIMPLE, NONE, DELTA_CC_HALF, DATASET, IMAGE_GROUP, USE_ALL, DATASET_SELECTION, EXCLUDE_DATASETS)
 
 
 class DialsProtScaling(EdBaseProtocol):
@@ -59,6 +62,311 @@ class DialsProtScaling(EdBaseProtocol):
                       minNumObjects=1,
                       maxNumObjects=0,
                       help="")
+
+        form.addParam('showReport', pwprot.BooleanParam,
+                      label='Do you want to view the HTML report after the processing?',
+                      default=True,
+                      )
+
+        group = form.addGroup('Cut data')
+
+        group.addParam('dMin', pwprot.FloatParam,
+                       default=None,
+                       allowsNull=True,
+                       label="High resolution limit",
+                       help="The maximum resolution limit")
+
+        group.addParam('dMax', pwprot.FloatParam,
+                       default=None,
+                       allowsNull=True,
+                       label="Low resolution limit",
+                       help="The minimum resolution limit")
+
+        group.addParam('partialityCutoff', pwprot.FloatParam,
+                       label='Partiality cutoff',
+                       default=0.4,
+                       allowsNull=True,
+                       help="Value below which reflections are removed from the dataset due to low partiality.",
+                       expertLevel=pwprot.LEVEL_ADVANCED,)
+
+        group.addParam('minIsigi', pwprot.FloatParam,
+                       label='min I/sigma(I)',
+                       default=-5,
+                       allowsNull=True,
+                       help="Value below which reflections are removed from the dataset due to low I/sigI in either profile or summation intensity estimates",
+                       expertLevel=pwprot.LEVEL_ADVANCED,)
+
+        group = form.addGroup('Scaling options')
+        group.addParam('checkConsistentIndexing', pwprot.BooleanParam,
+                       default=False,
+                       label='Check indexing consistency between datasets?',
+                       help="If True, run dials.cosym on all data in the data preparation step, to ensure consistent indexing.",)
+
+        group.addParam('outlierRejection', pwprot.EnumParam,
+                       label='Outlier rejection',
+                       choices=['standard', 'simple'],
+                       default=STANDARD,
+                       help="Choice of outlier rejection routine. Standard may take a significant amount of time to run for large datasets or high multiplicities, whereas simple should be quick for these datasets.",
+                       expertLevel=pwprot.LEVEL_ADVANCED,)
+
+        group.addParam('outlierZmax', pwprot.FloatParam,
+                       label="Outlier z-max",
+                       default=6.0,
+                       allowsNull=True,
+                       expertLevel=pwprot.LEVEL_ADVANCED,
+                       )
+
+        group = form.addGroup('Filtering')
+
+        group.addParam("filteringMethod", pwprot.EnumParam,
+                       label="Filtring method",
+                       choices=['None', 'delta CC(1/2)'],
+                       default=NONE,
+                       help="Choice of whether to do any filtering cycles, default None.",
+                       )
+
+        group.addParam("ccHalfMaxCycles", pwprot.IntParam,
+                       label="Max cycles",
+                       default=6,
+                       GE=1,
+                       allowsNull=True,
+                       condition="filteringMethod=={}".format(DELTA_CC_HALF),
+                       )
+
+        group.addParam("ccHalfMaxPercentRemoved", pwprot.FloatParam,
+                       label="Max percent removed",
+                       default=10,
+                       allowsNull=True,
+                       condition="filteringMethod=={}".format(DELTA_CC_HALF),
+                       )
+
+        group.addParam("ccHalfMinCompleteness", pwprot.FloatParam,
+                       label="Minimum completeness in percent",
+                       default=None,
+                       GE=1,
+                       LE=100,
+                       allowsNull=True,
+                       condition="filteringMethod=={}".format(DELTA_CC_HALF),
+                       )
+
+        group.addParam("ccHalfMode", pwprot.EnumParam,
+                       label="Mode",
+                       choices=["dataset", "image group"],
+                       default=DATASET,
+                       help="Perform analysis on whole datasets or batch groups",
+                       condition="filteringMethod==1",
+                       )
+
+        group.addParam("ccHalfGroupSize", pwprot.IntParam,
+                       label="Group size",
+                       default=10,
+                       GE=1,
+                       allowsNull=True,
+                       condition="ccHalfMode=={}".format(IMAGE_GROUP),
+                       help="The number of images to group together when calculating delta CC(1/2) in image_group mode",
+                       )
+
+        group.addParam("ccHalfStdcutoff", pwprot.FloatParam,
+                       label="Std cutoff",
+                       default=4.0,
+                       allowsNull=True,
+                       help="Datasets with a ΔCC½ below (mean - stdcutoff*std) are removed",
+                       condition="filteringMethod==1",
+                       )
+
+        group = form.addGroup('Selections')
+
+        group.addParam('excludeImages', pwprot.BooleanParam,
+                       label='Do you want to exclude images from a dataset?', default=False,
+                       help="",
+                       )
+
+        group.addParam('numberOfExclusions', pwprot.IntParam,
+                       label='How many groups of images do you want to exclude?',
+                       default=0,
+                       condition="excludeImages",
+                       help="If you want to use more than 20 groups, you will need to add it as command line parameters under advanced options",
+                       )
+
+        group.addParam('imageGroup1', pwprot.StringParam,
+                       label='Image group 1',
+                       default=None,
+                       allowsNull=True,
+                       condition="excludeImages and numberOfExclusions>=1",
+                       help="Input in the format exp:start:end\nExclude a range of images (start,stop) from the dataset with experiment identifier exp  (inclusive of frames start, stop). For the first dataset listed in {}, the identifier exp is typically 0. For the next it is 1, and so on.\nTo exclude images 22, 23 and 24 from the second dataset listed, the syntax is 1:22:24.".format(
+                           inputsetsLabel),
+                       )
+
+        group.addParam('imageGroup2', pwprot.StringParam,
+                       label='Image group 2',
+                       default=None,
+                       allowsNull=True,
+                       condition='excludeImages and numberOfExclusions>=2',
+                       help="Input in the format exp: start: end\nExclude a range of images(start, stop) from the dataset with experiment identifier exp(inclusive of frames start, stop). For the first dataset listed in {}, the identifier exp is typically 0. For the next it is 1, and so on.\nTo exclude images 22, 23 and 24 from the second dataset listed, the syntax is 1: 22: 24.".format(
+                           inputsetsLabel),
+                       )
+
+        group.addParam('imageGroup3', pwprot.StringParam,
+                       label='Image group 3',
+                       default=None,
+                       allowsNull=True,
+                       condition='excludeImages and numberOfExclusions>=3',
+                       help="Input in the format exp:start:end\nExclude a range of images (start,stop) from the dataset with experiment identifier exp  (inclusive of frames start, stop). For the first dataset listed in {}, the identifier exp is typically 0. For the next it is 1, and so on.\nTo exclude images 22, 23 and 24 from the second dataset listed, the syntax is 1:22:24.".format(
+                           inputsetsLabel),
+                       )
+
+        group.addParam('imageGroup4', pwprot.StringParam,
+                       label='Image group 4',
+                       default=None,
+                       allowsNull=True,
+                       condition='excludeImages and numberOfExclusions>=4',
+                       help="Input in the format exp:start:end\nExclude a range of images (start,stop) from the dataset with experiment identifier exp  (inclusive of frames start, stop). For the first dataset listed in {}, the identifier exp is typically 0. For the next it is 1, and so on.\nTo exclude images 22, 23 and 24 from the second dataset listed, the syntax is 1:22:24.".format(
+                           inputsetsLabel),
+                       )
+
+        group.addParam('imageGroup5', pwprot.StringParam,
+                       label='Image group 5',
+                       default=None,
+                       allowsNull=True,
+                       condition='excludeImages and numberOfExclusions>=5',
+                       help="Input in the format exp:start:end\nExclude a range of images (start,stop) from the dataset with experiment identifier exp  (inclusive of frames start, stop). For the first dataset listed in {}, the identifier exp is typically 0. For the next it is 1, and so on.\nTo exclude images 22, 23 and 24 from the second dataset listed, the syntax is 1:22:24.".format(
+                           inputsetsLabel),
+                       )
+
+        group.addParam('imageGroup6', pwprot.StringParam,
+                       label='Image group 6',
+                       default=None,
+                       allowsNull=True,
+                       condition='excludeImages and numberOfExclusions>=6',
+                       help="Input in the format exp:start:end\nExclude a range of images (start,stop) from the dataset with experiment identifier exp  (inclusive of frames start, stop). For the first dataset listed in {}, the identifier exp is typically 0. For the next it is 1, and so on.\nTo exclude images 22, 23 and 24 from the second dataset listed, the syntax is 1:22:24.".format(
+                           inputsetsLabel),
+                       )
+
+        group.addParam('imageGroup7', pwprot.StringParam,
+                       label='Image group 7',
+                       default=None,
+                       allowsNull=True,
+                       condition='excludeImages and numberOfExclusions>=7',
+                       help="Input in the format exp:start:end\nExclude a range of images (start,stop) from the dataset with experiment identifier exp  (inclusive of frames start, stop). For the first dataset listed in {}, the identifier exp is typically 0. For the next it is 1, and so on.\nTo exclude images 22, 23 and 24 from the second dataset listed, the syntax is 1:22:24.".format(
+                           inputsetsLabel),
+                       )
+
+        group.addParam('imageGroup8', pwprot.StringParam,
+                       label='Image group 8',
+                       default=None,
+                       allowsNull=True,
+                       condition='excludeImages and numberOfExclusions>=8',
+                       help="Input in the format exp:start:end\nExclude a range of images (start,stop) from the dataset with experiment identifier exp  (inclusive of frames start, stop). For the first dataset listed in {}, the identifier exp is typically 0. For the next it is 1, and so on.\nTo exclude images 22, 23 and 24 from the second dataset listed, the syntax is 1:22:24.".format(
+                           inputsetsLabel),
+                       )
+
+        group.addParam('imageGroup9', pwprot.StringParam,
+                       label='Image group 9',
+                       default=None,
+                       allowsNull=True,
+                       condition='excludeImages and numberOfExclusions>=9',
+                       help="Input in the format exp:start:end\nExclude a range of images (start,stop) from the dataset with experiment identifier exp  (inclusive of frames start, stop). For the first dataset listed in {}, the identifier exp is typically 0. For the next it is 1, and so on.\nTo exclude images 22, 23 and 24 from the second dataset listed, the syntax is 1:22:24.".format(
+                           inputsetsLabel),
+                       )
+
+        group.addParam('imageGroup10', pwprot.StringParam,
+                       label='Image group 10',
+                       default=None,
+                       allowsNull=True,
+                       condition='excludeImages and numberOfExclusions>=10',
+                       help="Input in the format exp:start:end\nExclude a range of images (start,stop) from the dataset with experiment identifier exp  (inclusive of frames start, stop). For the first dataset listed in {}, the identifier exp is typically 0. For the next it is 1, and so on.\nTo exclude images 22, 23 and 24 from the second dataset listed, the syntax is 1:22:24.".format(
+                           inputsetsLabel),
+                       )
+
+        group.addParam('imageGroup11', pwprot.StringParam,
+                       label='Image group 11',
+                       default=None,
+                       allowsNull=True,
+                       condition='excludeImages and numberOfExclusions>=11',
+                       help="Input in the format exp:start:end\nExclude a range of images (start,stop) from the dataset with experiment identifier exp  (inclusive of frames start, stop). For the first dataset listed in {}, the identifier exp is typically 0. For the next it is 1, and so on.\nTo exclude images 22, 23 and 24 from the second dataset listed, the syntax is 1:22:24.".format(
+                           inputsetsLabel),
+                       )
+
+        group.addParam('imageGroup12', pwprot.StringParam,
+                       label='Image group 12',
+                       default=None,
+                       allowsNull=True,
+                       condition='excludeImages and numberOfExclusions>=12',
+                       help="Input in the format exp:start:end\nExclude a range of images (start,stop) from the dataset with experiment identifier exp  (inclusive of frames start, stop). For the first dataset listed in {}, the identifier exp is typically 0. For the next it is 1, and so on.\nTo exclude images 22, 23 and 24 from the second dataset listed, the syntax is 1:22:24.".format(
+                           inputsetsLabel),
+                       )
+
+        group.addParam('imageGroup13', pwprot.StringParam,
+                       label='Image group 13',
+                       default=None,
+                       allowsNull=True,
+                       condition='excludeImages and numberOfExclusions>=13',
+                       help="Input in the format exp:start:end\nExclude a range of images (start,stop) from the dataset with experiment identifier exp  (inclusive of frames start, stop). For the first dataset listed in {}, the identifier exp is typically 0. For the next it is 1, and so on.\nTo exclude images 22, 23 and 24 from the second dataset listed, the syntax is 1:22:24.".format(
+                           inputsetsLabel),
+                       )
+
+        group.addParam('imageGroup14', pwprot.StringParam,
+                       label='Image group 14',
+                       default=None,
+                       allowsNull=True,
+                       condition='excludeImages and numberOfExclusions>=14',
+                       help="Input in the format exp:start:end\nExclude a range of images (start,stop) from the dataset with experiment identifier exp  (inclusive of frames start, stop). For the first dataset listed in {}, the identifier exp is typically 0. For the next it is 1, and so on.\nTo exclude images 22, 23 and 24 from the second dataset listed, the syntax is 1:22:24.".format(
+                           inputsetsLabel),
+                       )
+
+        group.addParam('imageGroup15', pwprot.StringParam,
+                       label='Image group 15',
+                       default=None,
+                       allowsNull=True,
+                       condition='excludeImages and numberOfExclusions>=15',
+                       help="Input in the format exp:start:end\nExclude a range of images (start,stop) from the dataset with experiment identifier exp  (inclusive of frames start, stop). For the first dataset listed in {}, the identifier exp is typically 0. For the next it is 1, and so on.\nTo exclude images 22, 23 and 24 from the second dataset listed, the syntax is 1:22:24.".format(
+                           inputsetsLabel),
+                       )
+
+        group.addParam('imageGroup16', pwprot.StringParam,
+                       label='Image group 16',
+                       default=None,
+                       allowsNull=True,
+                       condition='excludeImages and numberOfExclusions>=16',
+                       help="Input in the format exp:start:end\nExclude a range of images (start,stop) from the dataset with experiment identifier exp  (inclusive of frames start, stop). For the first dataset listed in {}, the identifier exp is typically 0. For the next it is 1, and so on.\nTo exclude images 22, 23 and 24 from the second dataset listed, the syntax is 1:22:24.".format(
+                           inputsetsLabel),
+                       )
+
+        group.addParam('imageGroup17', pwprot.StringParam,
+                       label='Image group 17',
+                       default=None,
+                       allowsNull=True,
+                       condition='excludeImages and numberOfExclusions>=17',
+                       help="Input in the format exp:start:end\nExclude a range of images (start,stop) from the dataset with experiment identifier exp  (inclusive of frames start, stop). For the first dataset listed in {}, the identifier exp is typically 0. For the next it is 1, and so on.\nTo exclude images 22, 23 and 24 from the second dataset listed, the syntax is 1:22:24.".format(
+                           inputsetsLabel),
+                       )
+
+        group.addParam('imageGroup18', pwprot.StringParam,
+                       label='Image group 18',
+                       default=None,
+                       allowsNull=True,
+                       condition='excludeImages and numberOfExclusions>=18',
+                       help="Input in the format exp:start:end\nExclude a range of images (start,stop) from the dataset with experiment identifier exp  (inclusive of frames start, stop). For the first dataset listed in {}, the identifier exp is typically 0. For the next it is 1, and so on.\nTo exclude images 22, 23 and 24 from the second dataset listed, the syntax is 1:22:24.".format(
+                           inputsetsLabel),
+                       )
+
+        group.addParam('imageGroup19', pwprot.StringParam,
+                       label='Image group 19',
+                       default=None,
+                       allowsNull=True,
+                       condition='excludeImages and numberOfExclusions>=19',
+                       help="Input in the format exp:start:end\nExclude a range of images (start,stop) from the dataset with experiment identifier exp  (inclusive of frames start, stop). For the first dataset listed in {}, the identifier exp is typically 0. For the next it is 1, and so on.\nTo exclude images 22, 23 and 24 from the second dataset listed, the syntax is 1:22:24.".format(
+                           inputsetsLabel),
+                       )
+
+        group.addParam('imageGroup20', pwprot.StringParam,
+                       label='Image group 20',
+                       default=None,
+                       allowsNull=True,
+                       condition='excludeImages and numberOfExclusions>=20',
+                       help="Input in the format exp:start:end\nExclude a range of images (start,stop) from the dataset with experiment identifier exp  (inclusive of frames start, stop). For the first dataset listed in {}, the identifier exp is typically 0. For the next it is 1, and so on.\nTo exclude images 22, 23 and 24 from the second dataset listed, the syntax is 1:22:24.".format(
+                           inputsetsLabel),
+                       )
 
         # Allow adding anything else with command line syntax
         group = form.addGroup('Raw command line input parameters',
@@ -99,6 +407,9 @@ class DialsProtScaling(EdBaseProtocol):
         except:
             self.info(self.getError())
 
+    def showHtmlReportStep(self):
+        self._showHtmlReport(self.getOutputHtmlFile())
+
     def createOutputStep(self):
         # Check that the indexing created proper output
         assert(pwutils.exists(self.getOutputReflFile()))
@@ -120,6 +431,35 @@ class DialsProtScaling(EdBaseProtocol):
     def _validate(self):
         errors = []
         return errors
+
+    def _summary(self):
+        summary = []
+        nSets = len(self.inputSets)
+        summary.append('Scaled {} different datasets together'.format(nSets))
+        if self.dMin:
+            summary.append(
+                'High resolution cutoff at {} Å'.format(self.dMin.get()))
+        if self.dMax:
+            summary.append(
+                'Low resolution cutoff at {} Å'.format(self.dMax.get()))
+        if self.checkConsistentIndexing:
+            summary.append(
+                'Reindexed all datasets with dials.cosym before scaling')
+        if self.filteringMethod.get() is DELTA_CC_HALF:
+            if self.ccHalfMode.get() is DATASET:
+                mode = 'datasets'
+            elif self.ccHalfMode.get() is IMAGE_GROUP:
+                mode = 'image groups'
+            summary.append('Filtered {} based on ΔCC½ with std cutoff {}'.format(
+                mode, self.ccHalfStdcutoff.get()))
+        if self.excludeImages:
+            for iG in self.getImageExclusions():
+                summary.append('Excluded images {}'.format(iG.get()))
+        if self.commandLineInput.get() is not '':
+            summary.append('Additional command line input:\n{}'.format(
+                self.commandLineInput.get()))
+
+        return summary
 
     # -------------------------- UTILS functions ------------------------------
     def getInputModelFile(self, inputSet):
@@ -168,8 +508,50 @@ class DialsProtScaling(EdBaseProtocol):
                                      self.getInputReflFile(iS.get()))
         return files.strip()
 
-    def _checkWriteRefl(self):
-        return self.getSetRefl() != self.getInputReflFile()
+    def getImageExclusions(self):
+        imageGroups = []
+        if self.imageGroup1.get() is not None:
+            imageGroups.append(self.imageGroup2)
+        if self.imageGroup2.get() is not None:
+            imageGroups.append(self.imageGroup3)
+        if self.imageGroup3.get() is not None:
+            imageGroups.append(self.imageGroup4)
+        if self.imageGroup4.get() is not None:
+            imageGroups.append(self.imageGroup5)
+        if self.imageGroup5.get() is not None:
+            imageGroups.append(self.imageGroup6)
+        if self.imageGroup6.get() is not None:
+            imageGroups.append(self.imageGroup7)
+        if self.imageGroup7.get() is not None:
+            imageGroups.append(self.imageGroup8)
+        if self.imageGroup8.get() is not None:
+            imageGroups.append(self.imageGroup9)
+        if self.imageGroup9.get() is not None:
+            imageGroups.append(self.imageGroup10)
+        if self.imageGroup10.get() is not None:
+            imageGroups.append(self.imageGroup11)
+        if self.imageGroup11.get() is not None:
+            imageGroups.append(self.imageGroup12)
+        if self.imageGroup12.get() is not None:
+            imageGroups.append(self.imageGroup13)
+        if self.imageGroup13.get() is not None:
+            imageGroups.append(self.imageGroup14)
+        if self.imageGroup14.get() is not None:
+            imageGroups.append(self.imageGroup15)
+        if self.imageGroup15.get() is not None:
+            imageGroups.append(self.imageGroup16)
+        if self.imageGroup16.get() is not None:
+            imageGroups.append(self.imageGroup17)
+        if self.imageGroup17.get() is not None:
+            imageGroups.append(self.imageGroup18)
+        if self.imageGroup18.get() is not None:
+            imageGroups.append(self.imageGroup19)
+        if self.imageGroup19.get() is not None:
+            imageGroups.append(self.imageGroup20)
+        if self.imageGroup20.get() is not None:
+            imageGroups.append(self.imageGroup1)
+
+        return imageGroups
 
     def _checkWriteModel(self, inputSet):
         return self.getSetModel(inputSet) != self.getInputModelFile(inputSet)
@@ -192,6 +574,69 @@ class DialsProtScaling(EdBaseProtocol):
         )
 
         # Update the command line with additional parameters
+
+        # Cut data
+
+        if self.dMin.get():
+            params += " cut_data.d_min={}".format(self.dMin.get())
+
+        if self.dMax.get():
+            params += " cut_data.d_min={}".format(self.dMax.get())
+
+        if self.partialityCutoff.get():
+            params += " cut_data.partiality_cutoff={}".format(
+                self.partialityCutoff.get())
+
+        if self.minIsigi.get():
+            params += " cut_data.min_isigi={}".format(self.minIsigi.get())
+
+        # Scaling options
+
+        if self.checkConsistentIndexing.get():
+            params += " scaling_options.check_consistent_indexing={}".format(
+                self.checkConsistentIndexing.get())
+
+        if self.outlierRejection.get() is STANDARD:
+            params += " outlier_rejection=standard"
+        elif self.outlierRejection.get() is SIMPLE:
+            params += " outlier_rejection=simple"
+
+        if self.outlierZmax.get():
+            params += " outlier_zmax={}".format(self.outlierZmax.get())
+
+        # Filtering
+
+        if self.filteringMethod.get() is DELTA_CC_HALF:
+            params += " filtering.method=deltacchalf"
+        elif self.filteringMethod.get() is NONE:
+            params += " filtering.method=None"
+
+        if self.ccHalfMaxCycles.get():
+            params += " filtering.deltacchalf.max_cycles={}".format(
+                self.ccHalfMaxCycles.get())
+
+        if self.ccHalfMaxPercentRemoved.get():
+            params += " filtering.deltacchalf.max_percent_removed={}".format(
+                self.ccHalfMaxPercentRemoved.get())
+
+        if self.ccHalfMinCompleteness.get():
+            params += " filtering.deltacchalf.min_completeness={}".format(
+                self.ccHalfMinCompleteness.get())
+
+        if self.ccHalfMode.get() is DATASET:
+            params += " filtering.deltacchalf.mode=dataset"
+        elif self.ccHalfMode.get() is IMAGE_GROUP:
+            params += " filtering.deltacchalf.mode=image_group"
+
+        if self.ccHalfGroupSize.get():
+            params += " filtering.deltacchalf.group_size={}".format(
+                self.ccHalfGroupSize.get())
+
+        if self.ccHalfStdcutoff.get():
+            params += " filtering.deltacchalf.stdcutoff={}".format(
+                self.ccHalfStdcutoff.get())
+
+        # Unrestrained command line input
 
         if self.commandLineInput.get():
             params += " {}".format(self.commandLineInput.get())
