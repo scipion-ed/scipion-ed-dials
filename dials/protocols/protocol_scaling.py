@@ -52,9 +52,12 @@ class DialsProtScaling(EdBaseProtocol):
         # The start of the actually relevant part.
         form.addSection(label='Input')
 
-        form.addParam('inputSet', pwprot.PointerParam,
+        inputsetsLabel = 'Spots to scale'
+        form.addParam('inputSets', pwprot.MultiPointerParam,
                       pointerClass='SetOfIndexedSpots',
-                      label="Spots to scale",
+                      label=inputsetsLabel,
+                      minNumObjects=1,
+                      maxNumObjects=0,
                       help="")
 
         # Allow adding anything else with command line syntax
@@ -68,20 +71,25 @@ class DialsProtScaling(EdBaseProtocol):
 
     def _insertAllSteps(self):
         self._insertFunctionStep(
-            'convertInputStep', self.inputSet.getObjId())
+            'convertInputStep', [inputSet.get().getObjId() for inputSet in self.inputSets])
         self._insertFunctionStep('scaleStep')
+        if self.showReport:
+            self._insertFunctionStep('showHtmlReportStep')
         self._insertFunctionStep('createOutputStep')
 
     # -------------------------- STEPS functions -------------------------------
     def convertInputStep(self, inputSpotId):
-        inputSet = self.inputSet.get()
-        self.info("Number of images: %s" % inputSet.getSize())
-        self.info("Number of spots: %s" % inputSet.getSpots())
-        # Write new model and/or reflection file if no was supplied from set
-        if self._checkWriteModel():
-            self.writeJson(inputSet, self.getInputModelFile())
-        if self._checkWriteRefl():
-            self.writeRefl(inputSet, self.getInputReflFile())
+        for iS in self.inputSets:
+            inputSet = iS.get()
+            self.info("ObjId: %s" %
+                      inputSet.getObjId())
+            self.info("Number of images: %s" % inputSet.getSize())
+            self.info("Number of spots: %s" % inputSet.getSpots())
+            # Write new model and/or reflection file if no was supplied from set
+            if self._checkWriteModel(inputSet):
+                self.writeJson(inputSet, self.getInputModelFile(inputSet))
+            if self._checkWriteRefl(inputSet):
+                self.writeRefl(inputSet, self.getInputReflFile(inputSet))
 
     def scaleStep(self):
         program = 'dials.scale'
@@ -114,15 +122,15 @@ class DialsProtScaling(EdBaseProtocol):
         return errors
 
     # -------------------------- UTILS functions ------------------------------
-    def getInputModelFile(self):
-        if self.getSetModel():
-            return self.getSetModel()
+    def getInputModelFile(self, inputSet):
+        if self.getSetModel(inputSet):
+            return self.getSetModel(inputSet)
         else:
             return self._getExtraPath('symmetrized.expt')
 
-    def getInputReflFile(self):
-        if self.getSetRefl():
-            return self.getSetRefl()
+    def getInputReflFile(self, inputSet):
+        if self.getSetRefl(inputSet):
+            return self.getSetRefl(inputSet)
         else:
             return self._getExtraPath('symmetrized.refl')
 
@@ -133,7 +141,10 @@ class DialsProtScaling(EdBaseProtocol):
         return self._getExtraPath('scaled.refl')
 
     def getOutputHtmlFile(self):
-        return self._getExtraPath('scale.html')
+        return self._getExtraPath('dials.scale.html')
+
+    def getOutputScaleJson(self):
+        return self._getExtraPath('scale_and_filter_results.json')
 
     def getPhilPath(self):
         return self._getTmpPath('scale.phil')
@@ -150,24 +161,34 @@ class DialsProtScaling(EdBaseProtocol):
         else:
             return None
 
-    def _checkWriteModel(self):
-        return self.getSetModel() != self.getInputModelFile()
+    def getAllInputFiles(self):
+        files = ""
+        for iS in self.inputSets:
+            files += "{} {} ".format(self.getInputModelFile(iS.get()),
+                                     self.getInputReflFile(iS.get()))
+        return files.strip()
 
     def _checkWriteRefl(self):
         return self.getSetRefl() != self.getInputReflFile()
+
+    def _checkWriteModel(self, inputSet):
+        return self.getSetModel(inputSet) != self.getInputModelFile(inputSet)
+
+    def _checkWriteRefl(self, inputSet):
+        return self.getSetRefl(inputSet) != self.getInputReflFile(inputSet)
 
     def _prepCommandline(self, program):
         "Create the command line input to run dials programs"
 
         # Input basic parameters
         logPath = "{}/{}.log".format(self._getLogsPath(), program)
-        params = "{} {} output.log={} output.experiments={} output.reflections={} output.html={}".format(
-            self.getInputModelFile(),
-            self.getInputReflFile(),
+        params = "{} output.log={} output.experiments={} output.reflections={} output.html={} filtering.output.scale_and_filter_results={}".format(
+            self.getAllInputFiles(),
             logPath,
             self.getOutputModelFile(),
             self.getOutputReflFile(),
             self.getOutputHtmlFile(),
+            self.getOutputScaleJson()
         )
 
         # Update the command line with additional parameters
