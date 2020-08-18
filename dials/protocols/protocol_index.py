@@ -55,14 +55,29 @@ class DialsProtIndexSpots(EdProtIndexSpots):
         form.addSection(label='Input')
 
         form.addParam('doIndex', pwprot.BooleanParam,
-                      default=True, label='Do you want to index from start?')
+                      default=True,
+                      label='Do you want to index from start?')
+
         form.addParam('doRefineBravaisSettings', pwprot.BooleanParam,
-                      default=False, label='Do you want to refine the Bravais settings?')
+                      default=False,
+                      label='Do you want to refine the Bravais settings?')
+
         form.addParam('doReindex', pwprot.BooleanParam,
-                      default=False, label='Do you want to reindex after refining Bravais settings?',
+                      default=False,
+                      label='Do you want to reindex after refining Bravais settings?',
                       condition='doRefineBravaisSettings')
 
-        # The start of the actually relevant part.
+        # Allow some options that are only relevant for reindexing
+        group = form.addGroup('Reindex',
+                              condition='doReindex')
+
+        group.addParam('doReindexModel', pwprot.BooleanParam,
+                       default=False, label="Do you want to reindex the experimental model?")
+
+        group.addParam('doReindexReflections', pwprot.BooleanParam,
+                       default=False, label="Do you want to reindex the experimental reflections?")
+
+        # The start typical inputs.
 
         form.addParam('inputImages', pwprot.PointerParam,
                       pointerClass='SetOfDiffractionImages',
@@ -218,16 +233,6 @@ class DialsProtIndexSpots(EdProtIndexSpots):
                        default=4, label="How many processors do you want to use?",
                        help="The number of processes to use.")
 
-        # Allow some options that are only relevant for reindexing
-        group = form.addGroup('Reindex',
-                              condition='doReindex')
-
-        group.addParam('doReindexModel', pwprot.BooleanParam,
-                       default=False, label="Do you want to reindex the experimental model?")
-
-        group.addParam('doReindexReflections', pwprot.BooleanParam,
-                       default=False, label="Do you want to reindex the experimental reflections?")
-
         # Allow adding anything else with command line syntax
         # Allow adding anything else with command line syntax
         group = form.addGroup('Raw command line input parameters',
@@ -296,7 +301,6 @@ class DialsProtIndexSpots(EdProtIndexSpots):
         except:
             self.info(self.getError())
 
-    # TODO: Create a temporary "SetOfIndexedSpotsFile" that only saves the file location
     def createOutputStep(self):
         # Find the most processed model file and reflection file and copy to output
         if self.existsPath(self.getReindexedModelFile()):
