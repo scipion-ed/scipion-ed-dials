@@ -32,6 +32,7 @@ from glob import glob
 from pathlib import Path
 
 import pyworkflow.protocol as pwprot
+import pyworkflow.utils as pwutils
 
 from pwed.objects import IndexedSpot, SetOfIndexedSpots
 from pwed.protocols import EdBaseProtocol
@@ -92,8 +93,8 @@ class DialsProtScaling(EdBaseProtocol):
 
     def createOutputStep(self):
         # Check that the indexing created proper output
-        assert(os.path.exists(self.getOutputReflFile()))
-        assert(os.path.exists(self.getOutputModelFile()))
+        assert(pwutils.exists(self.getOutputReflFile()))
+        assert(pwutils.exists(self.getOutputModelFile()))
 
         outputSet = self._createSetOfIndexedSpots()
         outputSet.setDialsModel(self.getOutputModelFile())
@@ -137,19 +138,14 @@ class DialsProtScaling(EdBaseProtocol):
     def getPhilPath(self):
         return self._getTmpPath('scale.phil')
 
-    def existsPath(self, path):
-        return os.path.exists(path)
-
-    def getSetModel(self):
-        inputSet = self.inputSet.get()
-        if self.existsPath(inputSet.getDialsModel()):
+    def getSetModel(self, inputSet):
+        if pwutils.exists(inputSet.getDialsModel()):
             return inputSet.getDialsModel()
         else:
             return None
 
-    def getSetRefl(self):
-        inputSet = self.inputSet.get()
-        if self.existsPath(inputSet.getDialsRefl()):
+    def getSetRefl(self, inputSet):
+        if pwutils.exists(inputSet.getDialsRefl()):
             return inputSet.getDialsRefl()
         else:
             return None
