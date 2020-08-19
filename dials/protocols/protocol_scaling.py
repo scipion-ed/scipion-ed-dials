@@ -64,7 +64,7 @@ class DialsProtScaling(EdBaseProtocol):
 
         form.addParam('showReport', pwprot.BooleanParam,
                       label='Do you want to view the HTML report after the processing?',
-                      default=True,
+                      default=False,
                       )
 
         group = form.addGroup('Cut data')
@@ -473,6 +473,14 @@ class DialsProtScaling(EdBaseProtocol):
             summary.append('Additional command line input:\n{}'.format(
                 self.commandLineInput.get()))
 
+        mergingStats = dutils.readLog(
+            self.getLogFilePath(),
+            'Merging statistics',
+            'Writing html report')
+
+        if mergingStats not in (None, ''):
+            summary.append("\n{}".format(mergingStats))
+
         return summary
 
     # -------------------------- UTILS functions ------------------------------
@@ -499,6 +507,10 @@ class DialsProtScaling(EdBaseProtocol):
 
     def getOutputScaleJson(self):
         return self._getExtraPath('scale_and_filter_results.json')
+
+    def getLogFilePath(self, program='dials.scale'):
+        logPath = "{}/{}.log".format(self._getLogsPath(), program)
+        return logPath
 
     def getPhilPath(self):
         return self._getTmpPath('scale.phil')
@@ -577,7 +589,7 @@ class DialsProtScaling(EdBaseProtocol):
         "Create the command line input to run dials programs"
 
         # Input basic parameters
-        logPath = "{}/{}.log".format(self._getLogsPath(), program)
+        logPath = self.getLogFilePath(program)
         params = "{} output.log={} output.experiments={} output.reflections={} output.html={} filtering.output.scale_and_filter_results={}".format(
             self.getAllInputFiles(),
             logPath,
