@@ -174,6 +174,14 @@ class DialsProtSymmetry(EdBaseProtocol):
             summary.append(
                 "Source of data:\n{}".format(newlineDatasets))
 
+        symSummary = dutils.readLog(
+            self.getLogFilePath(),
+            'Recommended',
+            'Saving')
+
+        if symSummary not in (None, ''):
+            summary.append("\n{}".format(symSummary))
+
         return summary
 
     # -------------------------- UTILS functions ------------------------------
@@ -218,6 +226,10 @@ class DialsProtSymmetry(EdBaseProtocol):
         else:
             return None
 
+    def getLogFilePath(self, program='dials.symmetry'):
+        logPath = "{}/{}.log".format(self._getLogsPath(), program)
+        return logPath
+
     def _checkWriteModel(self):
         return self.getSetModel() != self.getInputModelFile()
 
@@ -228,7 +240,7 @@ class DialsProtSymmetry(EdBaseProtocol):
         "Create the command line input to run dials programs"
 
         # Input basic parameters
-        logPath = "{}/{}.log".format(self._getLogsPath(), program)
+        logPath = self.getLogFilePath(program)
         params = "{} {} output.log={} output.experiments={} output.reflections={}".format(
             self.getInputModelFile(),
             self.getInputReflFile(),
