@@ -32,6 +32,7 @@ from glob import glob
 from pathlib import Path
 
 import pyworkflow.protocol as pwprot
+import dials.utils as dutils
 
 from pwed.objects import IndexedSpot, SetOfIndexedSpots, ExportFile, SetOfExportFiles
 from pwed.protocols import EdProtExport
@@ -249,6 +250,17 @@ class DialsProtExport(EdProtExport):
     def _validate(self):
         errors = []
         return errors
+
+    def _summary(self):
+        summary = []
+        datasets = dutils.getModelDataPath(self.getInputModelFile())
+        if len(datasets) >= 1:
+            newlineDatasets = '\n'.join(
+                '{}'.format(item) for item in datasets)
+            summary.append(
+                "Source of data:\n{}".format(newlineDatasets))
+
+        return summary
 
     # -------------------------- UTILS functions ------------------------------
     def getInputModelFile(self):

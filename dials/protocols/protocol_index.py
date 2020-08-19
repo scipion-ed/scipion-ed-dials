@@ -33,6 +33,7 @@ from pathlib import Path
 import json
 
 import pyworkflow.protocol as pwprot
+import dials.utils as dutils
 
 from pwed.objects import DiffractionImage, SetOfDiffractionImages, DiffractionSpot, SetOfSpots, IndexedSpot, SetOfIndexedSpots
 from pwed.protocols import EdProtIndexSpots
@@ -366,7 +367,18 @@ class DialsProtIndexSpots(EdProtIndexSpots):
         errors = []
         return errors
 
+    def _summary(self):
+        summary = []
+        datasets = dutils.getModelDataPath(self.getInputModelFile())
+        if len(datasets) >= 1:
+            newlineDatasets = '\n'.join(
+                '{}'.format(item) for item in datasets)
+            summary.append(
+                "Indexed spots on images in:\n{}".format(newlineDatasets))
+
+        return summary
     # -------------------------- UTILS functions ------------------------------
+
     def getInputModelFile(self):
         if self.getSetModel():
             return self.getSetModel()

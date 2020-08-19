@@ -23,13 +23,22 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-
+import json
+import os.path as p
 import pyworkflow.gui.text as text
 import pyworkflow.utils as pwutils
 
 
-def _showHtmlReport(self, reportPath):
+def _showHtmlReport(reportPath):
     if pwutils.exists(reportPath):
         text._open_cmd(reportPath)
-    else:
-        self.showInfo('Could not find an html report')
+
+
+def getModelDataPath(exptFile):
+    dataPaths = []
+    with open(exptFile) as json_file:
+        data = json.load(json_file)
+        for imageset in data['imageset']:
+            template = imageset['template']
+            dataPaths.append(p.dirname(template))
+    return dataPaths

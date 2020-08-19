@@ -31,6 +31,7 @@ import re
 from glob import glob
 
 import pyworkflow.protocol as pwprot
+import dials.utils as dutils
 
 from pwed.objects import DiffractionImage, SetOfDiffractionImages, DiffractionSpot, SetOfSpots
 from pwed.protocols import EdProtFindSpots
@@ -255,6 +256,17 @@ class DialsProtFindSpots(EdProtFindSpots):
     def _validate(self):
         errors = []
         return errors
+
+    def _summary(self):
+        summary = []
+        datasets = dutils.getModelDataPath(self.getInputModelFile())
+        if len(datasets) >= 1:
+            newlineDatasets = '\n'.join(
+                '{}'.format(item) for item in datasets)
+            summary.append(
+                "Source of data:\n{}".format(newlineDatasets))
+
+        return summary
 
     # -------------------------- UTILS functions ------------------------------
     def getInputModelFile(self):

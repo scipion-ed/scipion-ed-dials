@@ -33,10 +33,10 @@ from pathlib import Path
 
 import pyworkflow.protocol as pwprot
 import pyworkflow.utils as pwutils
+import dials.utils as dutils
 
 from pwed.objects import IndexedSpot, SetOfIndexedSpots
 from pwed.protocols import EdBaseProtocol
-from dials.utils import _showHtmlReport
 from dials.convert import writeJson, readRefl, writeRefl, copyDialsFile
 from dials.constants import (
     STANDARD, SIMPLE, NONE, DELTA_CC_HALF, DATASET, IMAGE_GROUP, USE_ALL, DATASET_SELECTION, EXCLUDE_DATASETS)
@@ -408,7 +408,10 @@ class DialsProtScaling(EdBaseProtocol):
             self.info(self.getError())
 
     def showHtmlReportStep(self):
-        self._showHtmlReport(self.getOutputHtmlFile())
+        try:
+            dutils._showHtmlReport(self.getOutputHtmlFile())
+        except:
+            self.info(self.getError())
 
     def createOutputStep(self):
         # Check that the indexing created proper output
@@ -435,11 +438,23 @@ class DialsProtScaling(EdBaseProtocol):
     def _summary(self):
         summary = []
         nSets = len(self.inputSets)
-        summary.append('Scaled {} different datasets together'.format(nSets))
-        if self.dMin:
+        if nSets > 1:
+            summary.append(
+                'Scaled {} different datasets together'.format(nSets))
+        elif nSets is 1:
+            summary.append('Scaled a single dataset')
+
+        datasets = dutils.getModelDataPath(self.getOutputModelFile())
+        if len(datasets) >= 1:
+            newlineDatasets = '\n'.join(
+                '{}'.format(item) for item in datasets)
+            summary.append(
+                "Source of data:\n{}".format(newlineDatasets))
+
+        if self.dMin.get() is not None:
             summary.append(
                 'High resolution cutoff at {} Å'.format(self.dMin.get()))
-        if self.dMax:
+        if self.dMax.get() is not None:
             summary.append(
                 'Low resolution cutoff at {} Å'.format(self.dMax.get()))
         if self.checkConsistentIndexing:
