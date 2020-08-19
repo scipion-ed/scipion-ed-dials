@@ -38,8 +38,7 @@ import dials.utils as dutils
 from pwed.objects import IndexedSpot, SetOfIndexedSpots
 from pwed.protocols import EdBaseProtocol
 from dials.convert import writeJson, readRefl, writeRefl, copyDialsFile
-from dials.constants import (
-    STANDARD, SIMPLE, NONE, DELTA_CC_HALF, DATASET, IMAGE_GROUP, USE_ALL, DATASET_SELECTION, EXCLUDE_DATASETS)
+from dials.constants import *
 
 
 class DialsProtScaling(EdBaseProtocol):

@@ -37,7 +37,7 @@ import dials.utils as dutils
 from pwed.objects import IndexedSpot, SetOfIndexedSpots, ExportFile, SetOfExportFiles
 from pwed.protocols import EdProtExport
 from dials.convert import writeJson, readRefl, writeRefl
-from dials.constants import MTZ, SADABS, NXS, MMCIF, XDS_ASCII, JSON
+from dials.constants import *
 
 
 class DialsProtExport(EdProtExport):
