@@ -61,7 +61,7 @@ def readLog(logfile, start, stop):
             elif append:
                 contentList.append(line)
 
-    newlineList = '\n'.join('{}'.format(item) for item in contentList)
+    newlineList = ''.join('{}'.format(item) for item in contentList)
     content = "{}".format(newlineList)
 
     return content
