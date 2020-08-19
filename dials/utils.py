@@ -42,3 +42,26 @@ def getModelDataPath(exptFile):
             template = imageset['template']
             dataPaths.append(p.dirname(template))
     return dataPaths
+
+
+def readLog(logfile, start, stop):
+    # based on https://stackoverflow.com/a/18865133
+    contentList = []
+    content = ''
+    with open(logfile) as infile:
+        append = False
+        for line in infile:
+            if start in line.strip():
+                append = True
+                contentList.append(line)
+                continue
+            elif stop in line.strip():
+                append = False
+                continue
+            elif append:
+                contentList.append(line)
+
+    newlineList = '\n'.join('{}'.format(item) for item in contentList)
+    content = "{}".format(newlineList)
+
+    return content
