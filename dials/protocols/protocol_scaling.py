@@ -473,6 +473,14 @@ class DialsProtScaling(EdBaseProtocol):
             summary.append('Additional command line input:\n{}'.format(
                 self.commandLineInput.get()))
 
+        spaceGroup = dutils.readLog(
+            self.getLogFilePath(),
+            'Space group being used',
+            'Scaling models have been initialised')
+
+        if spaceGroup not in (None, ''):
+            summary.append("\n{}".format(spaceGroup))
+
         mergingStats = dutils.readLog(
             self.getLogFilePath(),
             'Merging statistics',
