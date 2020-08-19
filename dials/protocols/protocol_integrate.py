@@ -38,6 +38,7 @@ from pwed.objects import IndexedSpot, SetOfIndexedSpots, IndexedSpot, SetOfIndex
 from pwed.protocols import EdProtIntegrateSpots
 from pwed.convert import find_subranges
 from dials.convert import writeJson, readRefl, writeRefl, writeRefinementPhil, copyDialsFile
+from dials.constants import *
 
 
 class DialsProtIntegrateSpots(EdProtIntegrateSpots):
@@ -93,12 +94,60 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots):
                        default='',
                        help="Anything added here will be added at the end of the command line")
 
+        # Add a section for creating an html report
+        form.addSection('HTML report')
+        form.addParam('makeReport', pwprot.BooleanParam,
+                      label='Do you want to create an HTML report for the output?', default=False,
+                      help="",
+                      )
+
+        form.addParam('showReport', pwprot.BooleanParam,
+                      label='Do you want to open the report as soon as the protocol is done?', default=False,
+                      help="",
+                      condition="makeReport",
+                      )
+
+        group = form.addGroup('Parameters',
+                              condition="makeReport",)
+
+        self.extDepOptions = ['remote', 'local', 'embed']
+        group.addParam('externalDependencies', pwprot.EnumParam,
+                       label='External dependencies: ',
+                       choices=self.extDepOptions,
+                       default=REMOTE,
+                       help="Whether to use remote external dependencies (files relocatable but requires an internet connection), local (does not require internet connection but files may not be relocatable) or embed all external dependencies (inflates the html file size).",
+                       )
+
+        group.addParam('pixelsPerBin', pwprot.IntParam,
+                       label='Pixels per bin',
+                       default=40,
+                       GE=1,
+                       allowsNull=True,
+                       )
+
+        group.addParam('centroidDiffMax', pwprot.FloatParam,
+                       label='Centroid diff max',
+                       default=None,
+                       allowsNull=True,
+                       expertLevel=pwprot.LEVEL_ADVANCED,
+                       help="Magnitude in pixels of shifts mapped to the extreme colours in the heatmap plots centroid_diff_x and centroid_diff_y",
+                       )
+
+        # Allow adding anything else with command line syntax
+        group = form.addGroup('Raw command line input parameters',
+                              expertLevel=pwprot.LEVEL_ADVANCED)
+        group.addParam('commandLineInputReport', pwprot.StringParam,
+                       default='',
+                       help="Anything added here will be added at the end of the command line")
+
    # -------------------------- INSERT functions ------------------------------
 
     def _insertAllSteps(self):
         self._insertFunctionStep(
             'convertInputStep', self.inputSet.getObjId())
         self._insertFunctionStep('integrateStep')
+        if self.makeReport:
+            self._insertFunctionStep('makeHtmlReportStep')
         self._insertFunctionStep('createOutputStep')
 
     # -------------------------- STEPS functions -------------------------------
@@ -120,6 +169,13 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots):
         except:
             self.info(self.getError())
     # TODO: Create a temporary "SetOfIndexedSpotsFile" that only saves the file location
+
+    def makeHtmlReportStep(self):
+        prog = 'dials.report'
+        arguments = self._prepCommandlineReport()
+        self.runJob(prog, arguments)
+        if self.showReport:
+            dutils._showHtmlReport(self.getOutputHtmlFile())
 
     def createOutputStep(self):
         # Check that the indexing created proper output
@@ -192,6 +248,9 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots):
 
     def getOutputReflFile(self):
         return self._getExtraPath('integrated_reflections.refl')
+
+    def getOutputHtmlFile(self):
+        return self._getExtraPath('dials.report.html')
 
     def getPhilPath(self):
         return self._getTmpPath('integrate.phil')
@@ -268,3 +327,25 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots):
         scanrange = ' '.join('spotfinder.scan_range={},{}'.format(i, j)
                              for i, j in scanranges)
         return scanrange
+
+    def _prepCommandlineReport(self):
+        "Create the command line input to run dials programs"
+        # Input basic parameters
+        params = "{} {} output.html={} output.external_dependencies={}".format(
+            self.getOutputModelFile(),
+            self.getOutputReflFile(),
+            self.getOutputHtmlFile(),
+            self.extDepOptions[self.externalDependencies.get()]
+        )
+
+        if self.pixelsPerBin.get():
+            params += " pixels_per_bin={}".format(self.pixelsPerBin.get())
+
+        if self.centroidDiffMax.get():
+            params += " centroid_diff_max={}".format(
+                self.centroidDiffMax.get())
+
+        if self.commandLineInputReport.get() not in (None, ''):
+            params += " {}".format(self.commandLineInputReport.get())
+
+        return params

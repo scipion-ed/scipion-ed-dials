@@ -21,6 +21,10 @@ USE_ALL = 0
 DATASET_SELECTION = 1
 EXCLUDE_DATASETS = 2
 
+# report external dependencies
+REMOTE = 0
+LOCAL = 1
+EMBED = 2
 
 # export formats
 MTZ = 0
