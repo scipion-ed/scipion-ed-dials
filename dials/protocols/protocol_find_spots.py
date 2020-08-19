@@ -320,6 +320,14 @@ class DialsProtFindSpots(EdProtFindSpots):
                 '{}'.format(item) for item in datasets)
             summary.append(
                 "Source of data:\n{}".format(newlineDatasets))
+        histogram = dutils.readLog(
+            self.getLogFilePath(),
+            'Histogram',
+            'Save')
+
+        if histogram not in (None, ''):
+            summary.append("\n{}".format(histogram))
+
         return summary
 
     # -------------------------- UTILS functions ------------------------------
@@ -356,6 +364,10 @@ class DialsProtFindSpots(EdProtFindSpots):
         scanrange = ' '.join('spotfinder.scan_range={},{}'.format(i, j)
                              for i, j in scanranges)
         return scanrange
+
+    def getLogFilePath(self, program='dials.find_spots'):
+        logPath = "{}/{}.log".format(self._getLogsPath(), program)
+        return logPath
 
     def _prepCommandline(self):
         "Create the command line input to run dials programs"
