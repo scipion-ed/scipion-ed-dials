@@ -24,28 +24,33 @@
 # *
 # **************************************************************************
 
+import tkinter as tk
+
+from pyworkflow.gui.widgets import Button, HotButton
+import pyworkflow.gui as pwgui
+import pyworkflow.gui.text as text
+import pyworkflow.utils as pwutils
+import pyworkflow.viewer as pwviewer
 import pyworkflow.protocol.params as params
-from pyworkflow.viewer import CommandView, ProtocolViewer, DESKTOP_TKINTER
-from ..protocols import DialsProtImportDiffractionImages, DialsProtFindSpots, DialsProtIndexSpots, DialsProtRefineSpots, DialsProtIntegrateSpots
 
-# Base on https://github.com/scipion-em/scipion-em-bsoft/blob/devel/bsoft/viewers/bsoft_viewers.py
-# ProtocolView in Gautomat
+import dials.protocols as dialsProt
+import dials.utils as dutils
 
 
-class DialsImageView(CommandView):
+class DialsImageView(pwviewer.CommandView):
     def __init__(self, modelFile, reflectionFile=None, **kwargs):
 
         if reflectionFile is None:
-            CommandView.__init__(
+            pwviewer.CommandView.__init__(
                 self, 'dials.image_viewer "%s" &' % modelFile, **kwargs)
         else:
-            CommandView.__init__(self, 'dials.image_viewer "%s" "%s" &' % (
+            pwviewer.CommandView.__init__(self, 'dials.image_viewer "%s" "%s" &' % (
                 modelFile, reflectionFile), **kwargs)
 
 
-class DialsReciprocalLatticeView(CommandView):
+class DialsReciprocalLatticeView(pwviewer.CommandView):
     def __init__(self, modelFile, reflectionFile=None, **kwargs):
-        CommandView.__init__(self, 'dials.reciprocal_lattice_viewer "%s" "%s" &' % (
+        pwviewer.CommandView.__init__(self, 'dials.reciprocal_lattice_viewer "%s" "%s" &' % (
             modelFile, reflectionFile), **kwargs)
 
 
@@ -53,12 +58,12 @@ IMAGE_VIEWER = 0
 RECIPROCAL_VIEWER = 1
 
 
-class DialsFoundSpotsViewer(ProtocolViewer):
+class DialsFoundSpotsViewer(pwviewer.ProtocolViewer):
     ''' Vizualisation of Dials imported images and results from spotfinding and indexing '''
 
-    _environments = [DESKTOP_TKINTER]
-    _targets = [DialsProtImportDiffractionImages, DialsProtFindSpots, DialsProtIndexSpots,
-                DialsProtRefineSpots, DialsProtIntegrateSpots]
+    _environments = [pwviewer.DESKTOP_TKINTER]
+    _targets = [dialsProt.DialsProtImportDiffractionImages, dialsProt.DialsProtFindSpots, dialsProt.DialsProtIndexSpots,
+                dialsProt.DialsProtRefineSpots, dialsProt.DialsProtIntegrateSpots]
 
     def _defineParams(self, form):
         form.addSection(label='Pick viewer')
@@ -115,3 +120,155 @@ class DialsFoundSpotsViewer(ProtocolViewer):
         except AttributeError:
             pass
         return None
+
+
+class DialsSummaryViewer(pwviewer.Viewer):
+    """ Viewer for analyzing results from dials processing in general  """
+    _environments = [pwviewer.DESKTOP_TKINTER]
+    _targets = [dialsProt.DialsProtImportDiffractionImages,
+                dialsProt.DialsProtFindSpots,
+                dialsProt.DialsProtIndexSpots,
+                dialsProt.DialsProtRefineSpots,
+                dialsProt.DialsProtIntegrateSpots,
+                dialsProt.DialsProtSymmetry,
+                dialsProt.DialsProtScaling,
+                dialsProt.DialsProtExport]
+
+    def visualize(self, obj, **kwargs):
+        self.summaryWindow = self.tkWindow(SummaryWindow,
+                                           title='Summary',
+                                           protocol=obj
+                                           )
+        self.summaryWindow.show()
+
+
+class SummaryWindow(pwgui.Window):
+
+    def __init__(self, **kwargs):
+        pwgui.Window.__init__(self, **kwargs)
+
+        self.protocol = kwargs.get('protocol')
+
+        content = tk.Frame(self.root)
+        self._createContent(content)
+        content.grid(row=0, column=0, sticky='news')
+        content.columnconfigure(0, weight=1)
+
+    def _createContent(self, content):
+        topFrame = tk.Frame(content)
+        content.columnconfigure(0, weight=1)
+        topFrame.grid(row=0, column=0, sticky='new', padx=5, pady=5)
+
+        summaryFrame = tk.Frame(content)
+        content.rowconfigure(1, weight=1)
+        summaryFrame.grid(row=1, column=0, sticky='news', padx=5, pady=5)
+
+        buttonsFrame = tk.Frame(content)
+        buttonsFrame.grid(row=2, column=0, sticky='new', padx=5, pady=5)
+
+        self._fillTopFrame(topFrame)
+        self._fillSummaryFrame(summaryFrame)
+        self._fillButtonsFrame(buttonsFrame)
+
+    def _fillTopFrame(self, frame):
+        p1 = tk.Label(frame, text='Project: ')
+        p1.grid(row=0, column=0, sticky='nw', padx=5, pady=5)
+        projName = self.protocol.getProject().getShortName()
+        p2 = tk.Label(frame, text=projName, font=self.fontBold)
+        p2.grid(row=0, column=1, sticky='nw', padx=5, pady=0)
+
+    def _fillSummaryFrame(self, frame):
+        try:
+            summary = self.protocol._summary()
+        except AttributeError:
+            summary = ''
+        # FIXME: Make output more beautiful
+        s = tk.Label(frame, text=summary)
+        s.grid(row=0, column=0, sticky='nws')
+
+    def _fillButtonsFrame(self, frame):
+        subframe = tk.Frame(frame)
+        subframe.grid(row=0, column=0, sticky='nw')
+        frame.columnconfigure(1, weight=1)
+
+        imgPlainBtn = Button(subframe, "View plain images",
+                             command=self._viewPlainImages)
+        imgPlainBtn.grid(row=0, column=0, sticky='nw', padx=(0, 5))
+        if self._getModel() is None:
+            imgPlainBtn['state'] = 'disabled'
+
+        imgOverlaidBtn = Button(subframe, "View images with spots",
+                                command=self._viewOverlaidImages)
+        imgOverlaidBtn.grid(row=0, column=1, sticky='nw', padx=(0, 5))
+        if None in {self._getModel(), self._getRefls()}:
+            imgOverlaidBtn['state'] = 'disabled'
+
+        reciprocalBtn = Button(subframe, "View reciprocal lattice",
+                               command=self._viewReciprocal)
+        reciprocalBtn.grid(row=0, column=2, sticky='nw', padx=(0, 5))
+        if None in {self._getModel(), self._getRefls()}:
+            reciprocalBtn['state'] = 'disabled'
+
+        htmlBtn = HotButton(subframe, 'Open HTML Report',
+                            command=self._openHTML)
+        htmlBtn.grid(row=0, column=3, sticky='nw', padx=(0, 5))
+        # FIXME: Find a way to actually check if the file exists
+        if self._getHtml() is None:
+            htmlBtn['state'] = 'disabled'
+
+        closeBtn = self.createCloseButton(frame)
+        closeBtn.grid(row=0, column=1, sticky='ne')
+
+    def _getModel(self):
+        try:
+            return self.protocol.getModelFile()
+        except AttributeError:
+            pass
+        try:
+            return self.protocol.getOutputModelFile()
+        except AttributeError:
+            pass
+        try:
+            return self.protocol.getInputModelFile()
+        except AttributeError:
+            pass
+        return None
+
+    def _getRefls(self):
+        try:
+            return self.protocol.getReflFile()
+        except AttributeError:
+            pass
+        try:
+            return self.protocol.getOutputReflFile()
+        except AttributeError:
+            pass
+        try:
+            return self.protocol.getInputReflFile()
+        except AttributeError:
+            pass
+        return None
+
+    def _getHtml(self):
+        try:
+            return self.protocol.getOutputHtmlFile()
+        except AttributeError:
+            pass
+        return None
+
+    def _viewPlainImages(self, e=None):
+        DialsImageView(self._getModel(), reflectionFile=None).show()
+
+    def _viewOverlaidImages(self, e=None):
+        DialsImageView(self._getModel(),
+                       reflectionFile=self._getRefls()).show()
+
+    def _viewReciprocal(self, e=None):
+        DialsReciprocalLatticeView(
+            self._getModel(), reflectionFile=self._getRefls()).show()
+
+    def _openHTML(self, e=None):
+        if self._getHtml() is not None:
+            dutils._showHtmlReport(self._getHtml())
+        else:
+            self.showInfo("Could not find an HTML file to open")

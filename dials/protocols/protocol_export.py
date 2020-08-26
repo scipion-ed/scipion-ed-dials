@@ -263,6 +263,7 @@ class DialsProtExport(EdProtExport):
         return summary
 
     # -------------------------- UTILS functions ------------------------------
+
     def getInputModelFile(self):
         if self.getSetModel():
             return self.getSetModel()
