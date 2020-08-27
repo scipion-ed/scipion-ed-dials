@@ -44,6 +44,15 @@ def getModelDataPath(exptFile):
     return dataPaths
 
 
+def getDatasets(modelFile):
+    datasets = getModelDataPath(modelFile)
+    if len(datasets) >= 1:
+        newlineDatasets = '\n'.join('{}'.format(item) for item in datasets)
+        return "Source of data:\n{}".format(newlineDatasets)
+    else:
+        return ''
+
+
 def readLog(logfile, start, stop):
     # based on https://stackoverflow.com/a/18865133
     contentList = []
