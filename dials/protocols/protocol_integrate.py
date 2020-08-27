@@ -226,7 +226,8 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots):
             summary.append("\n")
 
         if self.getLogOutput() not in (None, ''):
-            summary.append(self.getLogOutput())
+            pass
+            # summary.append(self.getLogOutput())
 
         return summary
 

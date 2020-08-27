@@ -471,8 +471,8 @@ class DialsProtScaling(EdBaseProtocol):
             summary.append('Additional command line input:\n{}'.format(
                 self.commandLineInput.get()))
 
-        if self.getLogOutput() not in (None, ''):
-            summary.append(self.getLogOutput())
+        if self.getSpaceGroupLogOutput() not in (None, ''):
+            summary.append(self.getSpaceGroupLogOutput())
 
         return summary
 
@@ -530,24 +530,31 @@ class DialsProtScaling(EdBaseProtocol):
     def getDatasets(self):
         return dutils.getDatasets(self.getOutputModelFile())
 
-    def getLogOutput(self):
-        logOutput = ''
+    def getSpaceGroupLogOutput(self):
         spaceGroup = dutils.readLog(
             self.getLogFilePath(),
             'Space group being used',
             'Scaling models have been initialised')
+        return spaceGroup
 
-        if spaceGroup not in (None, ''):
-            logOutput += spaceGroup
-
+    def getMergingStatisticsLogOutput(self):
         mergingStats = dutils.readLog(
             self.getLogFilePath(),
             'Merging statistics',
             'Writing html report')
-
         if mergingStats not in (None, ''):
-            mS = textwrap.dedent(mergingStats)
-            logOutput += "\n{}".format(mS)
+            mergeStats = "\n{}".format(textwrap.dedent(mergingStats))
+        else:
+            mergeStats = mergingStats
+        return mergeStats
+
+    def getLogOutput(self):
+        logOutput = ''
+        if self.getSpaceGroupLogOutput() not in (None, ''):
+            logOutput += self.getSpaceGroupLogOutput()
+
+        if self.getMergingStatisticsLogOutput() not in (None, ''):
+            logOutput += self.getMergingStatisticsLogOutput()
         return logOutput
 
     def getImageExclusions(self):
