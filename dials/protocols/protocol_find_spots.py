@@ -31,12 +31,13 @@ import re
 from glob import glob
 
 import pyworkflow.protocol as pwprot
+import dials.utils as dutils
 
 from pwed.objects import DiffractionImage, SetOfDiffractionImages, DiffractionSpot, SetOfSpots
 from pwed.protocols import EdProtFindSpots
 from pwed.convert import find_subranges
 from dials.convert import writeJson, readRefl, copyDialsFile
-from dials.constants import DISPERSION, DISPERSION_EXTENDED
+from dials.constants import *
 
 
 class DialsProtFindSpots(EdProtFindSpots):
@@ -188,12 +189,60 @@ class DialsProtFindSpots(EdProtFindSpots):
                        default='',
                        help="Anything added here will be added at the end of the command line")
 
+        # Add a section for creating an html report
+        form.addSection('HTML report')
+        form.addParam('makeReport', pwprot.BooleanParam,
+                      label='Do you want to create an HTML report for the output?', default=False,
+                      help="",
+                      )
+
+        form.addParam('showReport', pwprot.BooleanParam,
+                      label='Do you want to open the report as soon as the protocol is done?', default=False,
+                      help="",
+                      condition="makeReport",
+                      )
+
+        group = form.addGroup('Parameters',
+                              condition="makeReport",)
+
+        self.extDepOptions = ['remote', 'local', 'embed']
+        group.addParam('externalDependencies', pwprot.EnumParam,
+                       label='External dependencies: ',
+                       choices=self.extDepOptions,
+                       default=REMOTE,
+                       help="Whether to use remote external dependencies (files relocatable but requires an internet connection), local (does not require internet connection but files may not be relocatable) or embed all external dependencies (inflates the html file size).",
+                       )
+
+        group.addParam('pixelsPerBin', pwprot.IntParam,
+                       label='Pixels per bin',
+                       default=40,
+                       GE=1,
+                       allowsNull=True,
+                       )
+
+        group.addParam('centroidDiffMax', pwprot.FloatParam,
+                       label='Centroid diff max',
+                       default=None,
+                       allowsNull=True,
+                       expertLevel=pwprot.LEVEL_ADVANCED,
+                       help="Magnitude in pixels of shifts mapped to the extreme colours in the heatmap plots centroid_diff_x and centroid_diff_y",
+                       )
+
+        # Allow adding anything else with command line syntax
+        group = form.addGroup('Raw command line input parameters',
+                              expertLevel=pwprot.LEVEL_ADVANCED)
+        group.addParam('commandLineInputReport', pwprot.StringParam,
+                       default='',
+                       help="Anything added here will be added at the end of the command line")
+
     # -------------------------- INSERT functions ------------------------------
 
     def _insertAllSteps(self):
         self._insertFunctionStep(
             'convertInputStep', self.inputImages.getObjId())
         self._insertFunctionStep('findSpotsStep')
+        if self.makeReport:
+            self._insertFunctionStep('makeHtmlReportStep')
         self._insertFunctionStep('createOutputStep')
 
     # -------------------------- STEPS functions -------------------------------
@@ -217,6 +266,13 @@ class DialsProtFindSpots(EdProtFindSpots):
         self.program = 'dials.find_spots'
         arguments = self._prepCommandline()
         self.runJob(self.program, arguments)
+
+    def makeHtmlReportStep(self):
+        prog = 'dials.report'
+        arguments = self._prepCommandlineReport()
+        self.runJob(prog, arguments)
+        if self.showReport:
+            dutils._showHtmlReport(self.getOutputHtmlFile())
 
     def createOutputStep(self):
         reflectionData = readRefl(self.getOutputReflFile())
@@ -256,12 +312,36 @@ class DialsProtFindSpots(EdProtFindSpots):
         errors = []
         return errors
 
+    def _summary(self):
+        summary = []
+        if self.getDatasets() not in (None, ''):
+            summary.append(self.getDatasets())
+            summary.append("\n")
+
+        if self.getLogOutput() not in (None, ''):
+            summary.append(self.getLogOutput())
+
+        return summary
+
     # -------------------------- UTILS functions ------------------------------
     def getInputModelFile(self):
         return self._getExtraPath('imported.expt')
 
     def getOutputReflFile(self):
         return self._getExtraPath('strong.refl')
+
+    def getOutputHtmlFile(self):
+        return self._getExtraPath('dials.report.html')
+
+    def getDatasets(self):
+        return dutils.getDatasets(self.getInputModelFile())
+
+    def getLogOutput(self):
+        logOutput = dutils.readLog(
+            self.getLogFilePath(),
+            'Histogram',
+            '---')
+        return logOutput
 
     def getScanRanges(self):
         # Get a list of object IDs for good images
@@ -287,6 +367,10 @@ class DialsProtFindSpots(EdProtFindSpots):
         scanrange = ' '.join('spotfinder.scan_range={},{}'.format(i, j)
                              for i, j in scanranges)
         return scanrange
+
+    def getLogFilePath(self, program='dials.find_spots'):
+        logPath = "{}/{}.log".format(self._getLogsPath(), program)
+        return logPath
 
     def _prepCommandline(self):
         "Create the command line input to run dials programs"
@@ -371,3 +455,24 @@ class DialsProtFindSpots(EdProtFindSpots):
         scanrange = ' '.join('spotfinder.scan_range={},{}'.format(i, j)
                              for i, j in scanranges)
         return scanrange
+
+    def _prepCommandlineReport(self):
+        "Create the command line input to run dials programs"
+        # Input basic parameters
+        params = "{} output.html={} output.external_dependencies={}".format(
+            self.getOutputReflFile(),
+            self.getOutputHtmlFile(),
+            self.extDepOptions[self.externalDependencies.get()]
+        )
+
+        if self.pixelsPerBin.get():
+            params += " pixels_per_bin={}".format(self.pixelsPerBin.get())
+
+        if self.centroidDiffMax.get():
+            params += " centroid_diff_max={}".format(
+                self.centroidDiffMax.get())
+
+        if self.commandLineInputReport.get() not in (None, ''):
+            params += " {}".format(self.commandLineInputReport.get())
+
+        return params

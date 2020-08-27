@@ -114,9 +114,9 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         self.launchProtocol(protSymmetry)
         return protSymmetry
 
-    def _runScaling(self, inputSet, **kwargs):
+    def _runScaling(self, inputSets, **kwargs):
         protScaling = self.newProtocol(DialsProtScaling,
-                                       inputSet=inputSet,
+                                       inputSets=inputSets,
                                        **kwargs)
         self.launchProtocol(protScaling)
         return protScaling
@@ -716,7 +716,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
 
                     protScaling = self._runScaling(
                         # objLabel="dials - scaling",
-                        inputSet=protSymmetry.outputSymmetrizedSpots,
+                        inputSets=[protSymmetry.outputSymmetrizedSpots],
                     )
                     scaledset = getattr(
                         protScaling, 'outputScaledSpots', None)

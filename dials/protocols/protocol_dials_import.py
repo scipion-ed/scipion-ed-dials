@@ -33,6 +33,7 @@ from glob import glob
 
 import pyworkflow as pw
 import pyworkflow.protocol as pwprot
+import dials.utils as dutils
 
 from pwed.objects import DiffractionImage, SetOfDiffractionImages
 from pwed.protocols import ProtImportDiffractionImages
@@ -88,17 +89,6 @@ class DialsProtImportDiffractionImages(ProtImportDiffractionImages):
 
     # -------------------------- UTILS functions ------------------------------
 
-    def getFileParents(self, file_list):
-        uniquePaths = []
-        for f in file_list:
-            p = str(pathlib.Path(f[0]).parent)
-            if p not in uniquePaths:
-                uniquePaths.append(p)
-        if len(uniquePaths) == 1:
-            return uniquePaths[0]
-        else:
-            return uniquePaths
-
     def getCmdparamStart(self):
         self.loadPatterns()
         if self.useTemplate:
@@ -108,6 +98,12 @@ class DialsProtImportDiffractionImages(ProtImportDiffractionImages):
 
     def getOutputModelFile(self):
         return self._getExtraPath('imported.expt')
+
+    def getDatasets(self):
+        return dutils.getDatasets(self.getOutputModelFile())
+
+    def getLogOutput(self):
+        return ''
 
     def _prepareCommandLineArguments(self, program):
         # Make a string to append to

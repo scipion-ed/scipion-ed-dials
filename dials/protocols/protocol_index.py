@@ -33,11 +33,13 @@ from pathlib import Path
 import json
 
 import pyworkflow.protocol as pwprot
+import dials.utils as dutils
 
 from pwed.objects import DiffractionImage, SetOfDiffractionImages, DiffractionSpot, SetOfSpots, IndexedSpot, SetOfIndexedSpots
 from pwed.protocols import EdProtIndexSpots
 from pwed.convert import find_subranges
 from dials.convert import writeJson, readRefl, writeRefl, writeRefinementPhil, copyDialsFile
+from dials.constants import *
 
 
 class DialsProtIndexSpots(EdProtIndexSpots):
@@ -55,14 +57,29 @@ class DialsProtIndexSpots(EdProtIndexSpots):
         form.addSection(label='Input')
 
         form.addParam('doIndex', pwprot.BooleanParam,
-                      default=True, label='Do you want to index from start?')
+                      default=True,
+                      label='Do you want to index from start?')
+
         form.addParam('doRefineBravaisSettings', pwprot.BooleanParam,
-                      default=False, label='Do you want to refine the Bravais settings?')
+                      default=False,
+                      label='Do you want to refine the Bravais settings?')
+
         form.addParam('doReindex', pwprot.BooleanParam,
-                      default=False, label='Do you want to reindex after refining Bravais settings?',
+                      default=False,
+                      label='Do you want to reindex after refining Bravais settings?',
                       condition='doRefineBravaisSettings')
 
-        # The start of the actually relevant part.
+        # Allow some options that are only relevant for reindexing
+        group = form.addGroup('Reindex',
+                              condition='doReindex')
+
+        group.addParam('doReindexModel', pwprot.BooleanParam,
+                       default=False, label="Do you want to reindex the experimental model?")
+
+        group.addParam('doReindexReflections', pwprot.BooleanParam,
+                       default=False, label="Do you want to reindex the experimental reflections?")
+
+        # The start typical inputs.
 
         form.addParam('inputImages', pwprot.PointerParam,
                       pointerClass='SetOfDiffractionImages',
@@ -218,16 +235,6 @@ class DialsProtIndexSpots(EdProtIndexSpots):
                        default=4, label="How many processors do you want to use?",
                        help="The number of processes to use.")
 
-        # Allow some options that are only relevant for reindexing
-        group = form.addGroup('Reindex',
-                              condition='doReindex')
-
-        group.addParam('doReindexModel', pwprot.BooleanParam,
-                       default=False, label="Do you want to reindex the experimental model?")
-
-        group.addParam('doReindexReflections', pwprot.BooleanParam,
-                       default=False, label="Do you want to reindex the experimental reflections?")
-
         # Allow adding anything else with command line syntax
         # Allow adding anything else with command line syntax
         group = form.addGroup('Raw command line input parameters',
@@ -245,6 +252,52 @@ class DialsProtIndexSpots(EdProtIndexSpots):
                        label='Reindexing command line',
                        help="Anything added here will be added at the end of the command line for reindexing")
 
+        # Allow adding anything else with command line syntax
+        group = form.addGroup('Raw command line input parameters',
+                              expertLevel=pwprot.LEVEL_ADVANCED)
+        group.addParam('commandLineInputReport', pwprot.StringParam,
+                       default='',
+                       help="Anything added here will be added at the end of the command line")
+
+        # Add a section for creating an html report
+        form.addSection('HTML report')
+        form.addParam('makeReport', pwprot.BooleanParam,
+                      label='Do you want to create an HTML report for the output?', default=False,
+                      help="",
+                      )
+
+        form.addParam('showReport', pwprot.BooleanParam,
+                      label='Do you want to open the report as soon as the protocol is done?', default=False,
+                      help="",
+                      condition="makeReport",
+                      )
+
+        group = form.addGroup('Parameters',
+                              condition="makeReport",)
+
+        self.extDepOptions = ['remote', 'local', 'embed']
+        group.addParam('externalDependencies', pwprot.EnumParam,
+                       label='External dependencies: ',
+                       choices=self.extDepOptions,
+                       default=REMOTE,
+                       help="Whether to use remote external dependencies (files relocatable but requires an internet connection), local (does not require internet connection but files may not be relocatable) or embed all external dependencies (inflates the html file size).",
+                       )
+
+        group.addParam('pixelsPerBin', pwprot.IntParam,
+                       label='Pixels per bin',
+                       default=40,
+                       GE=1,
+                       allowsNull=True,
+                       )
+
+        group.addParam('centroidDiffMax', pwprot.FloatParam,
+                       label='Centroid diff max',
+                       default=None,
+                       allowsNull=True,
+                       expertLevel=pwprot.LEVEL_ADVANCED,
+                       help="Magnitude in pixels of shifts mapped to the extreme colours in the heatmap plots centroid_diff_x and centroid_diff_y",
+                       )
+
    # -------------------------- INSERT functions ------------------------------
 
     def _insertAllSteps(self):
@@ -257,6 +310,8 @@ class DialsProtIndexSpots(EdProtIndexSpots):
         if self.doReindex:
             self._insertFunctionStep('reindexStep')
         self._insertFunctionStep('createOutputStep')
+        if self.makeReport:
+            self._insertFunctionStep('makeHtmlReportStep')
 
     # -------------------------- STEPS functions -------------------------------
     def convertInputStep(self, inputImgId, inputSpotId):
@@ -296,7 +351,13 @@ class DialsProtIndexSpots(EdProtIndexSpots):
         except:
             self.info(self.getError())
 
-    # TODO: Create a temporary "SetOfIndexedSpotsFile" that only saves the file location
+    def makeHtmlReportStep(self):
+        prog = 'dials.report'
+        arguments = self._prepCommandlineReport()
+        self.runJob(prog, arguments)
+        if self.showReport:
+            dutils._showHtmlReport(self.getOutputHtmlFile())
+
     def createOutputStep(self):
         # Find the most processed model file and reflection file and copy to output
         if self.existsPath(self.getReindexedModelFile()):
@@ -362,7 +423,14 @@ class DialsProtIndexSpots(EdProtIndexSpots):
         errors = []
         return errors
 
+    def _summary(self):
+        summary = []
+        if self.getDatasets() not in (None, ''):
+            summary.append(self.getDatasets())
+
+        return summary
     # -------------------------- UTILS functions ------------------------------
+
     def getInputModelFile(self):
         if self.getSetModel():
             return self.getSetModel()
@@ -380,6 +448,12 @@ class DialsProtIndexSpots(EdProtIndexSpots):
 
     def getIndexedReflFile(self):
         return self._getTmpPath('indexed.refl')
+
+    def getDatasets(self):
+        return dutils.getDatasets(self.getInputModelFile())
+
+    def getLogOutput(self):
+        return ''
 
     def getBravaisPath(self, fn=None):
         if fn is None:
@@ -436,6 +510,9 @@ class DialsProtIndexSpots(EdProtIndexSpots):
     def getOutputReflFile(self):
         return self._getExtraPath('indexed.refl')
 
+    def getOutputHtmlFile(self):
+        return self._getExtraPath('dials.report.html')
+
     def getPhilPath(self):
         return self._getTmpPath('index.phil')
 
@@ -462,6 +539,10 @@ class DialsProtIndexSpots(EdProtIndexSpots):
         else:
             return None
 
+    def getLogFilePath(self, program='dials.index'):
+        logPath = "{}/{}.log".format(self._getLogsPath(), program)
+        return logPath
+
     def _checkWriteModel(self):
         return self.getSetModel() != self.getInputModelFile()
 
@@ -472,7 +553,7 @@ class DialsProtIndexSpots(EdProtIndexSpots):
         "Create the command line input to run dials programs"
 
         # Input basic parameters
-        logPath = "{}/{}.log".format(self._getLogsPath(), program)
+        logPath = self.getLogFilePath(program)
         params = "{} {} output.log={} output.experiments={} output.reflections={}".format(
             self.getInputModelFile(),
             self.getInputReflFile(),
@@ -583,7 +664,7 @@ class DialsProtIndexSpots(EdProtIndexSpots):
     def _prepBravaisCommandline(self, program):
         "Create the command line input to run dials programs"
         # Input basic parameters
-        logPath = "{}/{}.log".format(self._getLogsPath(), program)
+        logPath = self.getLogFilePath(program)
         params = "{} {} output.log={} output.directory={}".format(
             self.getIndexedModelFile(), self.getIndexedReflFile(), logPath, self.getBravaisPath())
 
@@ -613,5 +694,27 @@ class DialsProtIndexSpots(EdProtIndexSpots):
 
         if self.commandLineInputReindexing.get():
             params += " {}".format(self.commandLineInputReindexing.get())
+
+        return params
+
+    def _prepCommandlineReport(self):
+        "Create the command line input to run dials programs"
+        # Input basic parameters
+        params = "{} {} output.html={} output.external_dependencies={}".format(
+            self.getOutputModelFile(),
+            self.getOutputReflFile(),
+            self.getOutputHtmlFile(),
+            self.extDepOptions[self.externalDependencies.get()]
+        )
+
+        if self.pixelsPerBin.get():
+            params += " pixels_per_bin={}".format(self.pixelsPerBin.get())
+
+        if self.centroidDiffMax.get():
+            params += " centroid_diff_max={}".format(
+                self.centroidDiffMax.get())
+
+        if self.commandLineInputReport.get() not in (None, ''):
+            params += " {}".format(self.commandLineInputReport.get())
 
         return params

@@ -24,4 +24,4 @@
 # *
 # **************************************************************************
 
-from .dials_viewers import DialsFoundSpotsViewer
+from .dials_viewers import DialsResultsViewer
