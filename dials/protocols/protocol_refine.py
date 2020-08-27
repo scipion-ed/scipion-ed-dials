@@ -296,12 +296,8 @@ class DialsProtRefineSpots(EdProtRefineSpots):
 
     def _summary(self):
         summary = []
-        datasets = dutils.getModelDataPath(self.getInputModelFile())
-        if len(datasets) >= 1:
-            newlineDatasets = '\n'.join(
-                '{}'.format(item) for item in datasets)
-            summary.append(
-                "Source of data:\n{}".format(newlineDatasets))
+        if self.getDatasets() not in (None, ''):
+            summary.append(self.getDatasets())
 
         return summary
 
@@ -343,6 +339,12 @@ class DialsProtRefineSpots(EdProtRefineSpots):
             return inputSet.getDialsRefl()
         else:
             return None
+
+    def getDatasets(self):
+        return dutils.getDatasets(self.getInputModelFile())
+
+    def getLogOutput(self):
+        return ''
 
     def _checkWriteModel(self):
         return self.getSetModel() != self.getInputModelFile()

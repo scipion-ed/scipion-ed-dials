@@ -425,12 +425,8 @@ class DialsProtIndexSpots(EdProtIndexSpots):
 
     def _summary(self):
         summary = []
-        datasets = dutils.getModelDataPath(self.getInputModelFile())
-        if len(datasets) >= 1:
-            newlineDatasets = '\n'.join(
-                '{}'.format(item) for item in datasets)
-            summary.append(
-                "Indexed spots on images in:\n{}".format(newlineDatasets))
+        if self.getDatasets() not in (None, ''):
+            summary.append(self.getDatasets())
 
         return summary
     # -------------------------- UTILS functions ------------------------------
@@ -452,6 +448,12 @@ class DialsProtIndexSpots(EdProtIndexSpots):
 
     def getIndexedReflFile(self):
         return self._getTmpPath('indexed.refl')
+
+    def getDatasets(self):
+        return dutils.getDatasets(self.getInputModelFile())
+
+    def getLogOutput(self):
+        return ''
 
     def getBravaisPath(self, fn=None):
         if fn is None:

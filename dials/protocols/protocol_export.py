@@ -253,12 +253,8 @@ class DialsProtExport(EdProtExport):
 
     def _summary(self):
         summary = []
-        datasets = dutils.getModelDataPath(self.getInputModelFile())
-        if len(datasets) >= 1:
-            newlineDatasets = '\n'.join(
-                '{}'.format(item) for item in datasets)
-            summary.append(
-                "Source of data:\n{}".format(newlineDatasets))
+        if self.getDatasets() not in (None, ''):
+            summary.append(self.getDatasets())
 
         return summary
 
@@ -371,6 +367,13 @@ class DialsProtExport(EdProtExport):
                    xdsAsciiStr, jsonStr]
         outputString = "format={} {}".format(formats[idx], nameStr[idx])
         return outputString
+
+    def getDatasets(self):
+        return dutils.getDatasets(self.getInputModelFile())
+
+    def getLogOutput(self):
+        logOutput = ''
+        return logOutput
 
     def _checkWriteModel(self):
         return self.getSetModel() != self.getInputModelFile()

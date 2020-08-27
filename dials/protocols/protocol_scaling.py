@@ -30,6 +30,7 @@ import os
 import re
 from glob import glob
 from pathlib import Path
+import textwrap
 
 import pyworkflow.protocol as pwprot
 import pyworkflow.utils as pwutils
@@ -436,19 +437,16 @@ class DialsProtScaling(EdBaseProtocol):
 
     def _summary(self):
         summary = []
+
+        if self.getDatasets() not in (None, ''):
+            summary.append(self.getDatasets())
+
         nSets = len(self.inputSets)
         if nSets > 1:
             summary.append(
-                'Scaled {} different datasets together'.format(nSets))
+                '\nScaled {} different datasets together'.format(nSets))
         elif nSets is 1:
-            summary.append('Scaled a single dataset')
-
-        datasets = dutils.getModelDataPath(self.getOutputModelFile())
-        if len(datasets) >= 1:
-            newlineDatasets = '\n'.join(
-                '{}'.format(item) for item in datasets)
-            summary.append(
-                "Source of data:\n{}".format(newlineDatasets))
+            summary.append('\nScaled a single dataset')
 
         if self.dMin.get() is not None:
             summary.append(
@@ -473,21 +471,8 @@ class DialsProtScaling(EdBaseProtocol):
             summary.append('Additional command line input:\n{}'.format(
                 self.commandLineInput.get()))
 
-        spaceGroup = dutils.readLog(
-            self.getLogFilePath(),
-            'Space group being used',
-            'Scaling models have been initialised')
-
-        if spaceGroup not in (None, ''):
-            summary.append("\n{}".format(spaceGroup))
-
-        mergingStats = dutils.readLog(
-            self.getLogFilePath(),
-            'Merging statistics',
-            'Writing html report')
-
-        if mergingStats not in (None, ''):
-            summary.append("\n{}".format(mergingStats))
+        if self.getLogOutput() not in (None, ''):
+            summary.append(self.getLogOutput())
 
         return summary
 
@@ -541,6 +526,29 @@ class DialsProtScaling(EdBaseProtocol):
             files += "{} {} ".format(self.getInputModelFile(iS.get()),
                                      self.getInputReflFile(iS.get()))
         return files.strip()
+
+    def getDatasets(self):
+        return dutils.getDatasets(self.getOutputModelFile())
+
+    def getLogOutput(self):
+        logOutput = ''
+        spaceGroup = dutils.readLog(
+            self.getLogFilePath(),
+            'Space group being used',
+            'Scaling models have been initialised')
+
+        if spaceGroup not in (None, ''):
+            logOutput += spaceGroup
+
+        mergingStats = dutils.readLog(
+            self.getLogFilePath(),
+            'Merging statistics',
+            'Writing html report')
+
+        if mergingStats not in (None, ''):
+            mS = textwrap.dedent(mergingStats)
+            logOutput += "\n{}".format(mS)
+        return logOutput
 
     def getImageExclusions(self):
         imageGroups = []

@@ -167,20 +167,13 @@ class DialsProtSymmetry(EdBaseProtocol):
 
     def _summary(self):
         summary = []
-        datasets = dutils.getModelDataPath(self.getInputModelFile())
-        if len(datasets) >= 1:
-            newlineDatasets = '\n'.join(
-                '{}'.format(item) for item in datasets)
-            summary.append(
-                "Source of data:\n{}".format(newlineDatasets))
 
-        symSummary = dutils.readLog(
-            self.getLogFilePath(),
-            'Recommended',
-            'Saving')
+        if self.getDatasets() not in (None, ''):
+            summary.append(self.getDatasets())
+            summary.append("\n")
 
-        if symSummary not in (None, ''):
-            summary.append("\n{}".format(symSummary))
+        if self.getLogOutput() not in (None, ''):
+            summary.append(self.getLogOutput())
 
         return summary
 
@@ -229,6 +222,16 @@ class DialsProtSymmetry(EdBaseProtocol):
     def getLogFilePath(self, program='dials.symmetry'):
         logPath = "{}/{}.log".format(self._getLogsPath(), program)
         return logPath
+
+    def getDatasets(self):
+        return dutils.getDatasets(self.getInputModelFile())
+
+    def getLogOutput(self):
+        logOutput = dutils.readLog(
+            self.getLogFilePath(),
+            'Recommended',
+            'Saving')
+        return logOutput.strip()
 
     def _checkWriteModel(self):
         return self.getSetModel() != self.getInputModelFile()

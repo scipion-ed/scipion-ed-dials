@@ -177,8 +177,10 @@ class ResultsWindow(pwgui.Window):
         projName = self.protocol.getProject().getShortName()
         p2 = tk.Label(frame, text=projName, font=self.fontBold)
         p2.grid(row=0, column=1, sticky='nw', padx=5, pady=5)
-        dataSource = self.protocol._summary()[0]
-        [expl, source] = dataSource.split('\n')
+        dataSource = self.protocol.getDatasets()
+        splitSource = dataSource.split('\n')
+        expl = splitSource[0]
+        source = "\n".join(splitSource[1:])
         p3 = tk.Label(frame, text=expl)
         p3.grid(row=1, column=0, sticky='nw', padx=5, pady=5)
         p4 = tk.Label(frame, text=source)
@@ -186,10 +188,9 @@ class ResultsWindow(pwgui.Window):
 
     def _fillResultsFrame(self, frame):
         try:
-            summary = self.protocol._summary()
-            results = "\n".join(summary[1:])
-        except AttributeError:
-            results = ''
+            results = self.protocol.getLogOutput()
+        except Exception as e:
+            results = e
         text = textwrap.dedent(results)
         s = tk.Label(frame, justify=tk.LEFT, font="TkFixedFont", text=text)
         s.grid(row=0, column=0, sticky='news')

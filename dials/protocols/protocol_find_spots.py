@@ -314,19 +314,12 @@ class DialsProtFindSpots(EdProtFindSpots):
 
     def _summary(self):
         summary = []
-        datasets = dutils.getModelDataPath(self.getInputModelFile())
-        if len(datasets) >= 1:
-            newlineDatasets = '\n'.join(
-                '{}'.format(item) for item in datasets)
-            summary.append(
-                "Source of data:\n{}".format(newlineDatasets))
-        histogram = dutils.readLog(
-            self.getLogFilePath(),
-            'Histogram',
-            'Save')
+        if self.getDatasets() not in (None, ''):
+            summary.append(self.getDatasets())
+            summary.append("\n")
 
-        if histogram not in (None, ''):
-            summary.append("\n{}".format(histogram))
+        if self.getLogOutput() not in (None, ''):
+            summary.append(self.getLogOutput())
 
         return summary
 
@@ -339,6 +332,16 @@ class DialsProtFindSpots(EdProtFindSpots):
 
     def getOutputHtmlFile(self):
         return self._getExtraPath('dials.report.html')
+
+    def getDatasets(self):
+        return dutils.getDatasets(self.getInputModelFile())
+
+    def getLogOutput(self):
+        logOutput = dutils.readLog(
+            self.getLogFilePath(),
+            'Histogram',
+            '---')
+        return logOutput
 
     def getScanRanges(self):
         # Get a list of object IDs for good images

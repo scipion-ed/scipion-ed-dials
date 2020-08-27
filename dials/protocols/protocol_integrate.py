@@ -221,20 +221,12 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots):
 
     def _summary(self):
         summary = []
-        datasets = dutils.getModelDataPath(self.getInputModelFile())
-        if len(datasets) >= 1:
-            newlineDatasets = '\n'.join(
-                '{}'.format(item) for item in datasets)
-            summary.append(
-                "Source of data:\n{}".format(newlineDatasets))
+        if self.getDatasets() not in (None, ''):
+            summary.append(self.getDatasets())
+            summary.append("\n")
 
-        intSummary = dutils.readLog(
-            self.getLogFilePath(),
-            'Summary vs resolution',
-            'Timing')
-
-        if intSummary not in (None, ''):
-            summary.append("\n{}".format(intSummary))
+        if self.getLogOutput() not in (None, ''):
+            summary.append(self.getLogOutput())
 
         return summary
 
@@ -262,6 +254,16 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots):
 
     def getPhilPath(self):
         return self._getTmpPath('integrate.phil')
+
+    def getDatasets(self):
+        return dutils.getDatasets(self.getInputModelFile())
+
+    def getLogOutput(self):
+        logOutput = dutils.readLog(
+            self.getLogFilePath(),
+            'Summary vs resolution',
+            'Timing')
+        return logOutput
 
     def existsPath(self, path):
         return os.path.exists(path)

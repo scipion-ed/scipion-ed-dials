@@ -99,6 +99,12 @@ class DialsProtImportDiffractionImages(ProtImportDiffractionImages):
     def getOutputModelFile(self):
         return self._getExtraPath('imported.expt')
 
+    def getDatasets(self):
+        return dutils.getDatasets(self.getOutputModelFile())
+
+    def getLogOutput(self):
+        return ''
+
     def _prepareCommandLineArguments(self, program):
         # Make a string to append to
         cmdparams = "{}".format(self.getCmdparamStart())
