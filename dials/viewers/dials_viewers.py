@@ -25,6 +25,7 @@
 # **************************************************************************
 
 import tkinter as tk
+import textwrap
 
 from pyworkflow.gui.widgets import Button, HotButton
 import pyworkflow.gui as pwgui
@@ -122,7 +123,7 @@ class DialsFoundSpotsViewer(pwviewer.ProtocolViewer):
         return None
 
 
-class DialsSummaryViewer(pwviewer.Viewer):
+class DialsResultsViewer(pwviewer.Viewer):
     """ Viewer for analyzing results from dials processing in general  """
     _environments = [pwviewer.DESKTOP_TKINTER]
     _targets = [dialsProt.DialsProtImportDiffractionImages,
@@ -135,14 +136,14 @@ class DialsSummaryViewer(pwviewer.Viewer):
                 dialsProt.DialsProtExport]
 
     def visualize(self, obj, **kwargs):
-        self.summaryWindow = self.tkWindow(SummaryWindow,
-                                           title='Summary',
+        self.resultsWindow = self.tkWindow(ResultsWindow,
+                                           title='Results',
                                            protocol=obj
                                            )
-        self.summaryWindow.show()
+        self.resultsWindow.show()
 
 
-class SummaryWindow(pwgui.Window):
+class ResultsWindow(pwgui.Window):
 
     def __init__(self, **kwargs):
         pwgui.Window.__init__(self, **kwargs)
@@ -159,15 +160,15 @@ class SummaryWindow(pwgui.Window):
         content.columnconfigure(0, weight=1)
         topFrame.grid(row=0, column=0, sticky='new', padx=5, pady=5)
 
-        summaryFrame = tk.Frame(content)
+        resultsFrame = tk.Frame(content)
         content.rowconfigure(1, weight=1)
-        summaryFrame.grid(row=1, column=0, sticky='news', padx=5, pady=5)
+        resultsFrame.grid(row=1, column=0, sticky='news', padx=5, pady=5)
 
         buttonsFrame = tk.Frame(content)
         buttonsFrame.grid(row=2, column=0, sticky='new', padx=5, pady=5)
 
         self._fillTopFrame(topFrame)
-        self._fillSummaryFrame(summaryFrame)
+        self._fillResultsFrame(resultsFrame)
         self._fillButtonsFrame(buttonsFrame)
 
     def _fillTopFrame(self, frame):
@@ -175,16 +176,23 @@ class SummaryWindow(pwgui.Window):
         p1.grid(row=0, column=0, sticky='nw', padx=5, pady=5)
         projName = self.protocol.getProject().getShortName()
         p2 = tk.Label(frame, text=projName, font=self.fontBold)
-        p2.grid(row=0, column=1, sticky='nw', padx=5, pady=0)
+        p2.grid(row=0, column=1, sticky='nw', padx=5, pady=5)
+        dataSource = self.protocol._summary()[0]
+        [expl, source] = dataSource.split('\n')
+        p3 = tk.Label(frame, text=expl)
+        p3.grid(row=1, column=0, sticky='nw', padx=5, pady=5)
+        p4 = tk.Label(frame, text=source)
+        p4.grid(row=1, column=1, sticky='nw', padx=5, pady=5)
 
-    def _fillSummaryFrame(self, frame):
+    def _fillResultsFrame(self, frame):
         try:
             summary = self.protocol._summary()
+            results = "\n".join(summary[1:])
         except AttributeError:
-            summary = ''
-        # FIXME: Make output more beautiful
-        s = tk.Label(frame, text=summary)
-        s.grid(row=0, column=0, sticky='nws')
+            results = ''
+        text = textwrap.dedent(results)
+        s = tk.Label(frame, justify=tk.LEFT, font="TkFixedFont", text=text)
+        s.grid(row=0, column=0, sticky='news')
 
     def _fillButtonsFrame(self, frame):
         subframe = tk.Frame(frame)
@@ -212,7 +220,6 @@ class SummaryWindow(pwgui.Window):
         htmlBtn = HotButton(subframe, 'Open HTML Report',
                             command=self._openHTML)
         htmlBtn.grid(row=0, column=3, sticky='nw', padx=(0, 5))
-        # FIXME: Find a way to actually check if the file exists
         if self._getHtml() is None:
             htmlBtn['state'] = 'disabled'
 
@@ -251,10 +258,14 @@ class SummaryWindow(pwgui.Window):
 
     def _getHtml(self):
         try:
-            return self.protocol.getOutputHtmlFile()
+            reportPath = self.protocol.getOutputHtmlFile()
         except AttributeError:
-            pass
-        return None
+            return None
+
+        if pwutils.exists(reportPath):
+            return reportPath
+        else:
+            return None
 
     def _viewPlainImages(self, e=None):
         DialsImageView(self._getModel(), reflectionFile=None).show()
