@@ -252,13 +252,6 @@ class DialsProtIndexSpots(EdProtIndexSpots):
                        label='Reindexing command line',
                        help="Anything added here will be added at the end of the command line for reindexing")
 
-        # Allow adding anything else with command line syntax
-        group = form.addGroup('Raw command line input parameters',
-                              expertLevel=pwprot.LEVEL_ADVANCED)
-        group.addParam('commandLineInputReport', pwprot.StringParam,
-                       default='',
-                       help="Anything added here will be added at the end of the command line")
-
         # Add a section for creating an html report
         form.addSection('HTML report')
         form.addParam('makeReport', pwprot.BooleanParam,
@@ -297,6 +290,13 @@ class DialsProtIndexSpots(EdProtIndexSpots):
                        expertLevel=pwprot.LEVEL_ADVANCED,
                        help="Magnitude in pixels of shifts mapped to the extreme colours in the heatmap plots centroid_diff_x and centroid_diff_y",
                        )
+
+        # Allow adding anything else with command line syntax
+        group = form.addGroup('Raw command line input parameters',
+                              expertLevel=pwprot.LEVEL_ADVANCED)
+        group.addParam('commandLineInputReport', pwprot.StringParam,
+                       default='',
+                       help="Anything added here will be added at the end of the command line")
 
    # -------------------------- INSERT functions ------------------------------
 
