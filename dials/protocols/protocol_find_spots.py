@@ -376,7 +376,7 @@ class DialsProtFindSpots(EdProtFindSpots):
     def _prepCommandline(self):
         "Create the command line input to run dials programs"
         # Input basic parameters
-        logPath = "{}/{}.log".format(self._getLogsPath(), self.program)
+        logPath = "{}/{}.log".format(self._getLogsPath(), "dials.find_spots")
         params = "{} output.log={} output.reflections={} {}".format(
             self.getInputModelFile(), logPath, self.getOutputReflFile(), self.getScanRanges())
 
