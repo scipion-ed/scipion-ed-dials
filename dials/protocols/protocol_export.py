@@ -298,7 +298,7 @@ class DialsProtExport(EdProtExport):
 
     def getExport(self):
         if self.getFormat() is MTZ:
-            if self.mtzHklout.get() is "":
+            if self.mtzHklout.get() == "":
                 name = "integrated_{}.mtz".format(self.getObjId())
             else:
                 name = self.mtzHklout.get()
@@ -310,7 +310,7 @@ class DialsProtExport(EdProtExport):
             name = self.nxsHklout.get()
 
         if self.getFormat() is MMCIF:
-            if self.mmcifHklout.get() is "":
+            if self.mmcifHklout.get() == "":
                 name = "integrated_{}.cif".format(self.getObjId())
             else:
                 name = self.mmcifHklout.get()
@@ -417,7 +417,7 @@ class DialsProtExport(EdProtExport):
                 self.mtzCrystalName.get())
 
         elif self.exportFormat.get() is SADABS:
-            if self.sadabsRun.get() is not 1:
+            if self.sadabsRun.get() != 1:
                 params += " sadabs.run={}".format(self.sadabsRun.get())
 
             if self.sadabsPredict:
@@ -440,7 +440,7 @@ class DialsProtExport(EdProtExport):
             if self.jsonCompact is False:
                 params += " json.compact=False"
 
-            if self.jsonNDigits.get() is not 6:
+            if self.jsonNDigits.get() != 6:
                 params += " json.n_digits={}".format(self.jsonNDigits.get())
 
         if self.commandLineInput.get():

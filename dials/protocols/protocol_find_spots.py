@@ -408,13 +408,13 @@ class DialsProtFindSpots(EdProtFindSpots):
                 self.maxSeparation.get())
 
         if self.untrustedAreas.get():
-            if self.untrustedCircle.get() is not '':
+            if self.untrustedCircle.get() != '':
                 params += " spotfinder.filter.untrusted.circle={}".format(
                     self.untrustedCircle.get())
-            if self.untrustedRectangle_1.get() is not '':
+            if self.untrustedRectangle_1.get() != '':
                 params += " spotfinder.filter.untrusted.rectangle={}".format(
                     self.untrustedRectangle_1.get())
-            if self.untrustedRectangle_2.get() is not '':
+            if self.untrustedRectangle_2.get() != '':
                 params += " spotfinder.filter.untrusted.rectangle={}".format(
                     self.untrustedRectangle_2.get())
 
