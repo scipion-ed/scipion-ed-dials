@@ -221,36 +221,36 @@ def writeJson(inputImages, fn='model.expt', idname="ExperimentList", overwriteMo
 
 def readRefl(reflFile, fn='reflections.txt', **kwargs):
     with open(reflFile, 'rb') as f:
-        buf = msgpack.unpack(f)
+        buf = msgpack.unpack(f, strict_map_key=False)
 
-    reflFileIdentifier = buf[0].decode()
+    reflFileIdentifier = buf[0]
     version = buf[1]
-    nrows = buf[2][b'nrows']
-    identifier_dict = buf[2][b'identifiers']
-    data_dict = buf[2][b'data']
+    nrows = buf[2]['nrows']
+    identifier_dict = buf[2]['identifiers']
+    data_dict = buf[2]['data']
     data = {}
     for k, v in data_dict.items():
-        data[k.decode()] = np.array(extractRefls(v))
+        data[k] = np.array(extractRefls(v))
     return reflFileIdentifier, version, nrows, identifier_dict, data
 
 
 def extractRefls(v):
     dtype = v[0]
     size = v[1][0]
-    if dtype == b"int":
+    if dtype == "int":
         data = np.frombuffer(v[1][1], dtype=np.int32)
         assert len(data) == size
-    elif dtype == b"int6":
+    elif dtype == "int6":
         data = np.frombuffer(v[1][1], dtype=np.int32)
         assert len(data) == size * 6
         data = data.reshape((size, 6))
-    elif dtype == b"std::size_t":
+    elif dtype == "std::size_t":
         data = np.frombuffer(v[1][1], dtype=np.uint64)
         assert len(data) == size
-    elif dtype == b"double":
+    elif dtype == "double":
         data = np.frombuffer(v[1][1], dtype=np.float64)
         assert len(data) == size
-    elif dtype == b"vec3<double>":
+    elif dtype == "vec3<double>":
         data = np.frombuffer(v[1][1], dtype=np.float64)
         assert len(data) == size * 3
         data = data.reshape((size, 3))
@@ -280,9 +280,9 @@ def writeRefl(inputSpots, fn='reflections.refl', **kwargs):
         data_dict = compressRefl(data)
 
         header_dict = {
-            b'nrows': nrows,
-            b'identifiers': identifier_dict,
-            b'data': data_dict
+            'nrows': nrows,
+            'identifiers': identifier_dict,
+            'data': data_dict
         }
         output = [reflFileIdentifier.encode(), version, header_dict]
 
