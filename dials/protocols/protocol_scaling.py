@@ -445,7 +445,7 @@ class DialsProtScaling(EdBaseProtocol):
         if nSets > 1:
             summary.append(
                 '\nScaled {} different datasets together'.format(nSets))
-        elif nSets is 1:
+        elif nSets == 1:
             summary.append('\nScaled a single dataset')
 
         if self.dMin.get() is not None:
@@ -467,7 +467,7 @@ class DialsProtScaling(EdBaseProtocol):
         if self.excludeImages:
             for iG in self.getImageExclusions():
                 summary.append('Excluded images {}'.format(iG.get()))
-        if self.commandLineInput.get() is not '':
+        if self.commandLineInput.get() != '':
             summary.append('Additional command line input:\n{}'.format(
                 self.commandLineInput.get()))
 
