@@ -34,7 +34,7 @@ import pwed
 from .constants import *
 
 
-__version__ = '0.0.0'
+__version__ = '3.0.1a2'
 _logo = "logo.jpeg"
 
 
@@ -43,5 +43,3 @@ class Plugin(pwplugin.Plugin):
 
 
 pwed.Domain.registerPlugin(__name__)
-
-
