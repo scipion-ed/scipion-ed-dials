@@ -173,9 +173,9 @@ setup(
     # If using Python 2.6 or earlier, then these have to be included in
     # MANIFEST.in as well.
     # include_package_data=True,
-    # package_data={  # Optional
-    #   'relion': ['relion_logo.png', 'protocols.conf'],
-    # },
+    package_data={  # Optional
+        'dials': ['protocols.conf'],
+    },
 
     # Although 'package_data' is the preferred approach, in some case you may
     # need to place data files outside of your packages. See:
