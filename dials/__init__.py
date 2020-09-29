@@ -34,7 +34,7 @@ import pwed
 from .constants import *
 
 
-__version__ = '3.0.1a2'
+__version__ = '3.0.1a3'
 _logo = "logo.jpeg"
 
 
