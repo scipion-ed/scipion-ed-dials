@@ -236,7 +236,6 @@ class DialsProtIndexSpots(EdProtIndexSpots):
                        help="The number of processes to use.")
 
         # Allow adding anything else with command line syntax
-        # Allow adding anything else with command line syntax
         group = form.addGroup('Raw command line input parameters',
                               expertLevel=pwprot.LEVEL_ADVANCED)
         group.addParam('commandLineInputIndexing', pwprot.StringParam,
