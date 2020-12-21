@@ -209,8 +209,9 @@ class DialsProtRefineSpots(EdProtRefineSpots):
                        )
 
         # Allow adding anything else with command line syntax
-        group = form.addGroup('Raw command line input parameters',
-                              expertLevel=pwprot.LEVEL_ADVANCED)
+        group = form.addGroup('HTML report command line parameters',
+                              expertLevel=pwprot.LEVEL_ADVANCED,
+                              condition="makeReport",)
         group.addParam('commandLineInputReport', pwprot.StringParam,
                        default='',
                        help="Anything added here will be added at the end of the command line")
