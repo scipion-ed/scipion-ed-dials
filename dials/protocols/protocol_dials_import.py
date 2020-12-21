@@ -50,6 +50,8 @@ class DialsProtImportDiffractionImages(ProtImportDiffractionImages):
         (_importFile(fileName, fileId))
     """
 
+    _label = 'import diffraction images'
+
     # -------------------------- DEFINE param functions -----------------------
     def _defineParams(self, form):
         ProtImportDiffractionImages._defineParams(self, form)
