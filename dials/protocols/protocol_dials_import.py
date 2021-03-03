@@ -96,7 +96,8 @@ class DialsProtImportDiffractionImages(ProtImportDiffractionImages):
         if self.useTemplate:
             return "template={}".format(self._templatePattern)
         else:
-            return self.getFileParents(self.getMatchingFiles())
+            fileString = " ".join([i[0] for i in self.getMatchingFiles()])
+            return fileString
 
     def getOutputModelFile(self):
         return self._getExtraPath('imported.expt')

@@ -129,6 +129,14 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         return protExport
 
     # Helper functions
+    def makePathList(self, scanRange, digits=3, location=None, pattern='SMV/data/00{TI}.img', wildcard='{TI}'):
+        first, last = scanRange.split(',')
+        numbers = range(int(first), int(last)+1)
+        replacements = [str(num).zfill(digits) for num in numbers]
+        images = [pattern.replace(wildcard, replacement)
+                  for replacement in replacements]
+        imageList = [os.path.join(location, i) for i in images]
+        return imageList
 
     def getLysoTestExperiments(self):
         experiments = []
@@ -228,223 +236,226 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                     distance = " distance={}".format(experiment['distance'])
                 else:
                     distance = ''
-                importCL = '{} output.log={}/dials.import.log output.experiments={}/imported.expt goniometer.axes={}{}'.format(
-                    os.path.join(dataset, 'SMV/data'),
-                    protImport._getLogsPath(),
-                    protImport._getExtraPath(),
-                    experiment['rotation_axis'],
-                    distance
-                )
 
-                self.assertCommand(protImport, importCL,
-                                   program='dials.import')
-                outputModel = protImport.getOutputModelFile()
-                self.assertTrue(os.path.exists(outputModel))
-                importedset = getattr(
-                    protImport, 'outputDiffractionImages', None)
-                self.assertIsNotNone(importedset)
-                setModel = importedset.getDialsModel()
-                self.assertTrue(os.path.exists(setModel))
-                self.checkLogDataset(
-                    protImport, dataset, '')
+            pathlist = self.makePathList(
+                experiment['scan_range'], location=dataset, pattern=experiment['files_pattern'])
+            importCL = '{} output.log={}/dials.import.log output.experiments={}/imported.expt goniometer.axes={}{}'.format(
+                " ".join(pathlist),
+                protImport._getLogsPath(),
+                protImport._getExtraPath(),
+                experiment['rotation_axis'],
+                distance
+            )
 
-                # Run find spots
-                protFindSpots = self._runFindSpots(
-                    protImport.outputDiffractionImages,
-                    dMin=experiment['d_min'],
-                    untrustedAreas=True,
-                    untrustedRectangle_1='0,516,255,261',
-                    untrustedRectangle_2='255,261,0,516',
-                    thresholdAlgorithm=DISPERSION_EXTENDED)
-                inputModel = protFindSpots.getInputModelFile()
-                self.assertTrue(os.path.exists(inputModel))
-                findSpotCL = '{}/imported.expt output.log={}/dials.find_spots.log output.reflections={}/strong.refl spotfinder.scan_range={} spotfinder.filter.d_min={} spotfinder.filter.max_spot_size=1000 spotfinder.filter.max_strong_pixel_fraction=0.25 spotfinder.filter.max_separation=2.0 spotfinder.filter.untrusted.rectangle=0,516,255,261 spotfinder.filter.untrusted.rectangle=255,261,0,516 spotfinder.threshold.algorithm=dispersion_extended spotfinder.threshold.dispersion.sigma_background=6.0 spotfinder.threshold.dispersion.sigma_strong=3.0 spotfinder.threshold.dispersion.kernel_size=3,3'.format(
-                    protFindSpots._getExtraPath(),
-                    protFindSpots._getLogsPath(),
-                    protFindSpots._getExtraPath(),
-                    experiment['scan_range'],
-                    experiment['d_min'],)
-                self.assertCommand(protFindSpots, findSpotCL)
-                foundspotset = getattr(
-                    protFindSpots, 'outputDiffractionSpots', None)
-                self.assertIsNotNone(foundspotset)
-                self.assertEqual(foundspotset.getSpots(),
-                                 experiment['found_spots'])
-                self.assertTrue(os.path.exists(foundspotset.getDialsModel()))
-                self.assertTrue(os.path.exists(foundspotset.getDialsRefl()))
-                self.checkLogDataset(protFindSpots, dataset,
-                                     'Histogram of per-image spot count for imageset 0:')
+            self.assertCommand(protImport, importCL,
+                               program='dials.import')
+            outputModel = protImport.getOutputModelFile()
+            self.assertTrue(os.path.exists(outputModel))
+            importedset = getattr(
+                protImport, 'outputDiffractionImages', None)
+            self.assertIsNotNone(importedset)
+            setModel = importedset.getDialsModel()
+            self.assertTrue(os.path.exists(setModel))
+            self.checkLogDataset(
+                protImport, dataset, '')
 
-                # Run indexing
-                protIndex = self._runIndex(
-                    objLabel="dials - index and reindex",
-                    inputImages=protImport.outputDiffractionImages,
-                    inputSpots=protFindSpots.outputDiffractionSpots,
-                    doRefineBravaisSettings=True,
-                    doReindex=True,
-                    doReindexReflections=True,
-                    detectorFixPosition=True,
-                    detectorFixOrientation=True,
-                    detectorFixDistance=True,
-                    beamFixInSpindlePlane=True,
-                    beamFixOutSpindlePlane=True,
-                    beamFixWavelength=True,
-                    # FIXME: Command line input should not be needed
-                    commandLineInputBravais='beam.fix=all detector.fix=all',
-                )
-                indexTmp = protIndex._getTmpPath()
-                indexLogs = protIndex._getLogsPath()
-                indexExtra = protIndex._getExtraPath()
-                indexCL = "{}/imported.expt {}/strong.refl output.log={}/dials.index.log output.experiments={}/indexed.expt output.reflections={}/indexed.refl refinement.parameterisation.beam.fix='*all in_spindle_plane out_spindle_plane wavelength' refinement.parameterisation.crystal.fix='all cell orientation' refinement.parameterisation.detector.fix='*all position orientation distance'".format(
-                    protFindSpots._getExtraPath(),
-                    protFindSpots._getExtraPath(),
-                    indexLogs,
-                    indexTmp,
-                    indexTmp,
-                )
-                refBravCL = "{}/indexed.expt {}/indexed.refl output.log={}/dials.refine_bravais_settings.log output.directory={} beam.fix=all detector.fix=all".format(
-                    indexTmp,
-                    indexTmp,
-                    indexLogs,
-                    indexTmp,
-                )
-                reindexCL = 'change_of_basis_op=a,b,c {}/indexed.refl output.reflections={}/reindexed.refl'.format(
-                    indexTmp,
-                    indexTmp,
-                )
-                self.assertEqual(protIndex._prepIndexCommandline(
-                    'dials.index'), indexCL)
-                self.assertEqual(protIndex._prepBravaisCommandline(
-                    'dials.refine_bravais_settings'), refBravCL)
-                self.assertEqual(protIndex._prepReindexCommandline(
-                    'dials.reindex'), reindexCL)
-                indexedset = getattr(protIndex, 'outputIndexedSpots', None)
-                self.assertIsNotNone(protIndex.outputIndexedSpots)
-                self.assertTrue(os.path.exists(indexedset.getDialsModel()))
-                self.assertTrue(os.path.exists(indexedset.getDialsRefl()))
-                self.checkLogDataset(protIndex, dataset)
+            # Run find spots
+            protFindSpots = self._runFindSpots(
+                protImport.outputDiffractionImages,
+                dMin=experiment['d_min'],
+                untrustedAreas=True,
+                untrustedRectangle_1='0,516,255,261',
+                untrustedRectangle_2='255,261,0,516',
+                thresholdAlgorithm=DISPERSION_EXTENDED)
+            inputModel = protFindSpots.getInputModelFile()
+            self.assertTrue(os.path.exists(inputModel))
+            findSpotCL = '{}/imported.expt output.log={}/dials.find_spots.log output.reflections={}/strong.refl spotfinder.scan_range={} spotfinder.filter.d_min={} spotfinder.filter.max_spot_size=1000 spotfinder.filter.max_strong_pixel_fraction=0.25 spotfinder.filter.max_separation=2.0 spotfinder.filter.untrusted.rectangle=0,516,255,261 spotfinder.filter.untrusted.rectangle=255,261,0,516 spotfinder.threshold.algorithm=dispersion_extended spotfinder.threshold.dispersion.sigma_background=6.0 spotfinder.threshold.dispersion.sigma_strong=3.0 spotfinder.threshold.dispersion.kernel_size=3,3'.format(
+                protFindSpots._getExtraPath(),
+                protFindSpots._getLogsPath(),
+                protFindSpots._getExtraPath(),
+                experiment['scan_range'],
+                experiment['d_min'],)
+            self.assertCommand(protFindSpots, findSpotCL)
+            foundspotset = getattr(
+                protFindSpots, 'outputDiffractionSpots', None)
+            self.assertIsNotNone(foundspotset)
+            self.assertEqual(foundspotset.getSpots(),
+                             experiment['found_spots'])
+            self.assertTrue(os.path.exists(foundspotset.getDialsModel()))
+            self.assertTrue(os.path.exists(foundspotset.getDialsRefl()))
+            self.checkLogDataset(protFindSpots, dataset,
+                                 'Histogram of per-image spot count for imageset 0:')
 
-                # Run refinement
-                protRefine = self._runRefine(
-                    objLabel="dials - static refinement",
-                    inputSet=protIndex.outputIndexedSpots,
-                    scanVarying=False,
-                    detectorFixAll=True,
-                )
-                refineCLstatic = "{}/indexed.expt {}/indexed.refl output.log={}/dials.refine.log output.experiments={}/refined.expt output.reflections={}/refined.refl beam.fix='all *in_spindle_plane out_spindle_plane *wavelength' detector.fix='*all position orientation distance'".format(
-                    indexExtra,
-                    indexExtra,
-                    protRefine._getLogsPath(),
-                    protRefine._getExtraPath(),
-                    protRefine._getExtraPath(),
-                )
-                self.assertCommand(protRefine, refineCLstatic,
-                                   program='dials.refine')
-                refinedset = getattr(protRefine, 'outputRefinedSpots', None)
-                self.assertIsNotNone(protRefine.outputRefinedSpots)
-                self.assertTrue(os.path.exists(refinedset.getDialsModel()))
-                self.assertTrue(os.path.exists(refinedset.getDialsRefl()))
-                self.checkLogDataset(protRefine, dataset)
+            # Run indexing
+            protIndex = self._runIndex(
+                objLabel="dials - index and reindex",
+                inputImages=protImport.outputDiffractionImages,
+                inputSpots=protFindSpots.outputDiffractionSpots,
+                doRefineBravaisSettings=True,
+                doReindex=True,
+                doReindexReflections=True,
+                detectorFixPosition=True,
+                detectorFixOrientation=True,
+                detectorFixDistance=True,
+                beamFixInSpindlePlane=True,
+                beamFixOutSpindlePlane=True,
+                beamFixWavelength=True,
+                # FIXME: Command line input should not be needed
+                commandLineInputBravais='beam.fix=all detector.fix=all',
+            )
+            indexTmp = protIndex._getTmpPath()
+            indexLogs = protIndex._getLogsPath()
+            indexExtra = protIndex._getExtraPath()
+            indexCL = "{}/imported.expt {}/strong.refl output.log={}/dials.index.log output.experiments={}/indexed.expt output.reflections={}/indexed.refl refinement.parameterisation.beam.fix='*all in_spindle_plane out_spindle_plane wavelength' refinement.parameterisation.crystal.fix='all cell orientation' refinement.parameterisation.detector.fix='*all position orientation distance'".format(
+                protFindSpots._getExtraPath(),
+                protFindSpots._getExtraPath(),
+                indexLogs,
+                indexTmp,
+                indexTmp,
+            )
+            refBravCL = "{}/indexed.expt {}/indexed.refl output.log={}/dials.refine_bravais_settings.log output.directory={} beam.fix=all detector.fix=all".format(
+                indexTmp,
+                indexTmp,
+                indexLogs,
+                indexTmp,
+            )
+            reindexCL = 'change_of_basis_op=a,b,c {}/indexed.refl output.reflections={}/reindexed.refl'.format(
+                indexTmp,
+                indexTmp,
+            )
+            self.assertEqual(protIndex._prepIndexCommandline(
+                'dials.index'), indexCL)
+            self.assertEqual(protIndex._prepBravaisCommandline(
+                'dials.refine_bravais_settings'), refBravCL)
+            self.assertEqual(protIndex._prepReindexCommandline(
+                'dials.reindex'), reindexCL)
+            indexedset = getattr(protIndex, 'outputIndexedSpots', None)
+            self.assertIsNotNone(protIndex.outputIndexedSpots)
+            self.assertTrue(os.path.exists(indexedset.getDialsModel()))
+            self.assertTrue(os.path.exists(indexedset.getDialsRefl()))
+            self.checkLogDataset(protIndex, dataset)
 
-                # Run scan-varying refinement
-                protSvRefine = self._runRefine(
-                    objLabel="dials - scan-varying refinement",
-                    inputSet=protRefine.outputRefinedSpots,
-                    scanVarying=True,
-                    beamFixAll=False,
-                    beamFixInSpindlePlane=False,
-                    beamFixOutSpindlePlane=False,
-                    beamFixWavelength=True,
-                    beamForceStatic=False,
-                    detectorFixAll=True,
-                )
-                refineCLsv = "{}/refined.expt {}/refined.refl output.log={}/dials.refine.log output.experiments={}/refined.expt output.reflections={}/refined.refl scan_varying=True beam.fix='all in_spindle_plane out_spindle_plane *wavelength' beam.force_static=False detector.fix='*all position orientation distance'".format(
-                    protRefine._getExtraPath(),
-                    protRefine._getExtraPath(),
-                    protSvRefine._getLogsPath(),
-                    protSvRefine._getExtraPath(),
-                    protSvRefine._getExtraPath(),
-                )
-                self.assertCommand(protSvRefine, refineCLsv,
-                                   program='dials.refine')
-                svRefinedset = getattr(
-                    protSvRefine, 'outputRefinedSpots', None)
-                self.assertIsNotNone(protSvRefine.outputRefinedSpots)
-                self.assertTrue(os.path.exists(svRefinedset.getDialsModel()))
-                self.assertTrue(os.path.exists(svRefinedset.getDialsRefl()))
-                self.checkLogDataset(protSvRefine, dataset)
+            # Run refinement
+            protRefine = self._runRefine(
+                objLabel="dials - static refinement",
+                inputSet=protIndex.outputIndexedSpots,
+                scanVarying=False,
+                detectorFixAll=True,
+            )
+            refineCLstatic = "{}/indexed.expt {}/indexed.refl output.log={}/dials.refine.log output.experiments={}/refined.expt output.reflections={}/refined.refl beam.fix='all *in_spindle_plane out_spindle_plane *wavelength' detector.fix='*all position orientation distance'".format(
+                indexExtra,
+                indexExtra,
+                protRefine._getLogsPath(),
+                protRefine._getExtraPath(),
+                protRefine._getExtraPath(),
+            )
+            self.assertCommand(protRefine, refineCLstatic,
+                               program='dials.refine')
+            refinedset = getattr(protRefine, 'outputRefinedSpots', None)
+            self.assertIsNotNone(protRefine.outputRefinedSpots)
+            self.assertTrue(os.path.exists(refinedset.getDialsModel()))
+            self.assertTrue(os.path.exists(refinedset.getDialsRefl()))
+            self.checkLogDataset(protRefine, dataset)
 
-                # Run integration
-                protIntegrate = self._runIntegrate(
-                    # objLabel="Dials integration: {}".format(exptId),
-                    inputSet=protSvRefine.outputRefinedSpots,
-                    nproc=8,
-                    commandLineInput='prediction.d_min={}'.format(
-                        experiment['d_min']),
-                )
-                integrateCL = "{}/refined.expt {}/refined.refl output.log={}/dials.integrate.log output.experiments={}/integrated_model.expt output.reflections={}/integrated_reflections.refl nproc=8 prediction.d_min={}".format(
-                    protSvRefine._getExtraPath(),
-                    protSvRefine._getExtraPath(),
-                    protIntegrate._getLogsPath(),
-                    protIntegrate._getExtraPath(),
-                    protIntegrate._getExtraPath(),
-                    experiment['d_min']
-                )
-                self.assertCommand(protIntegrate, integrateCL,
-                                   program='dials.integrate')
-                integratedset = getattr(
-                    protIntegrate, 'outputIntegratedSpots', None)
-                self.assertIsNotNone(protIntegrate.outputIntegratedSpots)
-                self.assertTrue(os.path.exists(integratedset.getDialsModel()))
-                self.assertTrue(os.path.exists(integratedset.getDialsRefl()))
-                self.checkLogDataset(protIntegrate, dataset,
-                                     'Summary vs resolution')
+            # Run scan-varying refinement
+            protSvRefine = self._runRefine(
+                objLabel="dials - scan-varying refinement",
+                inputSet=protRefine.outputRefinedSpots,
+                scanVarying=True,
+                beamFixAll=False,
+                beamFixInSpindlePlane=False,
+                beamFixOutSpindlePlane=False,
+                beamFixWavelength=True,
+                beamForceStatic=False,
+                detectorFixAll=True,
+            )
+            refineCLsv = "{}/refined.expt {}/refined.refl output.log={}/dials.refine.log output.experiments={}/refined.expt output.reflections={}/refined.refl scan_varying=True beam.fix='all in_spindle_plane out_spindle_plane *wavelength' beam.force_static=False detector.fix='*all position orientation distance'".format(
+                protRefine._getExtraPath(),
+                protRefine._getExtraPath(),
+                protSvRefine._getLogsPath(),
+                protSvRefine._getExtraPath(),
+                protSvRefine._getExtraPath(),
+            )
+            self.assertCommand(protSvRefine, refineCLsv,
+                               program='dials.refine')
+            svRefinedset = getattr(
+                protSvRefine, 'outputRefinedSpots', None)
+            self.assertIsNotNone(protSvRefine.outputRefinedSpots)
+            self.assertTrue(os.path.exists(svRefinedset.getDialsModel()))
+            self.assertTrue(os.path.exists(svRefinedset.getDialsRefl()))
+            self.checkLogDataset(protSvRefine, dataset)
 
-                # Check symmetry and scale
-                protSymmetry = self._runSymmetry(
-                    objLabel="dials - symmetry check",
-                    inputSet=protIntegrate.outputIntegratedSpots,
-                )
-                symmCL = "{}/integrated_model.expt {}/integrated_reflections.refl output.log={}/dials.symmetry.log output.experiments={}/symmetrized.expt output.reflections={}/symmetrized.refl".format(
-                    protIntegrate._getExtraPath(),
-                    protIntegrate._getExtraPath(),
-                    protSymmetry._getLogsPath(),
-                    protSymmetry._getExtraPath(),
-                    protSymmetry._getExtraPath(),
-                )
-                self.assertCommand(protSymmetry, symmCL, 'dials.symmetry')
-                symmetrizedset = getattr(
-                    protSymmetry, 'outputSymmetrizedSpots', None)
-                self.assertIsNotNone(protSymmetry.outputSymmetrizedSpots)
-                self.assertTrue(os.path.exists(symmetrizedset.getDialsModel()))
-                self.assertTrue(os.path.exists(symmetrizedset.getDialsRefl()))
-                self.checkLogDataset(protSymmetry, dataset,
-                                     'Recommended space group: {}'.format(experiment['space_group']))
+            # Run integration
+            protIntegrate = self._runIntegrate(
+                # objLabel="Dials integration: {}".format(exptId),
+                inputSet=protSvRefine.outputRefinedSpots,
+                nproc=8,
+                commandLineInput='prediction.d_min={}'.format(
+                    experiment['d_min']),
+            )
+            integrateCL = "{}/refined.expt {}/refined.refl output.log={}/dials.integrate.log output.experiments={}/integrated_model.expt output.reflections={}/integrated_reflections.refl nproc=8 prediction.d_min={}".format(
+                protSvRefine._getExtraPath(),
+                protSvRefine._getExtraPath(),
+                protIntegrate._getLogsPath(),
+                protIntegrate._getExtraPath(),
+                protIntegrate._getExtraPath(),
+                experiment['d_min']
+            )
+            self.assertCommand(protIntegrate, integrateCL,
+                               program='dials.integrate')
+            integratedset = getattr(
+                protIntegrate, 'outputIntegratedSpots', None)
+            self.assertIsNotNone(protIntegrate.outputIntegratedSpots)
+            self.assertTrue(os.path.exists(integratedset.getDialsModel()))
+            self.assertTrue(os.path.exists(integratedset.getDialsRefl()))
+            self.checkLogDataset(protIntegrate, dataset,
+                                 'Summary vs resolution')
 
-                protScaling = self._runScaling(
-                    objLabel="dials - scaling",
-                    inputSets=[protIntegrate.outputIntegratedSpots],
-                )
-                scaleCL = "{}/integrated_model.expt {}/integrated_reflections.refl output.log={}/dials.scale.log output.experiments={}/scaled.expt output.reflections={}/scaled.refl output.html={}/dials.scale.html filtering.output.scale_and_filter_results={}/scale_and_filter_results.json cut_data.partiality_cutoff=0.4 cut_data.min_isigi=-5.0 outlier_rejection=standard outlier_zmax=6.0 filtering.method=None filtering.deltacchalf.max_cycles=6 filtering.deltacchalf.max_percent_removed=10.0 filtering.deltacchalf.mode=dataset filtering.deltacchalf.group_size=10 filtering.deltacchalf.stdcutoff=4.0".format(
-                    protIntegrate._getExtraPath(),
-                    protIntegrate._getExtraPath(),
-                    protScaling._getLogsPath(),
-                    protScaling._getExtraPath(),
-                    protScaling._getExtraPath(),
-                    protScaling._getExtraPath(),
-                    protScaling._getExtraPath(),
-                )
-                self.assertCommand(protScaling, scaleCL, 'dials.scale')
-                scaledset = getattr(
-                    protScaling, 'outputScaledSpots', None)
-                self.assertIsNotNone(protScaling.outputScaledSpots)
-                self.assertTrue(os.path.exists(scaledset.getDialsModel()))
-                self.assertTrue(os.path.exists(scaledset.getDialsRefl()))
-                self.checkLogDataset(
-                    protScaling, dataset, 'Space group being used during scaling is P 4')
+            # Check symmetry and scale
+            protSymmetry = self._runSymmetry(
+                objLabel="dials - symmetry check",
+                inputSet=protIntegrate.outputIntegratedSpots,
+            )
+            symmCL = "{}/integrated_model.expt {}/integrated_reflections.refl output.log={}/dials.symmetry.log output.experiments={}/symmetrized.expt output.reflections={}/symmetrized.refl".format(
+                protIntegrate._getExtraPath(),
+                protIntegrate._getExtraPath(),
+                protSymmetry._getLogsPath(),
+                protSymmetry._getExtraPath(),
+                protSymmetry._getExtraPath(),
+            )
+            self.assertCommand(protSymmetry, symmCL, 'dials.symmetry')
+            symmetrizedset = getattr(
+                protSymmetry, 'outputSymmetrizedSpots', None)
+            self.assertIsNotNone(protSymmetry.outputSymmetrizedSpots)
+            self.assertTrue(os.path.exists(symmetrizedset.getDialsModel()))
+            self.assertTrue(os.path.exists(symmetrizedset.getDialsRefl()))
+            self.checkLogDataset(protSymmetry, dataset,
+                                 'Recommended space group: {}'.format(experiment['space_group']))
 
-                scaledSets.append(protScaling.outputScaledSpots)
-                scaleProt.append(protScaling)
+            protScaling = self._runScaling(
+                objLabel="dials - scaling",
+                inputSets=[protIntegrate.outputIntegratedSpots],
+            )
+            scaleCL = "{}/integrated_model.expt {}/integrated_reflections.refl output.log={}/dials.scale.log output.experiments={}/scaled.expt output.reflections={}/scaled.refl output.html={}/dials.scale.html filtering.output.scale_and_filter_results={}/scale_and_filter_results.json cut_data.partiality_cutoff=0.4 cut_data.min_isigi=-5.0 outlier_rejection=standard outlier_zmax=6.0 filtering.method=None filtering.deltacchalf.max_cycles=6 filtering.deltacchalf.max_percent_removed=10.0 filtering.deltacchalf.mode=dataset filtering.deltacchalf.group_size=10 filtering.deltacchalf.stdcutoff=4.0".format(
+                protIntegrate._getExtraPath(),
+                protIntegrate._getExtraPath(),
+                protScaling._getLogsPath(),
+                protScaling._getExtraPath(),
+                protScaling._getExtraPath(),
+                protScaling._getExtraPath(),
+                protScaling._getExtraPath(),
+            )
+            self.assertCommand(protScaling, scaleCL, 'dials.scale')
+            scaledset = getattr(
+                protScaling, 'outputScaledSpots', None)
+            self.assertIsNotNone(protScaling.outputScaledSpots)
+            self.assertTrue(os.path.exists(scaledset.getDialsModel()))
+            self.assertTrue(os.path.exists(scaledset.getDialsRefl()))
+            self.checkLogDataset(
+                protScaling, dataset, 'Space group being used during scaling is P 4')
+
+            scaledSets.append(protScaling.outputScaledSpots)
+            scaleProt.append(protScaling)
 
         with self.subTest(msg='Scaling multiple datasets'):
             while len(scaledSets) < 2:
