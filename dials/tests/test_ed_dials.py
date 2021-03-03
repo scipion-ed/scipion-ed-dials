@@ -557,6 +557,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             dMin=experiment['d_min'],
             dMax=experiment['d_max'],
             sigmaBackground=experiment['sigma_background'],
+            thresholdAlgorithm=DISPERSION,
         )
         inputModel = protFindSpots.getInputModelFile()
         self.assertTrue(os.path.exists(inputModel))

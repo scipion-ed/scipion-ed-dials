@@ -178,7 +178,7 @@ class DialsProtFindSpots(EdProtFindSpots):
 
         group.addParam('thresholdAlgorithm', pwprot.EnumParam,
                        label='threshold algorithm',
-                       choices=['dispersion', 'dispersion extended'], default=DISPERSION,
+                       choices=['dispersion', 'dispersion extended'], default=DISPERSION_EXTENDED,
                        help="",
                        )
 
