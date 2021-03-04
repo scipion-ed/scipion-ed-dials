@@ -45,7 +45,7 @@ class DialsImageView(pwviewer.CommandView):
             pwviewer.CommandView.__init__(
                 self, 'dials.image_viewer "%s" &' % modelFile, **kwargs)
         else:
-            pwviewer.CommandView.__init__(self, 'dials.image_viewer "%s" "%s" &' % (
+            pwviewer.CommandView.__init__(self, 'dials.image_viewer experiments="%s" reflections="%s" &' % (
                 modelFile, reflectionFile), **kwargs)
 
 
