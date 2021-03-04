@@ -29,7 +29,7 @@ import textwrap
 
 from pyworkflow.gui.widgets import Button, HotButton
 import pyworkflow.gui as pwgui
-import pyworkflow.gui.text as text
+import pyworkflow.gui.text as pwtext
 import pyworkflow.utils as pwutils
 import pyworkflow.viewer as pwviewer
 import pyworkflow.protocol.params as params
@@ -160,8 +160,11 @@ class ResultsWindow(pwgui.Window):
         content.columnconfigure(0, weight=1)
         topFrame.grid(row=0, column=0, sticky='new', padx=5, pady=5)
 
-        resultsFrame = tk.Frame(content)
         content.rowconfigure(1, weight=1)
+        resultsFrame = tk.Frame(content)
+        # Descide how much relative space the frames should fill
+        resultsFrame.rowconfigure(0, weight=100)
+        resultsFrame.columnconfigure(0, weight=2)
         resultsFrame.grid(row=1, column=0, sticky='news', padx=5, pady=5)
 
         buttonsFrame = tk.Frame(content)
@@ -191,8 +194,11 @@ class ResultsWindow(pwgui.Window):
             results = self.protocol.getLogOutput()
         except Exception as e:
             results = e
-        text = textwrap.dedent(results)
-        s = tk.Label(frame, justify=tk.LEFT, font="TkFixedFont", text=text)
+        txt = textwrap.dedent(results)
+        # TODO: add monospace font
+        s = pwtext.Text(frame)
+        s.addText(txt)
+        s.configure(state='disabled')
         s.grid(row=0, column=0, sticky='news')
 
     def _fillButtonsFrame(self, frame):
