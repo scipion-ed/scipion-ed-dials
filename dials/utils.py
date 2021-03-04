@@ -53,7 +53,7 @@ def getDatasets(modelFile):
         return ''
 
 
-def readLog(logfile, start, stop):
+def readLog(logfile, start, stop, flush=None):
     # based on https://stackoverflow.com/a/18865133
     contentList = []
     content = ''
@@ -66,6 +66,10 @@ def readLog(logfile, start, stop):
                 continue
             elif stop in line.strip():
                 append = False
+                continue
+            elif flush is not None and flush in line.strip():
+                append = False
+                contentList.clear()
                 continue
             elif append:
                 contentList.append(line)
