@@ -31,6 +31,7 @@ import re
 from glob import glob
 from pathlib import Path
 import json
+import textwrap
 
 import pyworkflow.protocol as pwprot
 import dials.utils as dutils
@@ -453,7 +454,43 @@ class DialsProtIndexSpots(EdProtIndexSpots):
         return dutils.getDatasets(self.getInputModelFile())
 
     def getLogOutput(self):
-        return ''
+        logOutput = ''
+        if self.getIndexLogOutput() not in (None, ''):
+            logOutput += self.getIndexLogOutput()
+        if self.getBravaisLogOutput() not in (None, ''):
+            logOutput += self.getBravaisLogOutput()
+        return logOutput
+
+    def getIndexLogOutput(self):
+        try:
+            indexOutput = dutils.readLog(
+                self.getLogFilePath('dials.index'),
+                'crystal models:',
+                'Saving',
+                flush='###'
+            )
+        except FileNotFoundError:
+            indexOutput = None
+        if indexOutput not in (None, ''):
+            indexOut = "\n{}".format(textwrap.dedent(indexOutput))
+        else:
+            indexOut = indexOutput
+        return indexOut
+
+    def getBravaisLogOutput(self):
+        # Try-except to avoid problems when there is no log file to read
+        try:
+            bravaisOutput = dutils.readLog(
+                self.getLogFilePath('dials.refine_bravais_settings'),
+                'Chiral',
+                'Saving')
+        except FileNotFoundError:
+            bravaisOutput = None
+        if bravaisOutput not in (None, ''):
+            bravaisOut = "\n{}".format(textwrap.dedent(bravaisOutput))
+        else:
+            bravaisOut = bravaisOutput
+        return bravaisOut
 
     def getBravaisPath(self, fn=None):
         if fn is None:
