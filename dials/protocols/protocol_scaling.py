@@ -630,7 +630,7 @@ class DialsProtScaling(EdBaseProtocol):
             params += " cut_data.d_min={}".format(self.dMin.get())
 
         if self.dMax.get():
-            params += " cut_data.d_min={}".format(self.dMax.get())
+            params += " cut_data.d_max={}".format(self.dMax.get())
 
         if self.partialityCutoff.get():
             params += " cut_data.partiality_cutoff={}".format(
