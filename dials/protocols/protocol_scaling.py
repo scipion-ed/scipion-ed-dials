@@ -368,6 +368,14 @@ class DialsProtScaling(EdBaseProtocol):
                            inputsetsLabel),
                        )
 
+        # Allow an easy way to import a phil file with parameters
+        form.addParam('extraPhilPath', pwprot.PathParam,
+                      expertLevel=pwprot.LEVEL_ADVANCED,
+                      allowsNull=True,
+                      default=None,
+                      label="Add phil file",
+                      help="Enter the path to a phil file that you want to add to include.")
+
         # Allow adding anything else with command line syntax
         group = form.addGroup('Raw command line input parameters',
                               expertLevel=pwprot.LEVEL_ADVANCED)
@@ -507,6 +515,10 @@ class DialsProtScaling(EdBaseProtocol):
 
     def getPhilPath(self):
         return self._getTmpPath('scale.phil')
+
+    # Add additional phil file
+    def getExtraPhilsPath(self):
+        return self.extraPhilPath.get('').strip()
 
     def getSetModel(self, inputSet):
         if pwutils.exists(inputSet.getDialsModel()):
@@ -690,6 +702,9 @@ class DialsProtScaling(EdBaseProtocol):
                 params += " exclude_images={}".format(iG.get())
 
         # Unrestrained command line input
+
+        if self.extraPhilPath.get():
+            params += " {}".format(self.getExtraPhilsPath())
 
         if self.commandLineInput.get():
             params += " {}".format(self.commandLineInput.get())

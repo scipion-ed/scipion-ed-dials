@@ -236,6 +236,25 @@ class DialsProtIndexSpots(EdProtIndexSpots):
                        default=4, label="How many processors do you want to use?",
                        help="The number of processes to use.")
 
+        # Allow an easy way to import a phil file with parameters
+        group = form.addGroup('Add parameters with phil files',
+                              expertLevel=pwprot.LEVEL_ADVANCED,)
+        group.addParam('extraPhilPathIndexing', pwprot.PathParam,
+                       allowsNull=True,
+                       default=None, condition="doIndex==True",
+                       label="Additional indexing phil file",
+                       help="Enter the path to a phil file that you want to add to include.")
+        group.addParam('extraPhilPathBravais', pwprot.PathParam,
+                       allowsNull=True,
+                       default=None, condition="doRefineBravaisSettings",
+                       label="Additional bravais settings phil file",
+                       help="Enter the path to a phil file that you want to add to include.")
+        group.addParam('extraPhilPathReindexing', pwprot.PathParam,
+                       allowsNull=True,
+                       default=None, condition="doReindex",
+                       label="Additional reindexing phil file",
+                       help="Enter the path to a phil file that you want to add to include.")
+
         # Allow adding anything else with command line syntax
         group = form.addGroup('Raw command line input parameters',
                               expertLevel=pwprot.LEVEL_ADVANCED)
@@ -550,8 +569,19 @@ class DialsProtIndexSpots(EdProtIndexSpots):
     def getOutputHtmlFile(self):
         return self._getExtraPath('dials.report.html')
 
+    # Placeholder for using phils as default
     def getPhilPath(self):
         return self._getTmpPath('index.phil')
+
+    # Get the path of additional phil files
+    def getExtraPhilsPathIndexing(self):
+        return self.extraPhilPathIndexing.get('').strip()
+
+    def getExtraPhilsPathBravais(self):
+        return self.extraPhilPathBravais.get('').strip()
+
+    def getExtraPhilsPathReindexing(self):
+        return self.extraPhilPathReindexing.get('').strip()
 
     def existsPath(self, path):
         return os.path.exists(path)
@@ -693,6 +723,9 @@ class DialsProtIndexSpots(EdProtIndexSpots):
             params += " refinery.max_iterations={}".format(
                 self.refineryMaxIterations.get())
 
+        if self.extraPhilPathIndexing.get():
+            params += " {}".format(self.getExtraPhilsPathIndexing())
+
         if self.commandLineInputIndexing.get():
             params += " {}".format(self.commandLineInputIndexing.get())
 
@@ -709,6 +742,9 @@ class DialsProtIndexSpots(EdProtIndexSpots):
 
         if self.refineBravNproc.get() not in (None, 4):
             params += " nproc={}".format(self.refineBravNproc.get())
+
+        if self.extraPhilPathBravais.get():
+            params += " {}".format(self.getExtraPhilsPathBravais())
 
         if self.commandLineInputBravais.get():
             params += " {}".format(self.commandLineInputBravais.get())
@@ -728,6 +764,9 @@ class DialsProtIndexSpots(EdProtIndexSpots):
         if self.doReindexReflections.get():
             params += " {} output.reflections={}".format(
                 self.getIndexedReflFile(), self.getReindexedReflFile())
+
+        if self.extraPhilPathReindexing.get():
+            params += " {}".format(self.getExtraPhilsPathReindexing())
 
         if self.commandLineInputReindexing.get():
             params += " {}".format(self.commandLineInputReindexing.get())

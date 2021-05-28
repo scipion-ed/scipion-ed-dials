@@ -228,6 +228,14 @@ class DialsProtFindSpots(EdProtFindSpots):
                        help="Magnitude in pixels of shifts mapped to the extreme colours in the heatmap plots centroid_diff_x and centroid_diff_y",
                        )
 
+        # Allow an easy way to import a phil file with parameters
+        form.addParam('extraPhilPath', pwprot.PathParam,
+                      expertLevel=pwprot.LEVEL_ADVANCED,
+                      allowsNull=True,
+                      default=None,
+                      label="Add phil file",
+                      help="Enter the path to a phil file that you want to add to include.")
+
         # Allow adding anything else with command line syntax
         group = form.addGroup('HTML report command line parameters',
                               expertLevel=pwprot.LEVEL_ADVANCED,
@@ -345,6 +353,9 @@ class DialsProtFindSpots(EdProtFindSpots):
             '---')
         return logOutput
 
+    def getExtraPhilsPath(self):
+        return self.extraPhilPath.get('').strip()
+
     def getScanRanges(self):
         # Get a list of object IDs for good images
         objIds = [image.getObjId() for image in self.inputImages.get()
@@ -443,6 +454,9 @@ class DialsProtFindSpots(EdProtFindSpots):
         if self.kernelSize.get():
             params += " spotfinder.threshold.dispersion.kernel_size={},{}".format(
                 self.kernelSize.get(), self.kernelSize.get())
+
+        if self.extraPhilPath.get():
+            params += " {}".format(self.getExtraPhilsPath())
 
         if self.commandLineInput.get():
             params += " {}".format(self.commandLineInput.get())

@@ -133,6 +133,14 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots):
                        help="Magnitude in pixels of shifts mapped to the extreme colours in the heatmap plots centroid_diff_x and centroid_diff_y",
                        )
 
+        # Allow an easy way to import a phil file with parameters
+        form.addParam('extraPhilPath', pwprot.PathParam,
+                      expertLevel=pwprot.LEVEL_ADVANCED,
+                      allowsNull=True,
+                      default=None,
+                      label="Add phil file",
+                      help="Enter the path to a phil file that you want to add to include.")
+
         # Allow adding anything else with command line syntax
         group = form.addGroup('HTML report command line parameters',
                               expertLevel=pwprot.LEVEL_ADVANCED,
@@ -254,8 +262,13 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots):
     def getOutputHtmlFile(self):
         return self._getExtraPath('dials.report.html')
 
+    # Placeholder for defaulting to creating phil files
     def getPhilPath(self):
         return self._getTmpPath('integrate.phil')
+
+    # Provide a path to additonal phil files
+    def getExtraPhilsPath(self):
+        return self.extraPhilPath.get('').strip()
 
     def getDatasets(self):
         return dutils.getDatasets(self.getInputModelFile())
@@ -329,6 +342,9 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots):
 
         if self.dMax.get():
             params += " prediction.d_max={}".format(self.dMax.get())
+
+        if self.extraPhilPath.get():
+            params += " {}".format(self.getExtraPhilsPath())
 
         if self.commandLineInput.get():
             params += " {}".format(self.commandLineInput.get())

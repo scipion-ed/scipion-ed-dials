@@ -204,6 +204,14 @@ class DialsProtExport(EdProtExport):
                        help="Number of decimal places to be used for representing the reciprocal lattice points.",
                        )
 
+        # Allow an easy way to import a phil file with parameters
+        form.addParam('extraPhilPath', pwprot.PathParam,
+                      expertLevel=pwprot.LEVEL_ADVANCED,
+                      allowsNull=True,
+                      default=None,
+                      label="Add phil file",
+                      help="Enter the path to a phil file that you want to add to include.")
+
         # Allow adding anything else with command line syntax
         group = form.addGroup('Raw command line input parameters',
                               expertLevel=pwprot.LEVEL_ADVANCED)
@@ -375,6 +383,9 @@ class DialsProtExport(EdProtExport):
         logOutput = ''
         return logOutput
 
+    def getExtraPhilsPath(self):
+        return self.extraPhilPath.get('').strip()
+
     def _checkWriteModel(self):
         return self.getSetModel() != self.getInputModelFile()
 
@@ -442,6 +453,9 @@ class DialsProtExport(EdProtExport):
 
             if self.jsonNDigits.get() != 6:
                 params += " json.n_digits={}".format(self.jsonNDigits.get())
+
+        if self.extraPhilPath.get():
+            params += " {}".format(self.getExtraPhilsPath())
 
         if self.commandLineInput.get():
             params += " {}".format(self.commandLineInput.get())

@@ -56,6 +56,14 @@ class DialsProtImportDiffractionImages(ProtImportDiffractionImages):
     def _defineParams(self, form):
         ProtImportDiffractionImages._defineParams(self, form)
 
+        # Allow an easy way to import a phil file with parameters
+        form.addParam('extraPhilPath', pwprot.PathParam,
+                      expertLevel=pwprot.LEVEL_ADVANCED,
+                      allowsNull=True,
+                      default=None,
+                      label="Add phil file",
+                      help="Enter the path to a phil file that you want to add to include.")
+
         # Allow adding anything else with command line syntax
         group = form.addGroup('Raw command line input parameters',
                               expertLevel=pwprot.LEVEL_ADVANCED)
@@ -108,6 +116,9 @@ class DialsProtImportDiffractionImages(ProtImportDiffractionImages):
     def getLogOutput(self):
         return ''
 
+    def getExtraPhilsPath(self):
+        return self.extraPhilPath.get('').strip()
+
     def _prepareCommandLineArguments(self, program):
         # Make a string to append to
         cmdparams = "{}".format(self.getCmdparamStart())
@@ -124,6 +135,9 @@ class DialsProtImportDiffractionImages(ProtImportDiffractionImages):
         if self.overwriteDetectorDistance.get() is not None:
             cmdparams += " distance={}".format(
                 self.overwriteDetectorDistance.get())
+
+        if self.extraPhilPath.get():
+            cmdparams += " {}".format(self.getExtraPhilsPath())
 
         if self.commandLineInput.get():
             cmdparams += " {}".format(self.commandLineInput.get())
