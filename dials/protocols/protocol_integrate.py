@@ -270,6 +270,9 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots):
     def getExtraPhilsPath(self):
         return self.extraPhilPath.get('').strip()
 
+    def getOutputPhilFile(self):
+        return self._getExtraPath('dials.integrate.phil')
+
     def getDatasets(self):
         return dutils.getDatasets(self.getInputModelFile())
 
@@ -318,12 +321,13 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots):
 
         # Input basic parameters
         logPath = self.getLogFilePath(program)
-        params = "{} {} output.log={} output.experiments={} output.reflections={}".format(
+        params = "{} {} output.log={} output.experiments={} output.reflections={} output.phil={}".format(
             self.getInputModelFile(),
             self.getInputReflFile(),
             logPath,
             self.getOutputModelFile(),
             self.getOutputReflFile(),
+            self.getOutputPhilFile(),
         )
 
         # Update the command line with additional parameters
