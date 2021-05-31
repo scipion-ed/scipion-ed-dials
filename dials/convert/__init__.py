@@ -24,4 +24,4 @@
 # *
 # **************************************************************************
 
-from .input_output_utils import writeJson, readRefl, writeRefl, writeRefinementPhil, copyDialsFile
+from .input_output_utils import writeJson, readRefl, writeRefl, writeRefinementPhil, writeRestraintsPhil, copyDialsFile
