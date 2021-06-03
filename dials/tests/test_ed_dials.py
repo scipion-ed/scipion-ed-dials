@@ -339,7 +339,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             protRefine = self._runRefine(
                 objLabel="dials - static refinement",
                 inputSet=protIndex.outputIndexedSpots,
-                scanVarying=False,
+                scanVaryingNew=UNSET,
                 detectorFixAll=True,
             )
             refineCLstatic = "{}/indexed.expt {}/indexed.refl output.log={}/dials.refine.log output.experiments={}/refined.expt output.reflections={}/refined.refl beam.fix='all *in_spindle_plane out_spindle_plane *wavelength' detector.fix='*all position orientation distance'".format(
@@ -361,7 +361,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             protSvRefine = self._runRefine(
                 objLabel="dials - scan-varying refinement",
                 inputSet=protRefine.outputRefinedSpots,
-                scanVarying=True,
+                scanVaryingNew=SCAN_VARYING,
                 beamFixAll=False,
                 beamFixInSpindlePlane=False,
                 beamFixOutSpindlePlane=False,
@@ -385,6 +385,34 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             self.assertTrue(os.path.exists(svRefinedset.getDialsRefl()))
             self.checkLogDataset(protSvRefine, dataset)
 
+            # Run scan-varying refinement based on old workflow
+            protSvRefineOld = self._runRefine(
+                objLabel="dials - scan-varying refinement",
+                inputSet=protRefine.outputRefinedSpots,
+                scanVarying=True,
+                beamFixAll=False,
+                beamFixInSpindlePlane=False,
+                beamFixOutSpindlePlane=False,
+                beamFixWavelength=True,
+                beamForceStatic=False,
+                detectorFixAll=True,
+            )
+            refineCLsvOld = "{}/refined.expt {}/refined.refl output.log={}/dials.refine.log output.experiments={}/refined.expt output.reflections={}/refined.refl scan_varying=True beam.fix='all in_spindle_plane out_spindle_plane *wavelength' beam.force_static=False detector.fix='*all position orientation distance'".format(
+                protRefine._getExtraPath(),
+                protRefine._getExtraPath(),
+                protSvRefineOld._getLogsPath(),
+                protSvRefineOld._getExtraPath(),
+                protSvRefineOld._getExtraPath(),
+            )
+            self.assertCommand(protSvRefineOld, refineCLsvOld,
+                               program='dials.refine')
+            svRefinedsetOld = getattr(
+                protSvRefine, 'outputRefinedSpots', None)
+            self.assertIsNotNone(protSvRefineOld.outputRefinedSpots)
+            self.assertTrue(os.path.exists(svRefinedsetOld.getDialsModel()))
+            self.assertTrue(os.path.exists(svRefinedsetOld.getDialsRefl()))
+            self.checkLogDataset(protSvRefineOld, dataset)
+
             # Run integration
             protIntegrate = self._runIntegrate(
                 # objLabel="Dials integration: {}".format(exptId),
@@ -393,10 +421,11 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 commandLineInput='prediction.d_min={}'.format(
                     experiment['d_min']),
             )
-            integrateCL = "{}/refined.expt {}/refined.refl output.log={}/dials.integrate.log output.experiments={}/integrated_model.expt output.reflections={}/integrated_reflections.refl nproc=8 prediction.d_min={}".format(
+            integrateCL = "{}/refined.expt {}/refined.refl output.log={}/dials.integrate.log output.experiments={}/integrated_model.expt output.reflections={}/integrated_reflections.refl output.phil={}/dials.integrate.phil nproc=8 prediction.d_min={}".format(
                 protSvRefine._getExtraPath(),
                 protSvRefine._getExtraPath(),
                 protIntegrate._getLogsPath(),
+                protIntegrate._getExtraPath(),
                 protIntegrate._getExtraPath(),
                 protIntegrate._getExtraPath(),
                 experiment['d_min']
@@ -633,7 +662,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         # Run refinement
         protRefine = self._runRefine(
             inputSet=protIndex.outputIndexedSpots,
-            scanVarying=False,
+            scanVaryingNew=UNSET,
         )
         refineCLstatic = "{}/indexed.expt {}/indexed.refl output.log={}/dials.refine.log output.experiments={}/refined.expt output.reflections={}/refined.refl beam.fix='all *in_spindle_plane out_spindle_plane *wavelength' detector.fix='all position orientation distance'".format(
             indexExtra,
@@ -659,10 +688,11 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             nproc=experiment['nproc'],
             dMin=experiment['d_min'],
         )
-        integrateCL = "{}/refined.expt {}/refined.refl output.log={}/dials.integrate.log output.experiments={}/integrated_model.expt output.reflections={}/integrated_reflections.refl nproc=8 prediction.d_min={}".format(
+        integrateCL = "{}/refined.expt {}/refined.refl output.log={}/dials.integrate.log output.experiments={}/integrated_model.expt output.reflections={}/integrated_reflections.refl output.phil={}/dials.integrate.phil nproc=8 prediction.d_min={}".format(
             protRefine._getExtraPath(),
             protRefine._getExtraPath(),
             protIntegrate._getLogsPath(),
+            protIntegrate._getExtraPath(),
             protIntegrate._getExtraPath(),
             protIntegrate._getExtraPath(),
             experiment['d_min']
