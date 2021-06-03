@@ -4,6 +4,12 @@
 DISPERSION = 0
 DISPERSION_EXTENDED = 1
 
+# scan varying methods
+AUTO = 0
+STATIC = 1
+SCAN_VARYING = 2
+UNSET = 3
+
 # scaling outlier rejection scheme
 STANDARD = 0
 SIMPLE = 1
