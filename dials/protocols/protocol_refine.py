@@ -59,10 +59,24 @@ class DialsProtRefineSpots(EdProtRefineSpots):
                       label="Input indexed spots",
                       help="")
 
-        # TODO: Add auto option
-        form.addParam('scanVarying', pwprot.BooleanParam,
-                      label='Perform scan-varying refinement?', default=False,
-                      help="Allow models that are not forced to be static to vary during the scan, Auto will run one macrocycle with static then scan varying refinement for the crystal",
+        # Keep old option and syntax for compatibility, but do not show it.
+        form.addHidden('scanVarying', pwprot.BooleanParam,
+                       label='Perform scan-varying refinement?', default=None,
+                       allowsNull=True)
+
+        form.addParam('useScanVaryingFromWorkflow', pwprot.BooleanParam,
+                      label='Use scan varying option from imported workflow?',
+                      default=True,
+                      condition='scanVarying==True',
+                      help='It appears that a workflow from an older version used scan-varying refinement. Do you want to keep using that option?')
+
+        form.addParam('scanVaryingNew', pwprot.EnumParam,
+                      label='Scan varying or static?',
+                      choices=['Auto', 'Static',
+                               'Scan-varying', 'Dials default'],
+                      default=UNSET,
+                      condition='useScanVaryingFromWorkflow!=True',
+                      help="Allow models that are not forced to be static to vary during the scan, Auto will run one macrocycle with static then scan varying refinement for the crystal. The option \"Dials default\" will use the default as indicated in https://dials.github.io/documentation/programs/dials_refine.html.",
                       )
 
         # Help messages are copied from the DIALS documentation at
@@ -109,7 +123,8 @@ class DialsProtRefineSpots(EdProtRefineSpots):
                        )
 
         group.addParam('beamForceStatic', pwprot.BooleanParam,
-                       label='Force static parametrisation for the beam?', default=True, condition="scanVarying==True",
+                       label='Force static parametrisation for the beam? (only applies to scan-varying refinement)',
+                       default=True,
                        help="Force a static parameterisation for the beam when doing scan-varying refinement",
                        )
 
@@ -349,6 +364,25 @@ class DialsProtRefineSpots(EdProtRefineSpots):
         else:
             return None
 
+    def getScanVaryingCommand(self):
+        if self.scanVarying.get() is True and self.useScanVaryingFromWorkflow.get() is True:
+            return " scan_varying=True"
+        elif self.scanVaryingNew.get() == SCAN_VARYING:
+            return " scan_varying=True"
+        elif self.scanVaryingNew.get() == STATIC:
+            return " scan_varying=False"
+        elif self.scanVaryingNew.get() == AUTO:
+            return " scan_varying=Auto"
+        elif self.scanVaryingNew.get() == UNSET:
+            return ""
+        return ""
+
+    def getScanVaryingStatus(self):
+        try:
+            return self.getScanVaryingCommand().split("=")[-1].lower() == "true"
+        except:
+            return None
+
     def getDatasets(self):
         return dutils.getDatasets(self.getInputModelFile())
 
@@ -382,8 +416,7 @@ class DialsProtRefineSpots(EdProtRefineSpots):
         if self.Nproc.get() not in (None, 1):
             params += " nproc={}".format(self.Nproc.get())
 
-        if self.scanVarying:
-            params += " scan_varying=True"
+        params += self.getScanVaryingCommand()
 
         if self.beamFixAll:
             params += " beam.fix='*all in_spindle_plane out_spindle_plane wavelength'"
@@ -402,8 +435,9 @@ class DialsProtRefineSpots(EdProtRefineSpots):
             params += " beam.fix={}".format("".join(beamfix))
 
         if self.beamForceStatic.get() not in (None, True):
-            params += " beam.force_static={}".format(
-                self.beamForceStatic.get())
+            if self.getScanVaryingStatus():
+                params += " beam.force_static={}".format(
+                    self.beamForceStatic.get())
 
         crystalfix = []
         if self.crystalFixCell and self.crystalFixOrientation:
