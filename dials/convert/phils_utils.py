@@ -87,3 +87,4 @@ def writeRestraintsPhil(fn='restraints.phil', values=None, sigmas=None):
 
     with open(fn, 'w') as f:
         f.write("\n".join(template))
+    return fn
