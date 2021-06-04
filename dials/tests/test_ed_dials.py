@@ -791,26 +791,18 @@ class TestEdDialsUtils(pwtests.BaseTest):
     def setUpClass(cls):
         if SKIP_UTILS:
             cls.skipTest(cls, "Skipping utils")
+        pwtests.setupTestOutput(cls)
         cls.dataPath = os.environ.get("SCIPION_ED_TESTDATA")
 
         if not os.path.exists(cls.dataPath):
             raise Exception("Can not run utils tests, missing file:\n  %s"
                             % cls.dataPath)
 
-        cls.outputPath = os.path.join(
-            cls.dataPath, "Tests", "TestEdDialsUtils")
-        pw.utils.cleanPath(cls.outputPath)
-        if not os.path.exists(cls.outputPath):
-            os.mkdir(cls.outputPath)
-
     @classmethod
     def tearDownClass(cls):
         if not KEEP_ALL_TEST_OUTPUT:
             # Clean up all output files from the test
-            pw.utils.cleanPath(cls.outputPath)
-
-    def getTestOutputPath(self, fn):
-        return os.path.join(self.outputPath, fn)
+            pw.utils.cleanPath(cls.getOutputPath())
 
     def comparePhils(self, goodPhil='restraints.phil', testPhil=None):
         self.assertIsNotNone(testPhil)
@@ -820,7 +812,7 @@ class TestEdDialsUtils(pwtests.BaseTest):
 
     def test_write_restraints(self):
         # Input and output are as expected
-        setFn = self.getTestOutputPath("restraints.phil")
+        setFn = self.getOutputPath("restraints.phil")
         pw.utils.cleanPath(setFn)
 
         # Add some values as a start
@@ -832,8 +824,8 @@ class TestEdDialsUtils(pwtests.BaseTest):
 
     def test_write_restraints_bad_input(self):
         # Check if the functions to fix bad input and typos work
-        fnShort = self.getTestOutputPath("restraints_bad_input_short.phil")
-        fnLong = self.getTestOutputPath("restraints_bad_input_long.phil")
+        fnShort = self.getOutputPath("restraints_bad_input_short.phil")
+        fnLong = self.getOutputPath("restraints_bad_input_long.phil")
         pw.utils.cleanPath(fnShort)
         pw.utils.cleanPath(fnLong)
 
@@ -851,7 +843,7 @@ class TestEdDialsUtils(pwtests.BaseTest):
         self.comparePhils(goodPhil='restraints.phil', testPhil=fnLong)
 
     def test_write_restraints_no_sigmas(self):
-        setFn = self.getTestOutputPath("restraints_no_sigmas.phil")
+        setFn = self.getOutputPath("restraints_no_sigmas.phil")
         pw.utils.cleanPath(setFn)
 
         values = "10,20,30,90,90,90"
