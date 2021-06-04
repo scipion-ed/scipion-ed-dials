@@ -797,46 +797,48 @@ class TestEdDialsUtils(pwtests.BaseTest):
             raise Exception("Can not run utils tests, missing file:\n  %s"
                             % cls.dataPath)
 
-    def getRestraintsPhil(self, fn="restraints.phil"):
-        return os.path.join(self.dataPath, "utils", fn)
+    def comparePhils(self, goodPhil='restraints.phil', testPhil=None):
+        self.assertIsNotNone(testPhil)
+        with open(os.path.join(self.dataPath, "utils", goodPhil), 'r') as f1:
+            with open(testPhil, 'r') as f2:
+                self.assertEqual(f1.read(), f2.read())
 
     def test_write_restraints(self):
+        # Input and output are as expected
         if SKIP_UTILS:
             self.skipTest("Skipping utils")
         setFn = self.getOutputPath("restraints.phil")
         pw.utils.cleanPath(setFn)
 
+        # Add some values as a start
         values = "10,20,30,90,90,90"
         sigmas = "0.05,0.05,0.05,0.05,0.05,0.05"
-        writeRestraintsPhil(fn=setFn, values=values, sigmas=sigmas)
-        with open(self.getRestraintsPhil("restraints.phil"), 'r') as f1:
-            with open(setFn, 'r') as f2:
-                self.assertEqual(f1.read(), f2.read())
+
+        outFn = writeRestraintsPhil(fn=setFn, values=values, sigmas=sigmas)
+        self.comparePhils(goodPhil='restraints.phil', testPhil=outFn)
 
     def test_write_restraints_bad_input(self):
+        # Check if the functions to fix bad input and typos work
         if SKIP_UTILS:
             self.skipTest("Skipping utils")
 
-        setFn = self.getOutputPath("restraints_bad_input_short.phil")
-        setFn2 = self.getOutputPath("restraints_bad_input_long.phil")
-        pw.utils.cleanPath(setFn)
-        pw.utils.cleanPath(setFn2)
+        fnShort = self.getOutputPath("restraints_bad_input_short.phil")
+        fnLong = self.getOutputPath("restraints_bad_input_long.phil")
+        pw.utils.cleanPath(fnShort)
+        pw.utils.cleanPath(fnLong)
 
+        # Test different separators and do not add all values
         values = "10, 20 30,90 ,90"
         sigmas = "0.05,0.05"
+        # Test cutting away extra values added to the end
         values2 = "10,20,30,90,90,90,90"
         sigmas2 = "0.05,0.05,0.05,0.05,0.05,0.05,0.05"
 
-        writeRestraintsPhil(fn=setFn, values=values, sigmas=sigmas)
-        writeRestraintsPhil(fn=setFn2, values=values2, sigmas=sigmas2)
+        writeRestraintsPhil(fn=fnShort, values=values, sigmas=sigmas)
+        writeRestraintsPhil(fn=fnLong, values=values2, sigmas=sigmas2)
 
-        with open(self.getRestraintsPhil("restraints.phil"), 'r') as f1:
-            with open(setFn, 'r') as f2:
-                self.assertEqual(f1.read(), f2.read())
-
-        with open(self.getRestraintsPhil("restraints.phil"), 'r') as f1:
-            with open(setFn2, 'r') as f2:
-                self.assertEqual(f1.read(), f2.read())
+        self.comparePhils(goodPhil='restraints.phil', testPhil=fnShort)
+        self.comparePhils(goodPhil='restraints.phil', testPhil=fnLong)
 
     def test_write_restraints_no_sigmas(self):
         if SKIP_UTILS:
@@ -847,6 +849,4 @@ class TestEdDialsUtils(pwtests.BaseTest):
 
         values = "10,20,30,90,90,90"
         writeRestraintsPhil(fn=setFn, values=values)
-        with open(self.getRestraintsPhil("restraints_no_sigmas.phil"), 'r') as f1:
-            with open(setFn, 'r') as f2:
-                self.assertEqual(f1.read(), f2.read())
+        self.comparePhils(goodPhil='restraints_no_sigmas.phil', testPhil=setFn)
