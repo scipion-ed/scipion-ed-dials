@@ -50,11 +50,14 @@ pw.Config.setDomain(pwed)
 # Create toggles for skipping some tests
 SKIP_PIPELINES = False
 SKIP_UTILS = False
+KEEP_ALL_TEST_OUTPUT = False
 
 
 class TestEdDialsProtocols(pwtests.BaseTest):
     @classmethod
     def setUpClass(cls):
+        if SKIP_PIPELINES:
+            cls.skipTest(cls, "Skipping pipelines")
         pwtests.setupTestProject(cls, writeLocalConfig=True)
         cls.dataPath = os.environ.get("SCIPION_ED_TESTDATA")
 
@@ -215,8 +218,6 @@ class TestEdDialsProtocols(pwtests.BaseTest):
 
     # Pipelines
     def test_lyso_pipeline(self):
-        if SKIP_PIPELINES:
-            self.skipTest("Skipping pipelines")
 
         scaledSets = []
         scaleProt = []
@@ -545,8 +546,6 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             self.assertEqual(protExportMtz.getDatasets(), compareDatasets)
 
     def test_garnet_pipeline(self):
-        if SKIP_PIPELINES:
-            self.skipTest("Skipping pipelines")
 
         # Define all experiment variables in one place
         experiment = self.getGarnetExperiment()
@@ -790,6 +789,8 @@ class TestEdDialsProtocols(pwtests.BaseTest):
 class TestEdDialsUtils(pwtests.BaseTest):
     @classmethod
     def setUpClass(cls):
+        if SKIP_UTILS:
+            cls.skipTest(cls, "Skipping utils")
         cls.dataPath = os.environ.get("SCIPION_ED_TESTDATA")
 
         if not os.path.exists(cls.dataPath):
@@ -798,8 +799,15 @@ class TestEdDialsUtils(pwtests.BaseTest):
 
         cls.outputPath = os.path.join(
             cls.dataPath, "Tests", "TestEdDialsUtils")
+        pw.utils.cleanPath(cls.outputPath)
         if not os.path.exists(cls.outputPath):
             os.mkdir(cls.outputPath)
+
+    @classmethod
+    def tearDownClass(cls):
+        if not KEEP_ALL_TEST_OUTPUT:
+            # Clean up all output files from the test
+            pw.utils.cleanPath(cls.outputPath)
 
     def getTestOutputPath(self, fn):
         return os.path.join(self.outputPath, fn)
@@ -812,8 +820,6 @@ class TestEdDialsUtils(pwtests.BaseTest):
 
     def test_write_restraints(self):
         # Input and output are as expected
-        if SKIP_UTILS:
-            self.skipTest("Skipping utils")
         setFn = self.getTestOutputPath("restraints.phil")
         pw.utils.cleanPath(setFn)
 
@@ -826,9 +832,6 @@ class TestEdDialsUtils(pwtests.BaseTest):
 
     def test_write_restraints_bad_input(self):
         # Check if the functions to fix bad input and typos work
-        if SKIP_UTILS:
-            self.skipTest("Skipping utils")
-
         fnShort = self.getTestOutputPath("restraints_bad_input_short.phil")
         fnLong = self.getTestOutputPath("restraints_bad_input_long.phil")
         pw.utils.cleanPath(fnShort)
@@ -848,9 +851,6 @@ class TestEdDialsUtils(pwtests.BaseTest):
         self.comparePhils(goodPhil='restraints.phil', testPhil=fnLong)
 
     def test_write_restraints_no_sigmas(self):
-        if SKIP_UTILS:
-            self.skipTest("Skipping utils")
-
         setFn = self.getTestOutputPath("restraints_no_sigmas.phil")
         pw.utils.cleanPath(setFn)
 
