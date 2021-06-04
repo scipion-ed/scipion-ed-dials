@@ -790,12 +790,19 @@ class TestEdDialsProtocols(pwtests.BaseTest):
 class TestEdDialsUtils(pwtests.BaseTest):
     @classmethod
     def setUpClass(cls):
-        pwtests.setupTestProject(cls)
         cls.dataPath = os.environ.get("SCIPION_ED_TESTDATA")
 
         if not os.path.exists(cls.dataPath):
             raise Exception("Can not run utils tests, missing file:\n  %s"
                             % cls.dataPath)
+
+        cls.outputPath = os.path.join(
+            cls.dataPath, "Tests", "TestEdDialsUtils")
+        if not os.path.exists(cls.outputPath):
+            os.mkdir(cls.outputPath)
+
+    def getTestOutputPath(self, fn):
+        return os.path.join(self.outputPath, fn)
 
     def comparePhils(self, goodPhil='restraints.phil', testPhil=None):
         self.assertIsNotNone(testPhil)
@@ -807,7 +814,7 @@ class TestEdDialsUtils(pwtests.BaseTest):
         # Input and output are as expected
         if SKIP_UTILS:
             self.skipTest("Skipping utils")
-        setFn = self.getOutputPath("restraints.phil")
+        setFn = self.getTestOutputPath("restraints.phil")
         pw.utils.cleanPath(setFn)
 
         # Add some values as a start
@@ -822,8 +829,8 @@ class TestEdDialsUtils(pwtests.BaseTest):
         if SKIP_UTILS:
             self.skipTest("Skipping utils")
 
-        fnShort = self.getOutputPath("restraints_bad_input_short.phil")
-        fnLong = self.getOutputPath("restraints_bad_input_long.phil")
+        fnShort = self.getTestOutputPath("restraints_bad_input_short.phil")
+        fnLong = self.getTestOutputPath("restraints_bad_input_long.phil")
         pw.utils.cleanPath(fnShort)
         pw.utils.cleanPath(fnLong)
 
@@ -844,7 +851,7 @@ class TestEdDialsUtils(pwtests.BaseTest):
         if SKIP_UTILS:
             self.skipTest("Skipping utils")
 
-        setFn = self.getOutputPath("restraints_no_sigmas.phil")
+        setFn = self.getTestOutputPath("restraints_no_sigmas.phil")
         pw.utils.cleanPath(setFn)
 
         values = "10,20,30,90,90,90"
