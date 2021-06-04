@@ -40,7 +40,7 @@ from pwed.objects import *
 from pwed.protocols import ProtImportDiffractionImages
 
 from dials.protocols import *
-from dials.convert import writeJson, readRefl, writeRefl
+from dials.convert import writeJson, readRefl, writeRefl, writeRestraintsPhil
 from dials.constants import *
 import dials.utils as dutils
 
@@ -785,3 +785,68 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         for exportFile in exportedmtzset:
             self.assertTrue(os.path.exists(exportFile.getFilePath()))
         self.assertEqual(protExportMtz.getDatasets(), datasetString)
+
+
+class TestEdDialsUtils(pwtests.BaseTest):
+    @classmethod
+    def setUpClass(cls):
+        pwtests.setupTestProject(cls)
+        cls.dataPath = os.environ.get("SCIPION_ED_TESTDATA")
+
+        if not os.path.exists(cls.dataPath):
+            raise Exception("Can not run utils tests, missing file:\n  %s"
+                            % cls.dataPath)
+
+    def getRestraintsPhil(self, fn="restraints.phil"):
+        return os.path.join(self.dataPath, "utils", fn)
+
+    def test_write_restraints(self):
+        if SKIP_UTILS:
+            self.skipTest("Skipping utils")
+        setFn = self.getOutputPath("restraints.phil")
+        pw.utils.cleanPath(setFn)
+
+        values = "10,20,30,90,90,90"
+        sigmas = "0.05,0.05,0.05,0.05,0.05,0.05"
+        writeRestraintsPhil(fn=setFn, values=values, sigmas=sigmas)
+        with open(self.getRestraintsPhil("restraints.phil"), 'r') as f1:
+            with open(setFn, 'r') as f2:
+                self.assertEqual(f1.read(), f2.read())
+
+    def test_write_restraints_bad_input(self):
+        if SKIP_UTILS:
+            self.skipTest("Skipping utils")
+
+        setFn = self.getOutputPath("restraints_bad_input_short.phil")
+        setFn2 = self.getOutputPath("restraints_bad_input_long.phil")
+        pw.utils.cleanPath(setFn)
+        pw.utils.cleanPath(setFn2)
+
+        values = "10, 20 30,90 ,90"
+        sigmas = "0.05,0.05"
+        values2 = "10,20,30,90,90,90,90"
+        sigmas2 = "0.05,0.05,0.05,0.05,0.05,0.05,0.05"
+
+        writeRestraintsPhil(fn=setFn, values=values, sigmas=sigmas)
+        writeRestraintsPhil(fn=setFn2, values=values2, sigmas=sigmas2)
+
+        with open(self.getRestraintsPhil("restraints.phil"), 'r') as f1:
+            with open(setFn, 'r') as f2:
+                self.assertEqual(f1.read(), f2.read())
+
+        with open(self.getRestraintsPhil("restraints.phil"), 'r') as f1:
+            with open(setFn2, 'r') as f2:
+                self.assertEqual(f1.read(), f2.read())
+
+    def test_write_restraints_no_sigmas(self):
+        if SKIP_UTILS:
+            self.skipTest("Skipping utils")
+
+        setFn = self.getOutputPath("restraints_no_sigmas.phil")
+        pw.utils.cleanPath(setFn)
+
+        values = "10,20,30,90,90,90"
+        writeRestraintsPhil(fn=setFn, values=values)
+        with open(self.getRestraintsPhil("restraints_no_sigmas.phil"), 'r') as f1:
+            with open(setFn, 'r') as f2:
+                self.assertEqual(f1.read(), f2.read())
