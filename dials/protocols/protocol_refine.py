@@ -75,7 +75,7 @@ class DialsProtRefineSpots(EdProtRefineSpots):
                       choices=['Auto', 'Static',
                                'Scan-varying', 'Dials default'],
                       default=UNSET,
-                      condition='useScanVaryingFromWorkflow!=True',
+                      condition='scanVarying!=True or useScanVaryingFromWorkflow==False',
                       help="Allow models that are not forced to be static to vary during the scan, Auto will run one macrocycle with static then scan varying refinement for the crystal. The option \"Dials default\" will use the default as indicated in https://dials.github.io/documentation/programs/dials_refine.html.",
                       )
 
