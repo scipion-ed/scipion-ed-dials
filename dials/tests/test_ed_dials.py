@@ -49,6 +49,7 @@ pw.Config.setDomain(pwed)
 
 # Create toggles for skipping some tests
 SKIP_PIPELINES = False
+ACCEPT_BAD_WORKAROUND = True
 SKIP_UTILS = False
 KEEP_ALL_TEST_OUTPUT = False
 
@@ -158,6 +159,8 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             'sample': 'lyso',
             'scan_range': '1,49',
             'space_group': 'P 2',
+            'unit_cell': '40.5,77.76,77.76,90,90,90',
+            'unit_cell_sigmas': '0.05,0.05,0.05,0.05,0.05,0.05'
         }
         lyso_experiment_24 = {
             'location': 'lysozyme/experiment_24',
@@ -170,6 +173,8 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             'sample': 'lysozyme',
             'scan_range': '1,46',
             'space_group': 'P 4 2 2',
+            'unit_cell': '78.24,78.24,39.75,90,90,90',
+            'unit_cell_sigmas': '0.05,0.05,0.05,0.05,0.05,0.05'
         }
         experiments.append(lyso_experiment_14)
         experiments.append(lyso_experiment_24)
@@ -294,6 +299,11 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                                  'Histogram of per-image spot count for imageset 0:')
 
             # Run indexing
+            if ACCEPT_BAD_WORKAROUND:
+                badWorkaround = "beam.fix=all detector.fix=all"
+            else:
+                badWorkaround = ""
+            # TODO: add test for using refinement phil
             protIndex = self._runIndex(
                 objLabel="dials - index and reindex",
                 inputImages=protImport.outputDiffractionImages,
@@ -308,7 +318,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 beamFixOutSpindlePlane=True,
                 beamFixWavelength=True,
                 # FIXME: Command line input should not be needed
-                commandLineInputBravais='beam.fix=all detector.fix=all',
+                commandLineInputBravais=badWorkaround,
             )
             indexTmp = protIndex._getTmpPath()
             indexLogs = protIndex._getLogsPath()
