@@ -50,7 +50,7 @@ pw.Config.setDomain(pwed)
 # Create toggles for skipping some tests
 SKIP_PIPELINES = False
 ACCEPT_BAD_WORKAROUND = True
-SKIP_UTILS = True
+SKIP_UTILS = False
 KEEP_ALL_TEST_OUTPUT = False
 
 

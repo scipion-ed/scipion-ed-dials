@@ -37,7 +37,7 @@ import dials.utils as dutils
 from pwed.objects import IndexedSpot, SetOfIndexedSpots
 from pwed.protocols import EdProtRefineSpots
 from pwed.convert import find_subranges
-from dials.convert import writeJson, readRefl, writeRefl, writeRefinementPhil, copyDialsFile
+from dials.convert import writeJson, readRefl, writeRefl, writeRefinementPhil, copyDialsFile, writeRestraintsPhil
 from dials.constants import *
 
 
@@ -78,6 +78,22 @@ class DialsProtRefineSpots(EdProtRefineSpots):
                       condition='scanVarying!=True or useScanVaryingFromWorkflow==False',
                       help="Allow models that are not forced to be static to vary during the scan, Auto will run one macrocycle with static then scan varying refinement for the crystal. The option \"Dials default\" will use the default as indicated in https://dials.github.io/documentation/programs/dials_refine.html.",
                       )
+
+        form.addParam('useRestraint', pwprot.BooleanParam,
+                      label="Do you want to restrain the unit cell?",
+                      default=False,)
+
+        form.addParam('targetUnitCell', pwprot.StringParam,
+                      label="Unit cell values",
+                      allowsNull=True, default=None,
+                      condition='useRestraint==True',
+                      help="Target unit cell parameters for the restraint for this parameterisation")
+
+        form.addParam('targetSigmas', pwprot.StringParam,
+                      label="Sigmas for determining restraint weight",
+                      allowsNull=True, default=None,
+                      condition='useRestraint==True',
+                      help="The unit cell target values are associated with sigmas which are used to determine the weight of each restraint. A sigma of zero will remove the restraint at that position. If symmetry constrains two cell dimensions to be equal then only the smaller of the two sigmas will be kept")
 
         # Help messages are copied from the DIALS documentation at
         # https://dials.github.io/documentation/programs/dials_index.html
@@ -392,6 +408,16 @@ class DialsProtRefineSpots(EdProtRefineSpots):
     def getExtraPhilsPath(self):
         return self.extraPhilPath.get('').strip()
 
+    def getRestraintsPhil(self):
+        return self._getExtraPath("restraints.phil")
+
+    def makeRestraintsPhil(self):
+        writeRestraintsPhil(
+            fn=self.getRestraintsPhil(),
+            values=self.targetUnitCell.get(),
+            sigmas=self.targetSigmas.get()
+        )
+
     def _checkWriteModel(self):
         return self.getSetModel() != self.getInputModelFile()
 
@@ -471,6 +497,11 @@ class DialsProtRefineSpots(EdProtRefineSpots):
         if self.refineryMaxIterations.get() is not None:
             params += " refinery.max_iterations={}".format(
                 self.refineryMaxIterations.get())
+
+        if self.useRestraint:
+            # Make the phil when it is known that it will be used
+            self.makeRestraintsPhil()
+            params += " {}".format(self.getRestraintsPhil())
 
         if self.extraPhilPath.get():
             params += " {}".format(self.getExtraPhilsPath())
