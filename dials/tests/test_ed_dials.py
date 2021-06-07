@@ -50,7 +50,7 @@ pw.Config.setDomain(pwed)
 # Create toggles for skipping some tests
 SKIP_PIPELINES = False
 ACCEPT_BAD_WORKAROUND = True
-SKIP_UTILS = False
+SKIP_UTILS = True
 KEEP_ALL_TEST_OUTPUT = False
 
 
@@ -351,6 +351,66 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             self.assertTrue(os.path.exists(indexedset.getDialsModel()))
             self.assertTrue(os.path.exists(indexedset.getDialsRefl()))
             self.checkLogDataset(protIndex, dataset)
+
+            with self.subTest(msg='Testing with restraints in phil file'):
+                protIndexPhil = self._runIndex(
+                    objLabel="dials - index known space group",
+                    inputImages=protImport.outputDiffractionImages,
+                    inputSpots=protFindSpots.outputDiffractionSpots,
+                    detectorFixPosition=True,
+                    detectorFixOrientation=True,
+                    detectorFixDistance=True,
+                    beamFixInSpindlePlane=True,
+                    beamFixOutSpindlePlane=True,
+                    beamFixWavelength=True,
+                    enterSpaceGroup=True,
+                    knownSpaceGroup=experiment['space_group'].replace(" ", ""),
+                )
+                indexTmpPhil = protIndexPhil._getTmpPath()
+                indexLogsPhil = protIndexPhil._getLogsPath()
+                indexExtraPhil = protIndexPhil._getExtraPath()
+                indexCLPhil = "{}/imported.expt {}/strong.refl output.log={}/dials.index.log output.experiments={}/indexed.expt output.reflections={}/indexed.refl indexing.known_symmetry.space_group={} refinement.parameterisation.beam.fix='*all in_spindle_plane out_spindle_plane wavelength' refinement.parameterisation.crystal.fix='all cell orientation' refinement.parameterisation.detector.fix='*all position orientation distance'".format(
+                    protFindSpots._getExtraPath(),
+                    protFindSpots._getExtraPath(),
+                    indexLogsPhil,
+                    indexTmpPhil,
+                    indexTmpPhil,
+                    experiment['space_group'].replace(" ", ""),
+                )
+                self.assertEqual(protIndexPhil._prepIndexCommandline(
+                    'dials.index'), indexCLPhil)
+                indexedSetPhil = getattr(
+                    protIndexPhil, 'outputIndexedSpots', None)
+                self.assertIsNotNone(protIndexPhil.outputIndexedSpots)
+                self.assertTrue(os.path.exists(indexedSetPhil.getDialsModel()))
+                self.assertTrue(os.path.exists(indexedSetPhil.getDialsRefl()))
+                self.checkLogDataset(protIndexPhil, dataset)
+
+                # Refinement with target restraints
+                protRefinePhil = self._runRefine(
+                    objLabel="dials - static refinement with restraints",
+                    inputSet=protIndexPhil.outputIndexedSpots,
+                    scanVaryingNew=STATIC,
+                    detectorFixDistance=False,
+                    targetUnitCell=experiment['unit_cell'],
+                    targetSigmas=experiment['unit_cell_sigmas'],
+                )
+                refineCLstaticPhil = "{}/indexed.expt {}/indexed.refl output.log={}/dials.refine.log output.experiments={}/refined.expt output.reflections={}/refined.refl scan_varying=False beam.fix='all *in_spindle_plane out_spindle_plane *wavelength' detector.fix='all position orientation distance' {}/restraints.phil".format(
+                    indexExtraPhil,
+                    indexExtraPhil,
+                    protRefinePhil._getLogsPath(),
+                    protRefinePhil._getExtraPath(),
+                    protRefinePhil._getExtraPath(),
+                    protRefinePhil._getExtraPath(),
+                )
+                self.assertCommand(protRefinePhil, refineCLstaticPhil,
+                                   program='dials.refine')
+                refinedsetPhil = getattr(
+                    protRefinePhil, 'outputRefinedSpots', None)
+                self.assertIsNotNone(protRefinePhil.outputRefinedSpots)
+                self.assertTrue(os.path.exists(refinedsetPhil.getDialsModel()))
+                self.assertTrue(os.path.exists(refinedsetPhil.getDialsRefl()))
+                self.checkLogDataset(protRefinePhil, dataset)
 
             # Run refinement
             protRefine = self._runRefine(
