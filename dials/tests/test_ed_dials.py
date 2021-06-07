@@ -392,6 +392,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                     inputSet=protIndexPhil.outputIndexedSpots,
                     scanVaryingNew=STATIC,
                     detectorFixDistance=False,
+                    useRestraint=True,
                     targetUnitCell=experiment['unit_cell'],
                     targetSigmas=experiment['unit_cell_sigmas'],
                 )
