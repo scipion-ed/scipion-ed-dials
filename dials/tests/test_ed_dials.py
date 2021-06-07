@@ -221,6 +221,16 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 CL = protocol._prepareCommandLineArguments()
         self.assertEqual(CL, commandString)
 
+    def assertFileExists(self, file):
+        self.assertTrue(os.path.exists(file))
+
+    def comparePhils(self, goodPhil='restraints.phil', testPhil=None):
+        self.assertIsNotNone(goodPhil)
+        self.assertIsNotNone(testPhil)
+        with open(goodPhil, 'r') as f1:
+            with open(testPhil, 'r') as f2:
+                self.assertEqual(f1.read(), f2.read())
+
     # Pipelines
     def test_lyso_pipeline(self):
 
@@ -262,12 +272,12 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             self.assertCommand(protImport, importCL,
                                program='dials.import')
             outputModel = protImport.getOutputModelFile()
-            self.assertTrue(os.path.exists(outputModel))
+            self.assertFileExists(outputModel)
             importedset = getattr(
                 protImport, 'outputDiffractionImages', None)
             self.assertIsNotNone(importedset)
             setModel = importedset.getDialsModel()
-            self.assertTrue(os.path.exists(setModel))
+            self.assertFileExists(setModel)
             self.checkLogDataset(
                 protImport, dataset, '')
 
@@ -280,7 +290,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 untrustedRectangle_2='255,261,0,516',
                 thresholdAlgorithm=DISPERSION_EXTENDED)
             inputModel = protFindSpots.getInputModelFile()
-            self.assertTrue(os.path.exists(inputModel))
+            self.assertFileExists(inputModel)
             findSpotCL = '{}/imported.expt output.log={}/dials.find_spots.log output.reflections={}/strong.refl spotfinder.scan_range={} spotfinder.filter.d_min={} spotfinder.filter.max_spot_size=1000 spotfinder.filter.max_strong_pixel_fraction=0.25 spotfinder.filter.max_separation=2.0 spotfinder.filter.untrusted.rectangle=0,516,255,261 spotfinder.filter.untrusted.rectangle=255,261,0,516 spotfinder.threshold.algorithm=dispersion_extended spotfinder.threshold.dispersion.sigma_background=6.0 spotfinder.threshold.dispersion.sigma_strong=3.0 spotfinder.threshold.dispersion.kernel_size=3,3'.format(
                 protFindSpots._getExtraPath(),
                 protFindSpots._getLogsPath(),
@@ -293,8 +303,8 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             self.assertIsNotNone(foundspotset)
             self.assertEqual(foundspotset.getSpots(),
                              experiment['found_spots'])
-            self.assertTrue(os.path.exists(foundspotset.getDialsModel()))
-            self.assertTrue(os.path.exists(foundspotset.getDialsRefl()))
+            self.assertFileExists(foundspotset.getDialsModel())
+            self.assertFileExists(foundspotset.getDialsRefl())
             self.checkLogDataset(protFindSpots, dataset,
                                  'Histogram of per-image spot count for imageset 0:')
 
@@ -348,8 +358,8 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 'dials.reindex'), reindexCL)
             indexedset = getattr(protIndex, 'outputIndexedSpots', None)
             self.assertIsNotNone(protIndex.outputIndexedSpots)
-            self.assertTrue(os.path.exists(indexedset.getDialsModel()))
-            self.assertTrue(os.path.exists(indexedset.getDialsRefl()))
+            self.assertFileExists(indexedset.getDialsModel())
+            self.assertFileExists(indexedset.getDialsRefl())
             self.checkLogDataset(protIndex, dataset)
 
             with self.subTest(msg='Testing with restraints in phil file'):
@@ -382,8 +392,8 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 indexedSetPhil = getattr(
                     protIndexPhil, 'outputIndexedSpots', None)
                 self.assertIsNotNone(protIndexPhil.outputIndexedSpots)
-                self.assertTrue(os.path.exists(indexedSetPhil.getDialsModel()))
-                self.assertTrue(os.path.exists(indexedSetPhil.getDialsRefl()))
+                self.assertFileExists(indexedSetPhil.getDialsModel())
+                self.assertFileExists(indexedSetPhil.getDialsRefl())
                 self.checkLogDataset(protIndexPhil, dataset)
 
                 # Refinement with target restraints
@@ -409,8 +419,19 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 refinedsetPhil = getattr(
                     protRefinePhil, 'outputRefinedSpots', None)
                 self.assertIsNotNone(protRefinePhil.outputRefinedSpots)
-                self.assertTrue(os.path.exists(refinedsetPhil.getDialsModel()))
-                self.assertTrue(os.path.exists(refinedsetPhil.getDialsRefl()))
+                self.assertFileExists(refinedsetPhil.getDialsModel())
+                self.assertFileExists(refinedsetPhil.getDialsRefl())
+                # Check that the correct phil file is actually created
+                self.assertFileExists(protRefinePhil.getRestraintsPhil())
+                referenceFile = os.path.abspath("restraints.phil")
+                referencePhil = writeRestraintsPhil(
+                    fn=referenceFile,
+                    values=experiment["unit_cell"],
+                    sigmas=experiment["unit_cell_sigmas"]
+                )
+                self.assertFileExists(referenceFile)
+                self.comparePhils(goodPhil=referencePhil,
+                                  testPhil=protRefinePhil.getRestraintsPhil())
                 self.checkLogDataset(protRefinePhil, dataset)
 
             # Run refinement
@@ -431,8 +452,8 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                                program='dials.refine')
             refinedset = getattr(protRefine, 'outputRefinedSpots', None)
             self.assertIsNotNone(protRefine.outputRefinedSpots)
-            self.assertTrue(os.path.exists(refinedset.getDialsModel()))
-            self.assertTrue(os.path.exists(refinedset.getDialsRefl()))
+            self.assertFileExists(refinedset.getDialsModel())
+            self.assertFileExists(refinedset.getDialsRefl())
             self.checkLogDataset(protRefine, dataset)
 
             # Run scan-varying refinement
@@ -459,8 +480,8 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             svRefinedset = getattr(
                 protSvRefine, 'outputRefinedSpots', None)
             self.assertIsNotNone(protSvRefine.outputRefinedSpots)
-            self.assertTrue(os.path.exists(svRefinedset.getDialsModel()))
-            self.assertTrue(os.path.exists(svRefinedset.getDialsRefl()))
+            self.assertFileExists(svRefinedset.getDialsModel())
+            self.assertFileExists(svRefinedset.getDialsRefl())
             self.checkLogDataset(protSvRefine, dataset)
 
             # Run scan-varying refinement based on old workflow
@@ -487,8 +508,8 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             svRefinedsetOld = getattr(
                 protSvRefine, 'outputRefinedSpots', None)
             self.assertIsNotNone(protSvRefineOld.outputRefinedSpots)
-            self.assertTrue(os.path.exists(svRefinedsetOld.getDialsModel()))
-            self.assertTrue(os.path.exists(svRefinedsetOld.getDialsRefl()))
+            self.assertFileExists(svRefinedsetOld.getDialsModel())
+            self.assertFileExists(svRefinedsetOld.getDialsRefl())
             self.checkLogDataset(protSvRefineOld, dataset)
 
             # Run integration
@@ -513,8 +534,8 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             integratedset = getattr(
                 protIntegrate, 'outputIntegratedSpots', None)
             self.assertIsNotNone(protIntegrate.outputIntegratedSpots)
-            self.assertTrue(os.path.exists(integratedset.getDialsModel()))
-            self.assertTrue(os.path.exists(integratedset.getDialsRefl()))
+            self.assertFileExists(integratedset.getDialsModel())
+            self.assertFileExists(integratedset.getDialsRefl())
             self.checkLogDataset(protIntegrate, dataset,
                                  'Summary vs resolution')
 
@@ -534,8 +555,8 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             symmetrizedset = getattr(
                 protSymmetry, 'outputSymmetrizedSpots', None)
             self.assertIsNotNone(protSymmetry.outputSymmetrizedSpots)
-            self.assertTrue(os.path.exists(symmetrizedset.getDialsModel()))
-            self.assertTrue(os.path.exists(symmetrizedset.getDialsRefl()))
+            self.assertFileExists(symmetrizedset.getDialsModel())
+            self.assertFileExists(symmetrizedset.getDialsRefl())
             self.checkLogDataset(protSymmetry, dataset,
                                  'Recommended space group: {}'.format(experiment['space_group']))
 
@@ -556,8 +577,8 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             scaledset = getattr(
                 protScaling, 'outputScaledSpots', None)
             self.assertIsNotNone(protScaling.outputScaledSpots)
-            self.assertTrue(os.path.exists(scaledset.getDialsModel()))
-            self.assertTrue(os.path.exists(scaledset.getDialsRefl()))
+            self.assertFileExists(scaledset.getDialsModel())
+            self.assertFileExists(scaledset.getDialsRefl())
             self.checkLogDataset(
                 protScaling, dataset, 'Space group being used during scaling is P 4')
 
@@ -589,8 +610,8 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             multiscaledset = getattr(
                 protMultiScaling, 'outputScaledSpots', None)
             self.assertIsNotNone(protMultiScaling.outputScaledSpots)
-            self.assertTrue(os.path.exists(multiscaledset.getDialsModel()))
-            self.assertTrue(os.path.exists(multiscaledset.getDialsRefl()))
+            self.assertFileExists(multiscaledset.getDialsModel())
+            self.assertFileExists(multiscaledset.getDialsRefl())
             compareDatasets = 'Source of data:'
             for ds in multiDataset:
                 compareDatasets += "\n{}".format(
@@ -613,7 +634,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             exportedmtzset = getattr(protExportMtz, 'exportedFileSet', None)
             self.assertIsNotNone(protExportMtz.exportedFileSet)
             for exportFile in exportedmtzset:
-                self.assertTrue(os.path.exists(exportFile.getFilePath()))
+                self.assertFileExists(exportFile.getFilePath())
             self.assertEqual(protExportMtz.getDatasets(), compareDatasets)
 
     def test_garnet_pipeline(self):
@@ -645,12 +666,12 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         self.assertCommand(protImport, importCL,
                            program='dials.import')
         outputModel = protImport.getOutputModelFile()
-        self.assertTrue(os.path.exists(outputModel))
+        self.assertFileExists(outputModel)
         importedset = getattr(
             protImport, 'outputDiffractionImages', None)
         self.assertIsNotNone(importedset)
         setModel = importedset.getDialsModel()
-        self.assertTrue(os.path.exists(setModel))
+        self.assertFileExists(setModel)
         datasetString = "Source of data:\n{}".format(dataset)
         self.assertEqual(protImport.getDatasets(), datasetString)
         outputCompare = protImport.getLogOutput().split('\n')[0]
@@ -668,7 +689,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             thresholdAlgorithm=DISPERSION,
         )
         inputModel = protFindSpots.getInputModelFile()
-        self.assertTrue(os.path.exists(inputModel))
+        self.assertFileExists(inputModel)
         findSpotCL = '{}/imported.expt output.log={}/dials.find_spots.log output.reflections={}/strong.refl spotfinder.scan_range=1,566 spotfinder.filter.d_min={} spotfinder.filter.d_max={} spotfinder.filter.min_spot_size={} spotfinder.filter.max_spot_size={} spotfinder.filter.max_strong_pixel_fraction=0.25 spotfinder.filter.max_separation={} spotfinder.threshold.algorithm=dispersion spotfinder.threshold.dispersion.sigma_background={} spotfinder.threshold.dispersion.sigma_strong=3.0 spotfinder.threshold.dispersion.kernel_size=3,3'.format(
             protFindSpots._getExtraPath(),
             protFindSpots._getLogsPath(),
@@ -686,8 +707,8 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         self.assertIsNotNone(foundspotset)
         self.assertEqual(foundspotset.getSpots(),
                          experiment['found_spots'])
-        self.assertTrue(os.path.exists(foundspotset.getDialsModel()))
-        self.assertTrue(os.path.exists(foundspotset.getDialsRefl()))
+        self.assertFileExists(foundspotset.getDialsModel())
+        self.assertFileExists(foundspotset.getDialsRefl())
         datasetString = "Source of data:\n{}".format(dataset)
         self.assertEqual(protFindSpots.getDatasets(), datasetString)
         outputCompare = protFindSpots.getLogOutput().split('\n')[0]
@@ -731,8 +752,8 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             'dials.reindex'), reindexCL)
         indexedset = getattr(protIndex, 'outputIndexedSpots', None)
         self.assertIsNotNone(protIndex.outputIndexedSpots)
-        self.assertTrue(os.path.exists(indexedset.getDialsModel()))
-        self.assertTrue(os.path.exists(indexedset.getDialsRefl()))
+        self.assertFileExists(indexedset.getDialsModel())
+        self.assertFileExists(indexedset.getDialsRefl())
         datasetString = "Source of data:\n{}".format(dataset)
         self.assertEqual(protIndex.getDatasets(), datasetString)
         outputCompare = protIndex.getLogOutput().split('\n')[0]
@@ -754,8 +775,8 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                            program='dials.refine')
         refinedset = getattr(protRefine, 'outputRefinedSpots', None)
         self.assertIsNotNone(protRefine.outputRefinedSpots)
-        self.assertTrue(os.path.exists(refinedset.getDialsModel()))
-        self.assertTrue(os.path.exists(refinedset.getDialsRefl()))
+        self.assertFileExists(refinedset.getDialsModel())
+        self.assertFileExists(refinedset.getDialsRefl())
         datasetString = "Source of data:\n{}".format(dataset)
         self.assertEqual(protRefine.getDatasets(), datasetString)
         outputCompare = protRefine.getLogOutput().split('\n')[0]
@@ -781,8 +802,8 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         integratedset = getattr(
             protIntegrate, 'outputIntegratedSpots', None)
         self.assertIsNotNone(protIntegrate.outputIntegratedSpots)
-        self.assertTrue(os.path.exists(integratedset.getDialsModel()))
-        self.assertTrue(os.path.exists(integratedset.getDialsRefl()))
+        self.assertFileExists(integratedset.getDialsModel())
+        self.assertFileExists(integratedset.getDialsRefl())
         datasetString = "Source of data:\n{}".format(dataset)
         self.assertEqual(protIntegrate.getDatasets(), datasetString)
         outputCompare = protIntegrate.getLogOutput().split('\n')[0]
@@ -805,8 +826,8 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         symmetrizedset = getattr(
             protSymmetry, 'outputSymmetrizedSpots', None)
         self.assertIsNotNone(protSymmetry.outputSymmetrizedSpots)
-        self.assertTrue(os.path.exists(symmetrizedset.getDialsModel()))
-        self.assertTrue(os.path.exists(symmetrizedset.getDialsRefl()))
+        self.assertFileExists(symmetrizedset.getDialsModel())
+        self.assertFileExists(symmetrizedset.getDialsRefl())
         datasetString = "Source of data:\n{}".format(dataset)
         self.assertEqual(protSymmetry.getDatasets(), datasetString)
         outputCompare = protSymmetry.getLogOutput().split('\n')[0]
@@ -830,8 +851,8 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         scaledset = getattr(
             protScaling, 'outputScaledSpots', None)
         self.assertIsNotNone(protScaling.outputScaledSpots)
-        self.assertTrue(os.path.exists(scaledset.getDialsModel()))
-        self.assertTrue(os.path.exists(scaledset.getDialsRefl()))
+        self.assertFileExists(scaledset.getDialsModel())
+        self.assertFileExists(scaledset.getDialsRefl())
         self.assertEqual(protScaling.getDatasets(), datasetString)
         outputCompare = protScaling.getLogOutput().split('\n')[0]
         self.assertEqual(outputCompare.strip(),
@@ -853,12 +874,12 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         exportedmtzset = getattr(protExportMtz, 'exportedFileSet', None)
         self.assertIsNotNone(protExportMtz.exportedFileSet)
         for exportFile in exportedmtzset:
-            self.assertTrue(os.path.exists(exportFile.getFilePath()))
+            self.assertFileExists(exportFile.getFilePath())
         self.assertEqual(protExportMtz.getDatasets(), datasetString)
 
 
 class TestEdDialsUtils(pwtests.BaseTest):
-    @classmethod
+    @ classmethod
     def setUpClass(cls):
         if SKIP_UTILS:
             cls.skipTest(cls, "Skipping utils")
@@ -869,7 +890,7 @@ class TestEdDialsUtils(pwtests.BaseTest):
             raise Exception("Can not run utils tests, missing file:\n  %s"
                             % cls.dataPath)
 
-    @classmethod
+    @ classmethod
     def tearDownClass(cls):
         if not KEEP_ALL_TEST_OUTPUT:
             # Clean up all output files from the test
