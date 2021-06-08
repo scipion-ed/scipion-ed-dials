@@ -49,7 +49,6 @@ pw.Config.setDomain(pwed)
 
 # Create toggles for skipping some tests
 SKIP_PIPELINES = False
-ACCEPT_BAD_WORKAROUND = True
 SKIP_UTILS = False
 KEEP_ALL_TEST_OUTPUT = False
 
@@ -158,8 +157,8 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             'lyso': True,
             'sample': 'lyso',
             'scan_range': '1,49',
-            'space_group': 'P 2',
-            'unit_cell': '40.5,77.76,77.76,90,90,90',
+            'space_group': 'P 4 2 2',
+            'unit_cell': '77.76,77.76,40.5,90,90,90',
             'unit_cell_sigmas': '0.05,0.05,0.05,0.05,0.05,0.05'
         }
         lyso_experiment_24 = {
@@ -309,11 +308,6 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                                  'Histogram of per-image spot count for imageset 0:')
 
             # Run indexing
-            if ACCEPT_BAD_WORKAROUND:
-                badWorkaround = "beam.fix=all detector.fix=all"
-            else:
-                badWorkaround = ""
-            # TODO: add test for using refinement phil
             protIndex = self._runIndex(
                 objLabel="dials - index and reindex",
                 inputImages=protImport.outputDiffractionImages,
@@ -327,8 +321,6 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 beamFixInSpindlePlane=True,
                 beamFixOutSpindlePlane=True,
                 beamFixWavelength=True,
-                # FIXME: Command line input should not be needed
-                commandLineInputBravais=badWorkaround,
             )
             indexTmp = protIndex._getTmpPath()
             indexLogs = protIndex._getLogsPath()
@@ -340,7 +332,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 indexTmp,
                 indexTmp,
             )
-            refBravCL = "{}/indexed.expt {}/indexed.refl output.log={}/dials.refine_bravais_settings.log output.directory={} beam.fix=all detector.fix=all".format(
+            refBravCL = "{}/indexed.expt {}/indexed.refl output.log={}/dials.refine_bravais_settings.log output.directory={}".format(
                 indexTmp,
                 indexTmp,
                 indexLogs,
