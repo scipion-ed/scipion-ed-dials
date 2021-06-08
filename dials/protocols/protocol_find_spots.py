@@ -182,6 +182,14 @@ class DialsProtFindSpots(EdProtFindSpots):
                        help="",
                        )
 
+        # Allow an easy way to import a phil file with parameters
+        form.addParam('extraPhilPath', pwprot.PathParam,
+                      expertLevel=pwprot.LEVEL_ADVANCED,
+                      allowsNull=True,
+                      default=None,
+                      label="Add phil file",
+                      help="Enter the path to a phil file that you want to add to include.")
+
         # Allow adding anything else with command line syntax
         group = form.addGroup('Raw command line input parameters',
                               expertLevel=pwprot.LEVEL_ADVANCED)
@@ -227,14 +235,6 @@ class DialsProtFindSpots(EdProtFindSpots):
                        expertLevel=pwprot.LEVEL_ADVANCED,
                        help="Magnitude in pixels of shifts mapped to the extreme colours in the heatmap plots centroid_diff_x and centroid_diff_y",
                        )
-
-        # Allow an easy way to import a phil file with parameters
-        form.addParam('extraPhilPath', pwprot.PathParam,
-                      expertLevel=pwprot.LEVEL_ADVANCED,
-                      allowsNull=True,
-                      default=None,
-                      label="Add phil file",
-                      help="Enter the path to a phil file that you want to add to include.")
 
         # Allow adding anything else with command line syntax
         group = form.addGroup('HTML report command line parameters',
