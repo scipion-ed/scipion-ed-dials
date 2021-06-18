@@ -122,7 +122,8 @@ class DialsProtScaling(EdBaseProtocol):
                        label="Filtring method",
                        choices=['None', 'delta CC(1/2)'],
                        default=NONE,
-                       help="Choice of whether to do any filtering cycles, default None.",
+                       display=pwprot.EnumParam.DISPLAY_HLIST,
+                       help="Optionally use a filter to remove some datasets or groups of images based on the contribution to CC(1/2). CC(1/2) will be calculated for all datasets or groups of images combined. Each dataset or group will then be removed and a new CC(1/2) calculated and compared to the orginial, giving a ranking of all individual contributions to the overall CC(1/2). The mean and the standard deviation of these indiviual contributions are calculated. All datasets or image groups that reduce CC(1/2) with more than a number of standard deviations (default 4.0) from the mean will be removed. The cycle is then repeated by comparing to the overall CC(1/2) of the remaining datasets until no datasets are removed or further removals would violate the limits set by the user (max cycles, max percent removed, and minimum completeness).",
                        )
 
         group.addParam("ccHalfMaxCycles", pwprot.IntParam,
@@ -153,6 +154,7 @@ class DialsProtScaling(EdBaseProtocol):
                        label="Mode",
                        choices=["dataset", "image group"],
                        default=DATASET,
+                       display=pwprot.EnumParam.DISPLAY_HLIST,
                        help="Perform analysis on whole datasets or batch groups",
                        condition="filteringMethod==1",
                        )
@@ -170,7 +172,7 @@ class DialsProtScaling(EdBaseProtocol):
                        label="Std cutoff",
                        default=4.0,
                        allowsNull=True,
-                       help="Datasets with a ΔCC½ below (mean - stdcutoff*std) are removed",
+                       help="Datasets with a ΔCC½ below (mean(ΔCC½) - (std cutoff)*standard_deviation(ΔCC½)) are removed",
                        condition="filteringMethod==1",
                        )
 
