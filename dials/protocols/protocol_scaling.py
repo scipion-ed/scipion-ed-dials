@@ -443,6 +443,8 @@ class DialsProtScaling(EdBaseProtocol):
     # -------------------------- INFO functions -------------------------------
     def _validate(self):
         errors = []
+        if self.swappedResolution():
+            errors.append(f"High ({self.getDMin()} Å) and low ({self.getDMax()} Å) resolution limits appear swapped.")
         return errors
 
     def _summary(self):
@@ -458,12 +460,12 @@ class DialsProtScaling(EdBaseProtocol):
         elif nSets == 1:
             summary.append('\nScaled a single dataset')
 
-        if self.dMin.get() is not None:
+        if self.getDMin() is not None:
             summary.append(
-                'High resolution cutoff at {} Å'.format(self.dMin.get()))
-        if self.dMax.get() is not None:
+                'High resolution cutoff at {} Å'.format(self.getDMin()))
+        if self.getDMax() is not None:
             summary.append(
-                'Low resolution cutoff at {} Å'.format(self.dMax.get()))
+                'Low resolution cutoff at {} Å'.format(self.getDMax()))
         if self.checkConsistentIndexing:
             summary.append(
                 'Reindexed all datasets with dials.cosym before scaling')
@@ -615,6 +617,21 @@ class DialsProtScaling(EdBaseProtocol):
             imageGroups.append(self.imageGroup20)
 
         return imageGroups
+    
+    def getDMax(self):
+        return self.dMax.get()
+    
+    def getDMin(self):
+        return self.dMin.get()
+
+    def swappedResolution(self):
+        # d_min (high resolution) should always be smaller than d_max (low resolution).
+        if self.getDMin() is not None and self.getDMax() is not None:
+            # Check for the case where both d_min and d_max are set and have wrong relative values
+            return self.getDMin() > self.getDMax()
+        else:
+            # If at least one value is None, then no swap is possible
+            return False
 
     def _checkWriteModel(self, inputSet):
         return self.getSetModel(inputSet) != self.getInputModelFile(inputSet)
@@ -640,11 +657,11 @@ class DialsProtScaling(EdBaseProtocol):
 
         # Cut data
 
-        if self.dMin.get():
-            params += " cut_data.d_min={}".format(self.dMin.get())
+        if self.getDMin():
+            params += " cut_data.d_min={}".format(self.getDMin())
 
-        if self.dMax.get():
-            params += " cut_data.d_max={}".format(self.dMax.get())
+        if self.getDMax():
+            params += " cut_data.d_max={}".format(self.getDMax())
 
         if self.partialityCutoff.get():
             params += " cut_data.partiality_cutoff={}".format(
