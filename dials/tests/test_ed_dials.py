@@ -714,6 +714,13 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         outputCompare = protFindSpots.getLogOutput().split('\n')[0]
         self.assertEqual(outputCompare.strip(),
                          'Histogram of per-image spot count for imageset 0:'.strip())
+        with self.subTest(msg="Testing validation of resolution limits in Find Spots protocol"):
+            with self.assertRaises(Exception):
+                self._runFindSpots(
+                    protImport.outputDiffractionImages,
+                    dMin=experiment['d_max'],
+                    dMax=experiment['d_min'],
+                    )
 
         # Run indexing
         protIndex = self._runIndex(
@@ -809,6 +816,13 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         outputCompare = protIntegrate.getLogOutput().split('\n')[0]
         self.assertEqual(outputCompare.strip(),
                          'Summary vs resolution'.strip())
+        with self.subTest(msg="Testing validation of resolution limits in Integrate protocol"):
+            with self.assertRaises(Exception):
+                self._runIntegrate(
+                    inputSet=protRefine.outputRefinedSpots,
+                    dMin=experiment['d_max'],
+                    dMax=experiment['d_min'],
+                    )
 
         # Check symmetry and scale
         protSymmetry = self._runSymmetry(
@@ -857,6 +871,13 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         outputCompare = protScaling.getLogOutput().split('\n')[0]
         self.assertEqual(outputCompare.strip(),
                          'Space group being used during scaling is I 2 3'.strip())
+        with self.subTest(msg="Testing validation of resolution limits in Scale protocol"):
+            with self.assertRaises(Exception):
+                self._runScaling(
+                    inputSets=[protIntegrate.outputIntegratedSpots],
+                    dMin=experiment['d_max'],
+                    dMax=experiment['d_min'],
+                    )
 
         protExportMtz = self._runExport(
             inputSet=protScaling.outputScaledSpots,

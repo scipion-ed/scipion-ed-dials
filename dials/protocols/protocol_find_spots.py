@@ -319,6 +319,8 @@ class DialsProtFindSpots(EdProtFindSpots):
     # -------------------------- INFO functions -------------------------------
     def _validate(self):
         errors = []
+        if self.swappedResolution():
+            errors.append(f"High ({self.getDMin()} Å) and low ({self.getDMax()} Å) resolution limits appear swapped.")
         return errors
 
     def _summary(self):
@@ -384,6 +386,22 @@ class DialsProtFindSpots(EdProtFindSpots):
     def getLogFilePath(self, program='dials.find_spots'):
         logPath = "{}/{}.log".format(self._getLogsPath(), program)
         return logPath
+    
+    def getDMax(self):
+        return self.dMax.get()
+    
+    def getDMin(self):
+        return self.dMin.get()
+
+    def swappedResolution(self):
+        # d_min (high resolution) should always be smaller than d_max (low resolution).
+        if self.getDMin() is not None and self.getDMax() is not None:
+            # Check for the case where both d_min and d_max are set and have wrong relative values
+            return self.getDMin() > self.getDMax()
+        else:
+            # If at least one value is None, then no swap is possible
+            return False
+
 
     def _prepCommandline(self):
         "Create the command line input to run dials programs"
@@ -393,11 +411,11 @@ class DialsProtFindSpots(EdProtFindSpots):
             self.getInputModelFile(), logPath, self.getOutputReflFile(), self.getScanRanges())
 
         # Update the command line with additional parameters
-        if self.dMin.get():
-            params += " spotfinder.filter.d_min={}".format(self.dMin.get())
+        if self.getDMin():
+            params += " spotfinder.filter.d_min={}".format(self.getDMin())
 
-        if self.dMax.get():
-            params += " spotfinder.filter.d_max={}".format(self.dMax.get())
+        if self.getDMax():
+            params += " spotfinder.filter.d_max={}".format(self.getDMax())
 
         if self.iceRings.get():
             params += " spotfinder.filter.ice_rings.filter={}".format(

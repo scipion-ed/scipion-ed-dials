@@ -226,6 +226,8 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots):
     # -------------------------- INFO functions -------------------------------
     def _validate(self):
         errors = []
+        if self.swappedResolution():
+            errors.append(f"High ({self.getDMin()} Å) and low ({self.getDMax()} Å) resolution limits appear swapped.")
         return errors
 
     def _summary(self):
@@ -315,6 +317,21 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots):
 
     def _checkWriteRefl(self):
         return self.getSetRefl() != self.getInputReflFile()
+    
+    def getDMax(self):
+        return self.dMax.get()
+    
+    def getDMin(self):
+        return self.dMin.get()
+
+    def swappedResolution(self):
+        # d_min (high resolution) should always be smaller than d_max (low resolution).
+        if self.getDMin() is not None and self.getDMax() is not None:
+            # Check for the case where both d_min and d_max are set and have wrong relative values
+            return self.getDMin() > self.getDMax()
+        else:
+            # If at least one value is None, then no swap is possible
+            return False
 
     def _prepCommandline(self, program):
         "Create the command line input to run dials programs"
@@ -341,11 +358,11 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots):
             params += " filter.ice_rings={}".format(
                 self.doFilter_ice.get())
 
-        if self.dMin.get():
-            params += " prediction.d_min={}".format(self.dMin.get())
+        if self.getDMin():
+            params += " prediction.d_min={}".format(self.getDMin())
 
-        if self.dMax.get():
-            params += " prediction.d_max={}".format(self.dMax.get())
+        if self.getDMax():
+            params += " prediction.d_max={}".format(self.getDMax())
 
         if self.extraPhilPath.get():
             params += " {}".format(self.getExtraPhilsPath())
