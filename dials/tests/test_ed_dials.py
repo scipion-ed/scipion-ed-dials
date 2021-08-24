@@ -49,6 +49,10 @@ pw.Config.setDomain(pwed)
 
 # Create toggles for skipping some tests
 SKIP_PIPELINES = False
+SKIP_LYSO = False
+SKIP_GARNET = False
+if SKIP_LYSO and SKIP_GARNET:
+    SKIP_PIPELINES = True
 SKIP_UTILS = False
 KEEP_ALL_TEST_OUTPUT = False
 
@@ -232,6 +236,8 @@ class TestEdDialsProtocols(pwtests.BaseTest):
 
     # Pipelines
     def test_lyso_pipeline(self):
+        if SKIP_LYSO:
+            self.skipTest("Skipping lyso pipeline test")
 
         scaledSets = []
         scaleProt = []
@@ -630,6 +636,8 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             self.assertEqual(protExportMtz.getDatasets(), compareDatasets)
 
     def test_garnet_pipeline(self):
+        if SKIP_GARNET:
+            self.skipTest("Skipping garnet pipeline test")
 
         # Define all experiment variables in one place
         experiment = self.getGarnetExperiment()
