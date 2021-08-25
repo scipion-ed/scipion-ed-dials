@@ -331,7 +331,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             indexTmp = protIndex._getTmpPath()
             indexLogs = protIndex._getLogsPath()
             indexExtra = protIndex._getExtraPath()
-            indexCL = "{}/imported.expt {}/strong.refl output.log={}/dials.index.log output.experiments={}/indexed.expt output.reflections={}/indexed.refl refinement.parameterisation.beam.fix='*all in_spindle_plane out_spindle_plane wavelength' refinement.parameterisation.crystal.fix='all cell orientation' refinement.parameterisation.detector.fix='*all position orientation distance'".format(
+            indexCL = "{}/imported.expt {}/strong.refl output.log={}/dials.index.log output.experiments={}/indexed.expt output.reflections={}/indexed.refl refinement.parameterisation.beam.fix='*all in_spindle_plane out_spindle_plane wavelength' refinement.parameterisation.crystal.fix='all cell orientation' refinement.parameterisation.detector.fix='*all position orientation distance' refinement.parameterisation.goniometer.fix='*all in_beam_plane out_beam_plane'".format(
                 protFindSpots._getExtraPath(),
                 protFindSpots._getExtraPath(),
                 indexLogs,
@@ -377,7 +377,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 indexTmpPhil = protIndexPhil._getTmpPath()
                 indexLogsPhil = protIndexPhil._getLogsPath()
                 indexExtraPhil = protIndexPhil._getExtraPath()
-                indexCLPhil = "{}/imported.expt {}/strong.refl output.log={}/dials.index.log output.experiments={}/indexed.expt output.reflections={}/indexed.refl indexing.known_symmetry.space_group={} refinement.parameterisation.beam.fix='*all in_spindle_plane out_spindle_plane wavelength' refinement.parameterisation.crystal.fix='all cell orientation' refinement.parameterisation.detector.fix='*all position orientation distance'".format(
+                indexCLPhil = "{}/imported.expt {}/strong.refl output.log={}/dials.index.log output.experiments={}/indexed.expt output.reflections={}/indexed.refl indexing.known_symmetry.space_group={} refinement.parameterisation.beam.fix='*all in_spindle_plane out_spindle_plane wavelength' refinement.parameterisation.crystal.fix='all cell orientation' refinement.parameterisation.detector.fix='*all position orientation distance' refinement.parameterisation.goniometer.fix='*all in_beam_plane out_beam_plane'".format(
                     protFindSpots._getExtraPath(),
                     protFindSpots._getExtraPath(),
                     indexLogsPhil,
@@ -734,7 +734,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         indexTmp = protIndex._getTmpPath()
         indexLogs = protIndex._getLogsPath()
         indexExtra = protIndex._getExtraPath()
-        indexCL = "{}/imported.expt {}/strong.refl output.log={}/dials.index.log output.experiments={}/indexed.expt output.reflections={}/indexed.refl refinement.parameterisation.beam.fix='all *in_spindle_plane out_spindle_plane *wavelength' refinement.parameterisation.crystal.fix='all cell orientation' refinement.parameterisation.detector.fix='all position orientation *distance'".format(
+        indexCL = "{}/imported.expt {}/strong.refl output.log={}/dials.index.log output.experiments={}/indexed.expt output.reflections={}/indexed.refl refinement.parameterisation.beam.fix='all *in_spindle_plane out_spindle_plane *wavelength' refinement.parameterisation.crystal.fix='all cell orientation' refinement.parameterisation.detector.fix='all position orientation *distance' refinement.parameterisation.goniometer.fix='*all in_beam_plane out_beam_plane'".format(
             protFindSpots._getExtraPath(),
             protFindSpots._getExtraPath(),
             indexLogs,
