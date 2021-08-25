@@ -627,6 +627,76 @@ class DialsProtIndexSpots(EdProtIndexSpots):
     def getLogFilePath(self, program='dials.index'):
         logPath = "{}/{}.log".format(self._getLogsPath(), program)
         return logPath
+    
+    def getBeamFixParams(self):
+        beamfix = []
+        if self.beamFixInSpindlePlane and self.beamFixOutSpindlePlane and self.beamFixWavelength:
+            beamfix += "'*all in_spindle_plane out_spindle_plane wavelength'"
+        else:
+            beamfix += "'all "
+            if self.beamFixInSpindlePlane:
+                beamfix += "*"
+            beamfix += "in_spindle_plane "
+            if self.beamFixOutSpindlePlane:
+                beamfix += "*"
+            beamfix += "out_spindle_plane "
+            if self.beamFixWavelength:
+                beamfix += "*"
+            beamfix += "wavelength'"
+        beamfixparams = " refinement.parameterisation.beam.fix={}".format(
+            "".join(beamfix))
+        return beamfixparams
+    
+    def getCrystalFixParams(self):
+        crystalfix = []
+        if self.crystalFixCell and self.crystalFixOrientation:
+            crystalfix += "'*all cell orientation'"
+        else:
+            crystalfix += "'all "
+            if self.crystalFixCell:
+                crystalfix += "*"
+            crystalfix += "cell "
+            if self.crystalFixOrientation:
+                crystalfix += "*"
+            crystalfix += "orientation'"
+        crystalfixparams = " refinement.parameterisation.crystal.fix={}".format(
+                ''.join(crystalfix))
+        return crystalfixparams
+
+    def getDetectorFixParams(self):
+        detectorfix = []
+        if self.detectorFixPosition and self.detectorFixOrientation and self.detectorFixDistance:
+            detectorfix += "'*all position orientation distance'"
+        else:
+            detectorfix += "'all "
+            if self.detectorFixPosition:
+                detectorfix += "*"
+            detectorfix += "position "
+            if self.detectorFixOrientation:
+                detectorfix += "*"
+            detectorfix += "orientation "
+            if self.detectorFixDistance:
+                detectorfix += "*"
+            detectorfix += "distance'"
+        detectorfixparams = " refinement.parameterisation.detector.fix={}".format(
+            ''.join(detectorfix))
+        return detectorfixparams
+
+    def getGonioFixParams(self):
+        goniofix = []
+        if self.goniometerFixInBeamPlane and self.goniometerFixOutBeamPlane:
+            goniofix += "'*all in_beam_plane out_beam_plane'"
+        else:
+            goniofix += "'all "
+            if self.goniometerFixInBeamPlane:
+                goniofix += "*"
+            goniofix += "in_beam_plane "
+            if self.goniometerFixOutBeamPlane:
+                goniofix += "*"
+            goniofix += "out_beam_plane'"
+        goniofixparams = " refinement.parameterisation.goniometer.fix={}".format(
+            "".join(goniofix))
+        return goniofixparams
 
     def _checkWriteModel(self):
         return self.getSetModel() != self.getInputModelFile()
@@ -689,67 +759,13 @@ class DialsProtIndexSpots(EdProtIndexSpots):
         if self.refineNproc.get() not in (None, 1):
             params += " refinement.nproc={}".format(self.refineNproc.get())
 
-        beamfix = []
-        if self.beamFixInSpindlePlane and self.beamFixOutSpindlePlane and self.beamFixWavelength:
-            beamfix += "'*all in_spindle_plane out_spindle_plane wavelength'"
-        else:
-            beamfix += "'all "
-            if self.beamFixInSpindlePlane:
-                beamfix += "*"
-            beamfix += "in_spindle_plane "
-            if self.beamFixOutSpindlePlane:
-                beamfix += "*"
-            beamfix += "out_spindle_plane "
-            if self.beamFixWavelength:
-                beamfix += "*"
-            beamfix += "wavelength'"
-        params += " refinement.parameterisation.beam.fix={}".format(
-            "".join(beamfix))
+        params += self.getBeamFixParams()
 
-        crystalfix = []
-        if self.crystalFixCell and self.crystalFixOrientation:
-            crystalfix += "'*all cell orientation'"
-        else:
-            crystalfix += "'all "
-            if self.crystalFixCell:
-                crystalfix += "*"
-            crystalfix += "cell "
-            if self.crystalFixOrientation:
-                crystalfix += "*"
-            crystalfix += "orientation'"
-            params += " refinement.parameterisation.crystal.fix={}".format(
-                ''.join(crystalfix))
+        params += self.getCrystalFixParams()
 
-        detectorfix = []
-        if self.detectorFixPosition and self.detectorFixOrientation and self.detectorFixDistance:
-            detectorfix += "'*all position orientation distance'"
-        else:
-            detectorfix += "'all "
-            if self.detectorFixPosition:
-                detectorfix += "*"
-            detectorfix += "position "
-            if self.detectorFixOrientation:
-                detectorfix += "*"
-            detectorfix += "orientation "
-            if self.detectorFixDistance:
-                detectorfix += "*"
-            detectorfix += "distance'"
-        params += " refinement.parameterisation.detector.fix={}".format(
-            ''.join(detectorfix))
-        
-        goniofix = []
-        if self.goniometerFixInBeamPlane and self.goniometerFixOutBeamPlane:
-            goniofix += "'*all in_beam_plane out_beam_plane'"
-        else:
-            goniofix += "'all "
-            if self.goniometerFixInBeamPlane:
-                goniofix += "*"
-            goniofix += "in_beam_plane "
-            if self.goniometerFixOutBeamPlane:
-                goniofix += "*"
-            goniofix += "out_beam_plane'"
-        params += " refinement.parameterisation.goniometer.fix={}".format(
-            "".join(goniofix))
+        params += self.getDetectorFixParams()
+
+        params += self.getGonioFixParams()
 
         if self.refineryMaxIterations.get() is not None:
             params += " refinery.max_iterations={}".format(
