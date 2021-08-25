@@ -80,7 +80,7 @@ class DialsProtIndexSpots(EdProtIndexSpots):
         group.addParam('doReindexReflections', pwprot.BooleanParam,
                        default=False, label="Do you want to reindex the experimental reflections?")
 
-        # The start typical inputs.
+        # The start of typical inputs.
 
         form.addParam('inputImages', pwprot.PointerParam,
                       pointerClass='SetOfDiffractionImages',
@@ -211,6 +211,24 @@ class DialsProtIndexSpots(EdProtIndexSpots):
                        label='Fix detector distance?', default=True,
                        help="Fix detector parameters. The translational parameters (position) may be set"
                        "separately to the orientation.",
+                       )
+        
+        group.addParam('goniometerFixInBeamPlane', pwprot.BooleanParam,
+                       label='Fix goniometer in beam plane?', default=True,
+                       help="Whether to fix goniometer parameters. By default, fix all."
+                       "Alternatively the setting matrix can be constrained to allow"
+                       "rotation only within the spindle-beam plane or to allow"
+                       "rotation only around an axis that lies in that plane. Set to"
+                       "None to refine the in two orthogonal directions.",
+                       )
+
+        group.addParam('goniometerFixOutBeamPlane', pwprot.BooleanParam,
+                       label='Fix goniometer out of beam plane?', default=True,
+                       help="Whether to fix goniometer parameters. By default, fix all."
+                       "Alternatively the setting matrix can be constrained to allow"
+                       "rotation only within the spindle-beam plane or to allow"
+                       "rotation only around an axis that lies in that plane. Set to"
+                       "None to refine the in two orthogonal directions.",
                        )
 
         group = form.addGroup('Refinery',
@@ -718,6 +736,20 @@ class DialsProtIndexSpots(EdProtIndexSpots):
             detectorfix += "distance'"
         params += " refinement.parameterisation.detector.fix={}".format(
             ''.join(detectorfix))
+        
+        goniofix = []
+        if self.goniometerFixInBeamPlane and self.goniometerFixOutBeamPlane:
+            goniofix += "'*all in_beam_plane out_beam_plane'"
+        else:
+            goniofix += "'all "
+            if self.goniometerFixInBeamPlane:
+                goniofix += "*"
+            goniofix += "in_beam_plane "
+            if self.goniometerFixOutBeamPlane:
+                goniofix += "*"
+            goniofix += "out_beam_plane'"
+        params += " refinement.parameterisation.goniometer.fix={}".format(
+            "".join(goniofix))
 
         if self.refineryMaxIterations.get() is not None:
             params += " refinery.max_iterations={}".format(
