@@ -253,6 +253,26 @@ class DialsProtIndexSpots(EdProtIndexSpots):
         group.addParam('refineBravNproc', pwprot.IntParam,
                        default=4, label="How many processors do you want to use?",
                        help="The number of processes to use.")
+        
+        group.addParam('copyBeamFix', pwprot.BooleanParam,
+                    default=False,
+                    label="Copy beam parametrisation from indexing?",
+                    help="Do you want to use the indexing parametrisation of the beam instead of the default parametrisation for Bravais setting refinement?",)
+        
+        group.addParam('copyCrystalFix', pwprot.BooleanParam,
+                    default=False,
+                    label="Copy crystal parametrisation from indexing?",
+                    help="Do you want to use the indexing parametrisation of the crystal instead of the default parametrisation for Bravais setting refinement?",)
+        
+        group.addParam('copyDetectorFix', pwprot.BooleanParam,
+                    default=False,
+                    label="Copy detector parametrisation from indexing?",
+                    help="Do you want to use the indexing parametrisation of the detector instead of the default parametrisation for Bravais setting refinement?",)
+        
+        group.addParam('copyGonioFix', pwprot.BooleanParam,
+                    default=False,
+                    label="Copy goniometer parametrisation from indexing?",
+                    help="Do you want to use the indexing parametrisation of the goniometer instead of the default parametrisation for Bravais setting refinement?",)
 
         # Allow an easy way to import a phil file with parameters
         group = form.addGroup('Add parameters with phil files',
@@ -790,6 +810,18 @@ class DialsProtIndexSpots(EdProtIndexSpots):
 
         if self.refineBravNproc.get() not in (None, 4):
             params += " nproc={}".format(self.refineBravNproc.get())
+        
+        if self.copyBeamFix:
+            params += self.getBeamFixParams()
+        
+        if self.copyCrystalFix:
+            params += self.getCrystalFixParams()
+        
+        if self.copyDetectorFix:
+            params += self.getDetectorFixParams()
+        
+        if self.copyGonioFix:
+            params += self.getGonioFixParams()
 
         if self.extraPhilPathBravais.get():
             params += " {}".format(self.getExtraPhilsPathBravais())

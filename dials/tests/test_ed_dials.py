@@ -734,12 +734,20 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         indexTmp = protIndex._getTmpPath()
         indexLogs = protIndex._getLogsPath()
         indexExtra = protIndex._getExtraPath()
-        indexCL = "{}/imported.expt {}/strong.refl output.log={}/dials.index.log output.experiments={}/indexed.expt output.reflections={}/indexed.refl refinement.parameterisation.beam.fix='all *in_spindle_plane out_spindle_plane *wavelength' refinement.parameterisation.crystal.fix='all cell orientation' refinement.parameterisation.detector.fix='all position orientation *distance' refinement.parameterisation.goniometer.fix='*all in_beam_plane out_beam_plane'".format(
+        beamParams = "refinement.parameterisation.beam.fix='all *in_spindle_plane out_spindle_plane *wavelength'"
+        crystalParams = "refinement.parameterisation.crystal.fix='all cell orientation'"
+        detectorParams = "refinement.parameterisation.detector.fix='all position orientation *distance'"
+        gonioParams = "refinement.parameterisation.goniometer.fix='*all in_beam_plane out_beam_plane'"
+        indexCL = "{}/imported.expt {}/strong.refl output.log={}/dials.index.log output.experiments={}/indexed.expt output.reflections={}/indexed.refl {} {} {} {}".format(
             protFindSpots._getExtraPath(),
             protFindSpots._getExtraPath(),
             indexLogs,
             indexTmp,
             indexTmp,
+            beamParams,
+            crystalParams,
+            detectorParams,
+            gonioParams,
         )
         refBravCL = "{}/indexed.expt {}/indexed.refl output.log={}/dials.refine_bravais_settings.log output.directory={}".format(
             indexTmp,
@@ -765,6 +773,32 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         self.assertEqual(protIndex.getDatasets(), datasetString)
         outputCompare = protIndex.getLogOutput().split('\n')[0]
         self.assertEqual(outputCompare.strip(), ''.strip())
+        with self.subTest(msg="Testing refine_bravais_settings with copied parameters"):
+            protIndexCopy = self._runIndex(
+            objLabel="dials - index and refine bravais setting with copied parameters",
+            inputImages=protImport.outputDiffractionImages,
+            inputSpots=protFindSpots.outputDiffractionSpots,
+            doRefineBravaisSettings=True,
+            copyBeamFix=True,
+            copyCrystalFix=True,
+            copyDetectorFix=True,
+            copyGonioFix=True,
+            doReindex=False,
+            )
+            indexTmpCopy = protIndexCopy._getTmpPath()
+            indexLogsCopy = protIndexCopy._getLogsPath()
+            refBravCLCopy = "{}/indexed.expt {}/indexed.refl output.log={}/dials.refine_bravais_settings.log output.directory={} {} {} {} {}".format(
+                indexTmpCopy,
+                indexTmpCopy,
+                indexLogsCopy,
+                indexTmpCopy,
+                beamParams,
+                crystalParams,
+                detectorParams,
+                gonioParams,
+            )
+            self.assertEqual(protIndexCopy._prepBravaisCommandline(
+            'dials.refine_bravais_settings'), refBravCLCopy)
 
         # Run refinement
         protRefine = self._runRefine(
