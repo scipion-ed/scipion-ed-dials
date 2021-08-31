@@ -123,10 +123,10 @@ class DialsProtBase(EdBaseProtocol):
         return params
 
     def _getExtraPhilsPath(self):
-        return PhilBase._addPhilPath()
+        return PhilBase._addPhilPath(self)
 
     def _getCLI(self):
-        return CliBase._getCommandLineInput().rstrip()
+        return CliBase._getCommandLineInput(self).rstrip()
 
     def _prepareCommandline(self, program):
         "Create the command line input to run dials programs"
@@ -379,8 +379,8 @@ class HtmlBase(EdBaseProtocol):
         "Create the command line input to run dials programs"
         # Input basic parameters
         params = "{} {} output.html={} output.external_dependencies={}".format(
-            DialsProtBase.getOutputModelFile(),
-            DialsProtBase.getOutputReflFile(),
+            DialsProtBase.getOutputModelFile(self),
+            DialsProtBase.getOutputReflFile(self),
             self.getOutputHtmlFile(),
             self.extDepOptions[self.externalDependencies.get()]
         )
