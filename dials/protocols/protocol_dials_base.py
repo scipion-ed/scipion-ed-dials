@@ -74,29 +74,34 @@ class DialsProtBase(EdBaseProtocol):
     def getOutputReflFile(self):
         return self._getExtraPath(self.OUTPUT_REFL_FILENAME)
 
-    def getSetModel(self):
-        if self.inputImages.get():
-            modelSource = self.inputImages.get()
-        elif self.inputSpots.get():
-            modelSource = self.inputSpots.get()
-        elif self.inputSet.get():
-            modelSource = self.inputSet.get()
+    def _getModelSource(self):
+        try:
+            return self.inputImages.get()
+        except AttributeError:
+            pass
+        try:
+            return self.inputSpots.get()
+        except AttributeError:
+            pass
+        try:
+            return self.inputSet.get()
+        except AttributeError:
+            pass
+        return None
 
-        if dutils.existsPath(modelSource.getDialsModel()):
-            return modelSource.getDialsModel()
+    def getSetModel(self):
+        if self._getModelSource() is None:
+            return None
+        elif dutils.existsPath(self._getModelSource().getDialsModel()):
+            return self._getModelSource().getDialsModel()
         else:
             return None
 
     def getSetRefl(self):
-        if self.inputImages.get():
-            modelSource = self.inputImages.get()
-        elif self.inputSpots.get():
-            modelSource = self.inputSpots.get()
-        elif self.inputSet.get():
-            modelSource = self.inputSet.get()
-
-        if dutils.existsPath(modelSource.getDialsRefl()):
-            return modelSource.getDialsRefl()
+        if self._getModelSource() is None:
+            return None
+        elif dutils.existsPath(self._getModelSource().getDialsRefl()):
+            return self._getModelSource().getDialsRefl()
         else:
             return None
 
