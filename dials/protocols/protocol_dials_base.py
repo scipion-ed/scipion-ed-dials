@@ -26,19 +26,11 @@
 # *
 # **************************************************************************
 
-from _typeshed import Self
-import os
-from glob import glob
-from pathlib import Path
-import json
-import textwrap
 
 import pyworkflow.protocol as pwprot
 import dials.utils as dutils
 
 from pwed.protocols import EdBaseProtocol
-from pwed.convert import find_subranges
-from dials.convert import writeJson, readRefl, writeRefl, writeRefinementPhil, copyDialsFile
 from dials.constants import *
 
 
