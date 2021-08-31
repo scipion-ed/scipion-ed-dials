@@ -53,6 +53,10 @@ def getDatasets(modelFile):
         return ''
 
 
+def existsPath(path):
+    return p.exists(path)
+
+
 def readLog(logfile, start, stop, flush=None):
     # based on https://stackoverflow.com/a/18865133
     contentList = []
