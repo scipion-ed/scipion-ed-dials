@@ -109,6 +109,9 @@ class DialsProtBase(EdBaseProtocol):
         logPath = "{}/{}.log".format(self._getLogsPath(), program)
         return logPath
 
+    def getLogOutput(self):
+        return ''
+
     def _checkWriteModel(self):
         return self.getSetModel() != self.getInputModelFile()
 
