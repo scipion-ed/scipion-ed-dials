@@ -26,7 +26,7 @@
 # *
 # **************************************************************************
 
-from .protocol_dials_base import *
+from .protocol_dials_base import DialsProtBase, CliBase, PhilBase, HtmlBase
 from .protocol_dials_import import DialsProtImportDiffractionImages
 from .protocol_find_spots import DialsProtFindSpots
 from .protocol_index import DialsProtIndexSpots
