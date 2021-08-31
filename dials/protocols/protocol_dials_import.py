@@ -27,19 +27,16 @@
 # **************************************************************************
 
 import os
-import re
-import pathlib
-from glob import glob
 
-import pyworkflow as pw
 import pyworkflow.protocol as pwprot
+from dials.protocols import DialsProtBase, CliBase, PhilBase
 import dials.utils as dutils
 
 from pwed.objects import DiffractionImage, SetOfDiffractionImages
 from pwed.protocols import ProtImportDiffractionImages
 
 
-class DialsProtImportDiffractionImages(ProtImportDiffractionImages):
+class DialsProtImportDiffractionImages(ProtImportDiffractionImages, DialsProtBase):
     """ Base class for other Import protocols.
     All imports protocols will have:
     1) Several options to import from (_getImportOptions function)
@@ -56,20 +53,9 @@ class DialsProtImportDiffractionImages(ProtImportDiffractionImages):
     def _defineParams(self, form):
         ProtImportDiffractionImages._defineParams(self, form)
 
-        # Allow an easy way to import a phil file with parameters
-        form.addParam('extraPhilPath', pwprot.PathParam,
-                      expertLevel=pwprot.LEVEL_ADVANCED,
-                      allowsNull=True,
-                      default=None,
-                      label="Add phil file",
-                      help="Enter the path to a phil file that you want to add to include.")
+        PhilBase._definePhilParams(self, form)
 
-        # Allow adding anything else with command line syntax
-        group = form.addGroup('Raw command line input parameters',
-                              expertLevel=pwprot.LEVEL_ADVANCED)
-        group.addParam('commandLineInput', pwprot.StringParam,
-                       default='',
-                       help="Anything added here will be added at the end of the command line")
+        CliBase._defineCliParams(self, form)
 
     # -------------------------- INSERT functions ------------------------------
     def _insertAllSteps(self):
@@ -95,7 +81,10 @@ class DialsProtImportDiffractionImages(ProtImportDiffractionImages):
     # def _validate(self)
 
     # -------------------------- BASE methods to be overridden -----------------
-    # def here
+    OUTPUT_EXPT_FILENAME = 'imported.expt'
+
+    def getDatasets(self):
+        return dutils.getDatasets(self.getOutputModelFile())
 
     # -------------------------- UTILS functions ------------------------------
 
@@ -107,17 +96,16 @@ class DialsProtImportDiffractionImages(ProtImportDiffractionImages):
             fileString = " ".join([i[0] for i in self.getMatchingFiles()])
             return fileString
 
-    def getOutputModelFile(self):
-        return self._getExtraPath('imported.expt')
+    def _getDialsOverwrites(self):
+        params = ""
+        if self.getRotationAxis():
+            params += " goniometer.axes={}".format(
+                ",".join(map(str, self.getRotationAxis())))
 
-    def getDatasets(self):
-        return dutils.getDatasets(self.getOutputModelFile())
-
-    def getLogOutput(self):
-        return ''
-
-    def getExtraPhilsPath(self):
-        return self.extraPhilPath.get('').strip()
+        if self.overwriteDetectorDistance.get() is not None:
+            params += " distance={}".format(
+                self.overwriteDetectorDistance.get())
+        return params
 
     def _prepareCommandLineArguments(self, program):
         # Make a string to append to
@@ -128,18 +116,10 @@ class DialsProtImportDiffractionImages(ProtImportDiffractionImages):
         cmdparams += " output.log={} output.experiments={}".format(
             logPath, self.getOutputModelFile())
 
-        if self.getRotationAxis():
-            cmdparams += " goniometer.axes={}".format(
-                ",".join(map(str, self.getRotationAxis())))
+        cmdparams += self._getDialsOverwrites()
 
-        if self.overwriteDetectorDistance.get() is not None:
-            cmdparams += " distance={}".format(
-                self.overwriteDetectorDistance.get())
+        cmdparams += self._getExtraPhilsPath()
 
-        if self.extraPhilPath.get():
-            cmdparams += " {}".format(self.getExtraPhilsPath())
-
-        if self.commandLineInput.get():
-            cmdparams += " {}".format(self.commandLineInput.get())
+        cmdparams += self._getCLI()
 
         return cmdparams
