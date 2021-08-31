@@ -720,7 +720,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                     protImport.outputDiffractionImages,
                     dMin=experiment['d_max'],
                     dMax=experiment['d_min'],
-                    )
+                )
 
         # Run indexing
         protIndex = self._runIndex(
@@ -775,15 +775,15 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         self.assertEqual(outputCompare.strip(), ''.strip())
         with self.subTest(msg="Testing refine_bravais_settings with copied parameters"):
             protIndexCopy = self._runIndex(
-            objLabel="dials - index and refine bravais setting with copied parameters",
-            inputImages=protImport.outputDiffractionImages,
-            inputSpots=protFindSpots.outputDiffractionSpots,
-            doRefineBravaisSettings=True,
-            copyBeamFix=True,
-            copyCrystalFix=True,
-            copyDetectorFix=True,
-            copyGonioFix=True,
-            doReindex=False,
+                objLabel="dials - index and refine bravais setting with copied parameters",
+                inputImages=protImport.outputDiffractionImages,
+                inputSpots=protFindSpots.outputDiffractionSpots,
+                doRefineBravaisSettings=True,
+                copyBeamFix=True,
+                copyCrystalFix=True,
+                copyDetectorFix=True,
+                copyGonioFix=True,
+                doReindex=False,
             )
             indexTmpCopy = protIndexCopy._getTmpPath()
             indexLogsCopy = protIndexCopy._getLogsPath()
@@ -798,7 +798,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 gonioParams,
             )
             self.assertEqual(protIndexCopy._prepBravaisCommandline(
-            'dials.refine_bravais_settings'), refBravCLCopy)
+                'dials.refine_bravais_settings'), refBravCLCopy)
 
         # Run refinement
         protRefine = self._runRefine(
@@ -856,7 +856,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                     inputSet=protRefine.outputRefinedSpots,
                     dMin=experiment['d_max'],
                     dMax=experiment['d_min'],
-                    )
+                )
 
         # Check symmetry and scale
         protSymmetry = self._runSymmetry(
@@ -911,7 +911,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                     inputSets=[protIntegrate.outputIntegratedSpots],
                     dMin=experiment['d_max'],
                     dMax=experiment['d_min'],
-                    )
+                )
 
         protExportMtz = self._runExport(
             inputSet=protScaling.outputScaledSpots,
