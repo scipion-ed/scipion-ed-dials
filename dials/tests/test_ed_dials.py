@@ -297,7 +297,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             inputModel = protFindSpots.getInputModelFile()
             self.assertFileExists(inputModel)
             findSpotCL = '{}/imported.expt output.log={}/dials.find_spots.log output.reflections={}/strong.refl spotfinder.scan_range={} spotfinder.filter.d_min={} spotfinder.filter.max_spot_size=1000 spotfinder.filter.max_strong_pixel_fraction=0.25 spotfinder.filter.max_separation=2.0 spotfinder.filter.untrusted.rectangle=0,516,255,261 spotfinder.filter.untrusted.rectangle=255,261,0,516 spotfinder.threshold.algorithm=dispersion_extended spotfinder.threshold.dispersion.sigma_background=6.0 spotfinder.threshold.dispersion.sigma_strong=3.0 spotfinder.threshold.dispersion.kernel_size=3,3'.format(
-                protFindSpots._getExtraPath(),
+                protImport._getExtraPath(),
                 protFindSpots._getLogsPath(),
                 protFindSpots._getExtraPath(),
                 experiment['scan_range'],
@@ -332,7 +332,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             indexLogs = protIndex._getLogsPath()
             indexExtra = protIndex._getExtraPath()
             indexCL = "{}/imported.expt {}/strong.refl output.log={}/dials.index.log output.experiments={}/indexed.expt output.reflections={}/indexed.refl refinement.parameterisation.beam.fix='*all in_spindle_plane out_spindle_plane wavelength' refinement.parameterisation.crystal.fix='all cell orientation' refinement.parameterisation.detector.fix='*all position orientation distance' refinement.parameterisation.goniometer.fix='*all in_beam_plane out_beam_plane'".format(
-                protFindSpots._getExtraPath(),
+                protImport._getExtraPath(),
                 protFindSpots._getExtraPath(),
                 indexLogs,
                 indexTmp,
@@ -378,7 +378,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 indexLogsPhil = protIndexPhil._getLogsPath()
                 indexExtraPhil = protIndexPhil._getExtraPath()
                 indexCLPhil = "{}/imported.expt {}/strong.refl output.log={}/dials.index.log output.experiments={}/indexed.expt output.reflections={}/indexed.refl indexing.known_symmetry.space_group={} refinement.parameterisation.beam.fix='*all in_spindle_plane out_spindle_plane wavelength' refinement.parameterisation.crystal.fix='all cell orientation' refinement.parameterisation.detector.fix='*all position orientation distance' refinement.parameterisation.goniometer.fix='*all in_beam_plane out_beam_plane'".format(
-                    protFindSpots._getExtraPath(),
+                    protImport._getExtraPath(),
                     protFindSpots._getExtraPath(),
                     indexLogsPhil,
                     indexTmpPhil,
