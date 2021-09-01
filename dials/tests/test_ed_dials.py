@@ -691,7 +691,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         inputModel = protFindSpots.getInputModelFile()
         self.assertFileExists(inputModel)
         findSpotCL = '{}/imported.expt output.log={}/dials.find_spots.log output.reflections={}/strong.refl spotfinder.scan_range=1,566 spotfinder.filter.d_min={} spotfinder.filter.d_max={} spotfinder.filter.min_spot_size={} spotfinder.filter.max_spot_size={} spotfinder.filter.max_strong_pixel_fraction=0.25 spotfinder.filter.max_separation={} spotfinder.threshold.algorithm=dispersion spotfinder.threshold.dispersion.sigma_background={} spotfinder.threshold.dispersion.sigma_strong=3.0 spotfinder.threshold.dispersion.kernel_size=3,3'.format(
-            protFindSpots._getExtraPath(),
+            protImport._getExtraPath(),
             protFindSpots._getLogsPath(),
             protFindSpots._getExtraPath(),
             experiment['d_min'],
@@ -739,7 +739,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         detectorParams = "refinement.parameterisation.detector.fix='all position orientation *distance'"
         gonioParams = "refinement.parameterisation.goniometer.fix='*all in_beam_plane out_beam_plane'"
         indexCL = "{}/imported.expt {}/strong.refl output.log={}/dials.index.log output.experiments={}/indexed.expt output.reflections={}/indexed.refl {} {} {} {}".format(
-            protFindSpots._getExtraPath(),
+            protImport._getExtraPath(),
             protFindSpots._getExtraPath(),
             indexLogs,
             indexTmp,
