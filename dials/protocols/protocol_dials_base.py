@@ -111,6 +111,12 @@ class DialsProtBase(EdBaseProtocol):
     def _checkWriteRefl(self):
         return self.getSetRefl() != self.getInputReflFile()
 
+    def _initialParams(self, program):
+        # Base method that can more easily be overridden when needed
+        params = f"{self.getInputModelFile()} {self.getInputReflFile()} output.log={self.getLogFilePath(program)} output.experiments={self.getOutputModelFile()} output.reflections={self.getOutputReflFile()}"
+
+        return params
+
     def _extraParams(self):
         params = ""
         return params
@@ -121,12 +127,12 @@ class DialsProtBase(EdBaseProtocol):
     def _getCLI(self):
         return CliBase._getCommandLineInput(self).rstrip()
 
-    def _prepareCommandline(self, program):
-        "Create the command line input to run dials programs"
+    def _prepareCommandline(self, program=None):
+        """Create the command line input to run dials programs"""
 
         # Input basic parameters
-        logPath = self.getLogFilePath(program)
-        params = f"{self.getInputModelFile()} {self.getInputReflFile()} output.log={logPath} output.experiments={self.getOutputModelFile()} output.reflections={self.getOutputReflFile()}"
+        self.info(f"Program is {program}")
+        params = self._initialParams(program)
 
         # Update the command line with additional parameters
 
