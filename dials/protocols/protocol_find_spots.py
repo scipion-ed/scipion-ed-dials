@@ -285,6 +285,12 @@ class DialsProtFindSpots(EdProtFindSpots, DialsProtBase):
             '---')
         return logOutput
 
+    def _initialParams(self, program):
+        # Input basic parameters
+        params = f"{self.getInputModelFile()} output.log={self.getLogFilePath(program)} output.reflections={self.getOutputReflFile()}"
+
+        return params
+
     def _extraParams(self):
         params = f" {self.getScanRanges()}"
         # Update the command line with additional parameters
@@ -337,23 +343,6 @@ class DialsProtFindSpots(EdProtFindSpots, DialsProtBase):
         if self.kernelSize.get():
             params += f" spotfinder.threshold.dispersion.kernel_size={self.kernelSize.get()},{self.kernelSize.get()}"
         return params
-
-    def _prepareCommandline(self, program):
-        "Create the command line input to run dials programs"
-
-        # Input basic parameters
-        logPath = self.getLogFilePath(program)
-        params = f"{self.getInputModelFile()} output.log={logPath} output.reflections={self.getOutputReflFile()}"
-
-        # Update the command line with additional parameters
-
-        params += self._extraParams()
-
-        params += self._getExtraPhilsPath()
-
-        params += self._getCLI()
-
-        return params
     # -------------------------- UTILS functions ------------------------------
 
     def getScanRanges(self):
@@ -395,111 +384,3 @@ class DialsProtFindSpots(EdProtFindSpots, DialsProtBase):
         else:
             # If at least one value is None, then no swap is possible
             return False
-
-    def _prepCommandline(self):
-        "Create the command line input to run dials programs"
-        # Input basic parameters
-        logPath = "{}/{}.log".format(self._getLogsPath(), "dials.find_spots")
-        params = "{} output.log={} output.reflections={} {}".format(
-            self.getInputModelFile(), logPath, self.getOutputReflFile(), self.getScanRanges())
-
-        # Update the command line with additional parameters
-        if self.getDMin():
-            params += " spotfinder.filter.d_min={}".format(self.getDMin())
-
-        if self.getDMax():
-            params += " spotfinder.filter.d_max={}".format(self.getDMax())
-
-        if self.iceRings.get():
-            params += " spotfinder.filter.ice_rings.filter={}".format(
-                self.iceRings.get())
-
-        if self.minSpotSize.get():
-            params += " spotfinder.filter.min_spot_size={}".format(
-                self.minSpotSize.get())
-
-        if self.maxSpotSize.get():
-            params += " spotfinder.filter.max_spot_size={}".format(
-                self.maxSpotSize.get())
-
-        if self.maxStrongPixelFraction.get():
-            params += " spotfinder.filter.max_strong_pixel_fraction={}".format(
-                self.maxStrongPixelFraction.get())
-
-        if self.maxSeparation.get():
-            params += " spotfinder.filter.max_separation={}".format(
-                self.maxSeparation.get())
-
-        if self.untrustedAreas.get():
-            if self.untrustedCircle.get() != '':
-                params += " spotfinder.filter.untrusted.circle={}".format(
-                    self.untrustedCircle.get())
-            if self.untrustedRectangle_1.get() != '':
-                params += " spotfinder.filter.untrusted.rectangle={}".format(
-                    self.untrustedRectangle_1.get())
-            if self.untrustedRectangle_2.get() != '':
-                params += " spotfinder.filter.untrusted.rectangle={}".format(
-                    self.untrustedRectangle_2.get())
-
-        if self.thresholdAlgorithm.get() is DISPERSION:
-            params += " spotfinder.threshold.algorithm=dispersion"
-        elif self.thresholdAlgorithm.get() is DISPERSION_EXTENDED:
-            params += " spotfinder.threshold.algorithm=dispersion_extended"
-
-        if self.thresholdIntensity.get():
-            params += " spotfinder.threshold.dispersion.global_threshold={}".format(
-                self.thresholdIntensity.get())
-
-        if self.gain.get():
-            params += " spotfinder.threshold.dispersion.gain={}".format(
-                self.gain.get())
-
-        if self.sigmaBackground.get():
-            params += " spotfinder.threshold.dispersion.sigma_background={}".format(
-                self.sigmaBackground.get())
-
-        if self.sigmaStrong.get():
-            params += " spotfinder.threshold.dispersion.sigma_strong={}".format(
-                self.sigmaStrong.get())
-
-        if self.kernelSize.get():
-            params += " spotfinder.threshold.dispersion.kernel_size={},{}".format(
-                self.kernelSize.get(), self.kernelSize.get())
-
-        if self.extraPhilPath.get():
-            params += " {}".format(self.getExtraPhilsPath())
-
-        if self.commandLineInput.get():
-            params += " {}".format(self.commandLineInput.get())
-
-        return params
-
-    def _createScanRanges(self):
-        # FIXME: Remove if getScanRanges() works
-        images = [image.getObjId() for image in self.inputImages.get()
-                  if image.getIgnore() is not True]
-        scanranges = find_subranges(images)
-        scanrange = ' '.join('spotfinder.scan_range={},{}'.format(i, j)
-                             for i, j in scanranges)
-        return scanrange
-
-    """def _prepCommandlineReport(self):
-        "Create the command line input to run dials programs"
-        # Input basic parameters
-        params = "{} output.html={} output.external_dependencies={}".format(
-            self.getOutputReflFile(),
-            HtmlBase.getOutputHtmlFile(self),
-            HtmlBase.extDepOptions[self.externalDependencies.get()]
-        )
-
-        if self.pixelsPerBin.get():
-            params += " pixels_per_bin={}".format(self.pixelsPerBin.get())
-
-        if self.centroidDiffMax.get():
-            params += " centroid_diff_max={}".format(
-                self.centroidDiffMax.get())
-
-        if self.commandLineInputReport.get() not in (None, ''):
-            params += " {}".format(self.commandLineInputReport.get())
-
-        return params"""
