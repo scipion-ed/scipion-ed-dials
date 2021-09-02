@@ -66,36 +66,37 @@ class DialsProtBase(EdBaseProtocol):
     def getOutputReflFile(self):
         return self._getExtraPath(self.OUTPUT_REFL_FILENAME)
 
-    def _getModelSource(self):
+    def _getModelSources(self):
+        sources = []
         try:
-            return self.inputImages.get()
+            sources.append(self.inputImages.get())
         except AttributeError:
             pass
         try:
-            return self.inputSpots.get()
+            sources.append(self.inputSpots.get())
         except AttributeError:
             pass
         try:
-            return self.inputSet.get()
+            sources.append(self.inputSet.get())
         except AttributeError:
             pass
-        return None
+        return sources
 
     def getSetModel(self):
-        if self._getModelSource() is None:
-            return None
-        elif dutils.existsPath(self._getModelSource().getDialsModel()):
-            return self._getModelSource().getDialsModel()
-        else:
-            return None
+        for source in self._getModelSources():
+            try:
+                if dutils.existsPath(source.getDialsModel()):
+                    return source.getDialsModel()
+            except TypeError:
+                pass
 
     def getSetRefl(self):
-        if self._getModelSource() is None:
-            return None
-        elif dutils.existsPath(self._getModelSource().getDialsRefl()):
-            return self._getModelSource().getDialsRefl()
-        else:
-            return None
+        for source in self._getModelSources():
+            try:
+                if dutils.existsPath(source.getDialsRefl()):
+                    return source.getDialsRefl()
+            except TypeError:
+                pass
 
     def getLogFilePath(self, program='dials.*'):
         logPath = "{}/{}.log".format(self._getLogsPath(), program)
