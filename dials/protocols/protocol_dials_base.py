@@ -168,8 +168,17 @@ class RefineParamsBase(EdBaseProtocol):
     def _defineParametrisations(self, form):
         group = form.addGroup('Model parametrisation')
 
+        group.addHidden('beamFixAll', pwprot.BooleanParam,
+                        label='Fix all beam parameters?', default=False,
+                        help="Whether to fix beam parameters. By default, in_spindle_plane is selected, and one of the two"
+                        "parameters is fixed. If a goniometer is present this leads to the beam orientation being restricted to a"
+                        "direction in the initial spindle-beam plane. Wavelength is also fixed by default, to allow refinement of"
+                        "the unit cell volume.",
+                        )
+
         group.addParam('beamFixInSpindlePlane', pwprot.BooleanParam,
                        label='Fix beam in spindle plane?', default=True,
+                       condition="beamFixAll==False",
                        help="Whether to fix beam parameters. By default, in_spindle_plane is selected, and one of the two"
                        "parameters is fixed. If a goniometer is present this leads to the beam orientation being restricted to a"
                        "direction in the initial spindle-beam plane. Wavelength is also fixed by default, to allow refinement of"
@@ -178,6 +187,7 @@ class RefineParamsBase(EdBaseProtocol):
 
         group.addParam('beamFixOutSpindlePlane', pwprot.BooleanParam,
                        label='Fix beam out of spindle plane?', default=False,
+                       condition="beamFixAll==False",
                        help="Whether to fix beam parameters. By default, in_spindle_plane is selected, and one of the two"
                        "parameters is fixed. If a goniometer is present this leads to the beam orientation being restricted to"
                        "a direction in the initial spindle-beam plane. Wavelength is also fixed by default, to allow refinement"
@@ -186,10 +196,17 @@ class RefineParamsBase(EdBaseProtocol):
 
         group.addParam('beamFixWavelength', pwprot.BooleanParam,
                        label='Fix beam wavelength?', default=True,
+                       condition="beamFixAll==False",
                        help="Whether to fix beam parameters. By default, in_spindle_plane is selected, and one of the two"
                        "parameters is fixed. If a goniometer is present this leads to the beam orientation being restricted"
                        "to a direction in the initial spindle-beam plane. Wavelength is also fixed by default, to allow"
                        "refinement of the unit cell volume.",
+                       )
+
+        group.addParam('beamForceStatic', pwprot.BooleanParam,
+                       label='Force static parametrisation for the beam? (only applies to scan-varying refinement)',
+                       default=True,
+                       help="Force a static parameterisation for the beam when doing scan-varying refinement",
                        )
 
         group.addParam('crystalFixCell', pwprot.BooleanParam,
@@ -202,22 +219,31 @@ class RefineParamsBase(EdBaseProtocol):
                        help="Fix crystal parameters",
                        )
 
+        group.addHidden('detectorFixAll', pwprot.BooleanParam,
+                        label='Fix all detector parameters?', default=False,
+                        help="Fix detector parameters. The translational parameters (position) may be set"
+                        "separately to the orientation.",
+                        )
+
         group.addParam('detectorFixPosition', pwprot.BooleanParam,
                        label='Fix detector position?', default=False,
                        help="Fix detector parameters. The translational parameters (position) may be set"
                        "separately to the orientation.",
+                       condition="detectorFixAll==False",
                        )
 
         group.addParam('detectorFixOrientation', pwprot.BooleanParam,
                        label='Fix detector orientation?', default=False,
                        help="Fix detector parameters. The translational parameters (position) may be set"
                        "separately to the orientation.",
+                       condition="detectorFixAll==False",
                        )
 
         group.addParam('detectorFixDistance', pwprot.BooleanParam,
                        label='Fix detector distance?', default=True,
                        help="Fix detector parameters. The translational parameters (position) may be set"
                        "separately to the orientation.",
+                       condition="detectorFixAll==False",
                        )
 
         group.addParam('goniometerFixInBeamPlane', pwprot.BooleanParam,
