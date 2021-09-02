@@ -211,17 +211,22 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         outputCompare = protocol.getLogOutput().split('\n')[0]
         self.assertEqual(outputCompare.strip(), logOutput.strip())
 
+    def _getCommand(self, protocol, program=None):
+        try:
+            return protocol._prepareCommandline(program)
+        except AttributeError:
+            pass
+        try:
+            return protocol._prepCommandline(program)
+        except AttributeError:
+            pass
+        try:
+            return protocol._prepareCommandLineArguments(program)
+        except AttributeError:
+            pass
+
     def assertCommand(self, protocol, commandString, program=None):
-        if program != None:
-            try:
-                CL = protocol._prepCommandline(program)
-            except AttributeError:
-                CL = protocol._prepareCommandLineArguments(program)
-        else:
-            try:
-                CL = protocol._prepCommandline()
-            except AttributeError:
-                CL = protocol._prepareCommandLineArguments()
+        CL = self._getCommand(protocol, program)
         self.assertEqual(CL, commandString)
 
     def assertFileExists(self, file):
@@ -701,7 +706,8 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             experiment['max_separation'],
             experiment['sigma_background'],
         )
-        self.assertCommand(protFindSpots, findSpotCL)
+        self.assertCommand(protFindSpots, findSpotCL,
+                           program="dials.find_spots")
         foundspotset = getattr(
             protFindSpots, 'outputDiffractionSpots', None)
         self.assertIsNotNone(foundspotset)
