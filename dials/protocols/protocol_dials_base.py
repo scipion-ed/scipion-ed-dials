@@ -377,22 +377,16 @@ class HtmlBase(EdBaseProtocol):
     def _prepCommandlineReport(self):
         "Create the command line input to run dials programs"
         # Input basic parameters
-        params = "{} {} output.html={} output.external_dependencies={}".format(
-            DialsProtBase.getOutputModelFile(self),
-            DialsProtBase.getOutputReflFile(self),
-            self.getOutputHtmlFile(),
-            self.extDepOptions[self.externalDependencies.get()]
-        )
+        params = f"{DialsProtBase.getOutputModelFile(self)} {DialsProtBase.getOutputReflFile(self)} output.html={self.getOutputHtmlFile()} output.external_dependencies={self.extDepOptions[self.externalDependencies.get()]}"
 
         if self.pixelsPerBin.get():
-            params += " pixels_per_bin={}".format(self.pixelsPerBin.get())
+            params += f" pixels_per_bin={self.pixelsPerBin.get()}"
 
         if self.centroidDiffMax.get():
-            params += " centroid_diff_max={}".format(
-                self.centroidDiffMax.get())
+            params += f" centroid_diff_max={self.centroidDiffMax.get()}"
 
         if self.commandLineInputReport.get() not in (None, ''):
-            params += " {}".format(self.commandLineInputReport.get())
+            params += f" {self.commandLineInputReport.get()}"
 
         return params
 
