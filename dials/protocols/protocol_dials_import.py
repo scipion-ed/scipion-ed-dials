@@ -70,7 +70,7 @@ class DialsProtImportDiffractionImages(ProtImportDiffractionImages, DialsProtBas
         # Run dials import on the images
         self.info("Rotation axis is {}".format(self.getRotationAxis()))
         program = 'dials.import'
-        arguments = self._prepareCommandLineArguments(program)
+        arguments = self._prepareCommandline(program)
         self.runJob(program, arguments)
         assert(os.path.exists(self.getOutputModelFile()))
 
@@ -85,6 +85,14 @@ class DialsProtImportDiffractionImages(ProtImportDiffractionImages, DialsProtBas
 
     def getDatasets(self):
         return dutils.getDatasets(self.getOutputModelFile())
+
+    def _initialParams(self, program):
+        params = f"{self.getCmdparamStart()} output.log={self.getLogFilePath(program)} output.experiments={self.getOutputModelFile()}"
+        return params
+
+    def _extraParams(self):
+        params = self._getDialsOverwrites()
+        return params
 
     # -------------------------- UTILS functions ------------------------------
 
@@ -106,20 +114,3 @@ class DialsProtImportDiffractionImages(ProtImportDiffractionImages, DialsProtBas
             params += " distance={}".format(
                 self.overwriteDetectorDistance.get())
         return params
-
-    def _prepareCommandLineArguments(self, program):
-        # Make a string to append to
-        cmdparams = "{}".format(self.getCmdparamStart())
-
-        # Add standard output paths
-        logPath = "{}/{}.log".format(self._getLogsPath(), program)
-        cmdparams += " output.log={} output.experiments={}".format(
-            logPath, self.getOutputModelFile())
-
-        cmdparams += self._getDialsOverwrites()
-
-        cmdparams += self._getExtraPhilsPath()
-
-        cmdparams += self._getCLI()
-
-        return cmdparams
