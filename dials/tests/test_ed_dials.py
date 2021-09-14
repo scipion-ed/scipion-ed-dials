@@ -247,6 +247,17 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         scaledSets = []
         scaleProt = []
         multiDataset = []
+
+        # Define parameter reference strings
+        beamParams = "refinement.parameterisation.beam.fix='all *in_spindle_plane out_spindle_plane *wavelength'"
+        beamParamsAll = "refinement.parameterisation.beam.fix='*all in_spindle_plane out_spindle_plane wavelength'"
+        beamParamsSv = "refinement.parameterisation.beam.fix='all in_spindle_plane out_spindle_plane *wavelength'"
+        crystalParams = "refinement.parameterisation.crystal.fix='all cell orientation'"
+        detectorParamsAll = 'refinement.parameterisation.detector.fix=\'*all position orientation distance\''
+        detectorParamsNoFix = "refinement.parameterisation.detector.fix='all position orientation distance'"
+        gonioParams = "refinement.parameterisation.goniometer.fix='*all in_beam_plane out_beam_plane'"
+
+        # Start the run
         for experiment in self.getLysoTestExperiments():
             exptId = experiment['location']
             with self.subTest(msg='Pipeline using {}'.format(exptId), experiment=exptId):
@@ -337,21 +348,16 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             indexTmp = protIndex._getTmpPath()
             indexLogs = protIndex._getLogsPath()
             indexExtra = protIndex._getExtraPath()
-            beamParams = "refinement.parameterisation.beam.fix='all *in_spindle_plane out_spindle_plane *wavelength'"
-            beamParams_all = "refinement.parameterisation.beam.fix='*all in_spindle_plane out_spindle_plane wavelength'"
-            crystalParams = "refinement.parameterisation.crystal.fix='all cell orientation'"
-            detectorParams = "refinement.parameterisation.detector.fix='all position orientation *distance'"
-            detectorParams_all = "refinement.parameterisation.detector.fix='*all position orientation distance'"
-            gonioParams = "refinement.parameterisation.goniometer.fix='*all in_beam_plane out_beam_plane'"
+
             indexCL = "{}/imported.expt {}/strong.refl output.log={}/dials.index.log output.experiments={}/indexed.expt output.reflections={}/indexed.refl {} {} {} {}".format(
                 protImport._getExtraPath(),
                 protFindSpots._getExtraPath(),
                 indexLogs,
                 indexTmp,
                 indexTmp,
-                beamParams_all,
+                beamParamsAll,
                 crystalParams,
-                detectorParams_all,
+                detectorParamsAll,
                 gonioParams,
             )
             refBravCL = "{}/indexed.expt {}/indexed.refl output.log={}/dials.refine_bravais_settings.log output.directory={}".format(
@@ -400,9 +406,9 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                     indexTmpPhil,
                     indexTmpPhil,
                     experiment['space_group'].replace(" ", ""),
-                    beamParams_all,
+                    beamParamsAll,
                     crystalParams,
-                    detectorParams_all,
+                    detectorParamsAll,
                     gonioParams,
                 )
                 self.assertEqual(protIndexPhil._prepIndexCommandline(
@@ -424,7 +430,6 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                     targetUnitCell=experiment['unit_cell'],
                     targetSigmas=experiment['unit_cell_sigmas'],
                 )
-                detectorParams_noFix = "refinement.parameterisation.detector.fix='all position orientation distance'"
                 refineCLstaticPhil = "{}/indexed.expt {}/indexed.refl output.log={}/dials.refine.log output.experiments={}/refined.expt output.reflections={}/refined.refl scan_varying=False {} {} {} {} {}/restraints.phil".format(
                     indexExtraPhil,
                     indexExtraPhil,
@@ -433,7 +438,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                     protRefinePhil._getExtraPath(),
                     beamParams,
                     crystalParams,
-                    detectorParams_noFix,
+                    detectorParamsNoFix,
                     gonioParams,
                     protRefinePhil._getExtraPath(),
                 )
@@ -472,7 +477,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 protRefine._getExtraPath(),
                 beamParams,
                 crystalParams,
-                detectorParams,
+                detectorParamsAll,
                 gonioParams,
             )
             self.assertCommand(protRefine, refineCLstatic,
@@ -495,17 +500,15 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 beamForceStatic=False,
                 detectorFixAll=True,
             )
-            beamParams_sv = "refinement.parameterisation.beam.fix='all in_spindle_plane out_spindle_plane *wavelength'"
-            detectorParams_sv = 'refinement.parameterisation.detector.fix=\'*all position orientation distance\''
             refineCLsv = "{}/refined.expt {}/refined.refl output.log={}/dials.refine.log output.experiments={}/refined.expt output.reflections={}/refined.refl scan_varying=True {} beam.force_static=False {} {} {}".format(
                 protRefine._getExtraPath(),
                 protRefine._getExtraPath(),
                 protSvRefine._getLogsPath(),
                 protSvRefine._getExtraPath(),
                 protSvRefine._getExtraPath(),
-                beamParams_sv,
+                beamParamsSv,
                 crystalParams,
-                detectorParams_sv,
+                detectorParamsAll,
                 gonioParams,
             )
             self.assertCommand(protSvRefine, refineCLsv,
@@ -535,9 +538,9 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 protSvRefineOld._getLogsPath(),
                 protSvRefineOld._getExtraPath(),
                 protSvRefineOld._getExtraPath(),
-                beamParams_sv,
+                beamParamsSv,
                 crystalParams,
-                detectorParams,
+                detectorParamsAll,
                 gonioParams,
             )
             self.assertCommand(protSvRefineOld, refineCLsvOld,
@@ -683,6 +686,12 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         exptId = experiment['location']
         dataset = os.path.join(self.dataPath, exptId)
 
+        # Define parameter strings
+        beamParams = "refinement.parameterisation.beam.fix='all *in_spindle_plane out_spindle_plane *wavelength'"
+        crystalParams = "refinement.parameterisation.crystal.fix='all cell orientation'"
+        detectorParamsDistance = "refinement.parameterisation.detector.fix='all position orientation *distance'"
+        gonioParams = "refinement.parameterisation.goniometer.fix='*all in_beam_plane out_beam_plane'"
+
         # Run import
         protImport = self._runDialsImportImages(
             filesPath=dataset,
@@ -774,10 +783,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         indexTmp = protIndex._getTmpPath()
         indexLogs = protIndex._getLogsPath()
         indexExtra = protIndex._getExtraPath()
-        beamParams = "refinement.parameterisation.beam.fix='all *in_spindle_plane out_spindle_plane *wavelength'"
-        crystalParams = "refinement.parameterisation.crystal.fix='all cell orientation'"
-        detectorParams = "refinement.parameterisation.detector.fix='all position orientation *distance'"
-        gonioParams = "refinement.parameterisation.goniometer.fix='*all in_beam_plane out_beam_plane'"
+
         indexCL = "{}/imported.expt {}/strong.refl output.log={}/dials.index.log output.experiments={}/indexed.expt output.reflections={}/indexed.refl {} {} {} {}".format(
             protImport._getExtraPath(),
             protFindSpots._getExtraPath(),
@@ -786,7 +792,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             indexTmp,
             beamParams,
             crystalParams,
-            detectorParams,
+            detectorParamsDistance,
             gonioParams,
         )
         refBravCL = "{}/indexed.expt {}/indexed.refl output.log={}/dials.refine_bravais_settings.log output.directory={}".format(
@@ -834,7 +840,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 indexTmpCopy,
                 beamParams,
                 crystalParams,
-                detectorParams,
+                detectorParamsDistance,
                 gonioParams,
             )
             self.assertEqual(protIndexCopy._prepBravaisCommandline(
@@ -853,7 +859,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             protRefine._getExtraPath(),
             beamParams,
             crystalParams,
-            detectorParams,
+            detectorParamsDistance,
             gonioParams,
         )
         self.assertCommand(protRefine, refineCLstatic,
