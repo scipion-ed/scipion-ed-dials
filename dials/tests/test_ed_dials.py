@@ -878,6 +878,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             inputSet=protRefine.outputRefinedSpots,
             nproc=experiment['nproc'],
             dMin=experiment['d_min'],
+            makeReport=True,
         )
         integrateCL = "{}/refined.expt {}/refined.refl output.log={}/dials.integrate.log output.experiments={}/integrated_model.expt output.reflections={}/integrated_reflections.refl output.phil={}/dials.integrate.phil nproc=8 prediction.d_min={}".format(
             protRefine._getExtraPath(),
