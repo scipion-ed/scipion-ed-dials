@@ -291,9 +291,6 @@ class DialsProtIndexSpots(EdProtIndexSpots, DialsProtBase):
         except:
             self.info(self.getError())
 
-    def makeHtmlReportStep(self):
-        HtmlBase.makeHtmlReportStep(self)
-
     def createOutputStep(self):
         # Find the most processed model file and reflection file and copy to output
         if dutils.existsPath(self.getReindexedModelFile()):

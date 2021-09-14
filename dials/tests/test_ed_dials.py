@@ -27,10 +27,6 @@
 # **************************************************************************
 
 import os
-import io
-import json
-
-import msgpack
 
 import pyworkflow as pw
 import pyworkflow.tests as pwtests
@@ -40,9 +36,8 @@ from pwed.objects import *
 from pwed.protocols import ProtImportDiffractionImages
 
 from dials.protocols import *
-from dials.convert import writeJson, readRefl, writeRefl, writeRestraintsPhil
+from dials.convert import writeRestraintsPhil
 from dials.constants import *
-import dials.utils as dutils
 
 
 pw.Config.setDomain(pwed)

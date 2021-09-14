@@ -124,9 +124,6 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots, DialsProtBase):
             self.info(self.getError())
     # TODO: Create a temporary "SetOfIndexedSpotsFile" that only saves the file location
 
-    def makeHtmlReportStep(self):
-        HtmlBase.makeHtmlReportStep(self)
-
     def createOutputStep(self):
         # Check that the indexing created proper output
         assert(os.path.exists(self.getOutputReflFile()))

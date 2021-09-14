@@ -218,9 +218,6 @@ class DialsProtFindSpots(EdProtFindSpots, DialsProtBase):
         arguments = self._prepareCommandline(program)
         self.runJob(program, arguments)
 
-    def makeHtmlReportStep(self):
-        HtmlBase.makeHtmlReportStep(self)
-
     def createOutputStep(self):
         reflectionData = readRefl(self.getOutputReflFile())
         outputSet = self._createSetOfSpots()

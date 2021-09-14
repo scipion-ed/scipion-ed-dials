@@ -156,9 +156,6 @@ class DialsProtRefineSpots(EdProtRefineSpots, DialsProtBase):
         except:
             self.info(self.getError())
 
-    def makeHtmlReportStep(self):
-        HtmlBase.makeHtmlReportStep(self)
-
     def createOutputStep(self):
         # Check that the indexing created proper output
         assert(os.path.exists(self.getOutputReflFile()))

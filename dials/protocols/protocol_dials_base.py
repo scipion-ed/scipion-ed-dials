@@ -37,13 +37,19 @@ from dials.constants import *
 class DialsProtBase(EdBaseProtocol):
     """ Base protocol for DIALS
     """
-
-    # -------------------------- UTILS functions ------------------------------
-
+    # Define default filenames
     INPUT_EXPT_FILENAME = 'input.expt'
     OUTPUT_EXPT_FILENAME = 'output.expt'
     INPUT_REFL_FILENAME = 'input.refl'
     OUTPUT_REFL_FILENAME = 'output.refl'
+    OUTPUT_HTML_FILENAME = 'dials.report.html'
+
+    # -------------------------- STEPS functions -------------------------------
+
+    def makeHtmlReportStep(self):
+        HtmlBase.makeHtmlReportStep(self)
+
+    # -------------------------- UTILS functions ------------------------------
 
     def getInputModelFile(self):
         if self.getSetModel():
@@ -388,22 +394,22 @@ class HtmlBase(EdBaseProtocol):
 
     def makeHtmlReportStep(self):
         prog = 'dials.report'
-        arguments = self._prepCommandlineReport()
+        arguments = HtmlBase._prepCommandlineReport(self)
         self.runJob(prog, arguments)
         if self.showReport:
-            dutils._showHtmlReport(self.getOutputHtmlFile())
+            dutils._showHtmlReport(HtmlBase.getOutputHtmlFile(self))
 
-        # -------------------------- UTILS functions ------------------------------
-
-    OUTPUT_HTML_FILENAME = 'dials.report.html'
-
+    # -------------------------- UTILS functions ------------------------------
     def getOutputHtmlFile(self):
-        return self._getExtraPath(self.OUTPUT_HTML_FILENAME)
+        if self.OUTPUT_HTML_FILENAME:
+            return self._getExtraPath(self.OUTPUT_HTML_FILENAME)
+        else:
+            return self._getExtraPath('dials.report.html')
 
     def _prepCommandlineReport(self):
         "Create the command line input to run dials programs"
         # Input basic parameters
-        params = f"{DialsProtBase.getOutputModelFile(self)} {DialsProtBase.getOutputReflFile(self)} output.html={self.getOutputHtmlFile()} output.external_dependencies={self.extDepOptions[self.externalDependencies.get()]}"
+        params = f"{DialsProtBase.getOutputModelFile(self)} {DialsProtBase.getOutputReflFile(self)} output.html={HtmlBase.getOutputHtmlFile(self)} output.external_dependencies={self.extDepOptions[self.externalDependencies.get()]}"
 
         if self.pixelsPerBin.get():
             params += f" pixels_per_bin={self.pixelsPerBin.get()}"
