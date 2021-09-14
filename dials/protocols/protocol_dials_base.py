@@ -301,7 +301,7 @@ class RefineParamsBase(EdBaseProtocol):
 
     def getDetectorFixParams(self):
         detectorfix = []
-        if self.detectorFixPosition and self.detectorFixOrientation and self.detectorFixDistance:
+        if self.detectorFixAll or (self.detectorFixPosition and self.detectorFixOrientation and self.detectorFixDistance):
             detectorfix += "'*all position orientation distance'"
         else:
             detectorfix += "'all "

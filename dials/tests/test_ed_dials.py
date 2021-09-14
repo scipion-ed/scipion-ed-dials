@@ -253,7 +253,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         beamParamsAll = "refinement.parameterisation.beam.fix='*all in_spindle_plane out_spindle_plane wavelength'"
         beamParamsSv = "refinement.parameterisation.beam.fix='all in_spindle_plane out_spindle_plane *wavelength'"
         crystalParams = "refinement.parameterisation.crystal.fix='all cell orientation'"
-        detectorParamsAll = 'refinement.parameterisation.detector.fix=\'*all position orientation distance\''
+        detectorParamsAll = "refinement.parameterisation.detector.fix='*all position orientation distance'"
         detectorParamsNoFix = "refinement.parameterisation.detector.fix='all position orientation distance'"
         gonioParams = "refinement.parameterisation.goniometer.fix='*all in_beam_plane out_beam_plane'"
 
