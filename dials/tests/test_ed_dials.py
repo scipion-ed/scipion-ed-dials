@@ -265,18 +265,18 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                     overwriteDetectorDistance=experiment['distance'],
                 )
                 if experiment['distance'] != None:
-                    distance = "distance={}".format(experiment['distance'])
+                    distance = " distance={}".format(experiment['distance'])
                 else:
                     distance = ''
 
             pathlist = self.makePathList(
                 experiment['scan_range'], location=dataset, pattern=experiment['files_pattern'])
-            importCL = '{} output.log={}/dials.import.log output.experiments={}/imported.expt goniometer.axes={} {}'.format(
+            importCL = '{} output.log={}/dials.import.log output.experiments={}/imported.expt goniometer.axes={}{}'.format(
                 " ".join(pathlist),
                 protImport._getLogsPath(),
                 protImport._getExtraPath(),
                 experiment['rotation_axis'],
-                distance.strip()
+                distance.rstrip()
             )
 
             self.assertCommand(protImport, importCL,
@@ -496,6 +496,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 detectorFixAll=True,
             )
             beamParams_sv = "refinement.parameterisation.beam.fix='all in_spindle_plane out_spindle_plane *wavelength'"
+            detectorParams_sv = 'refinement.parameterisation.detector.fix=\'*all position orientation distance\''
             refineCLsv = "{}/refined.expt {}/refined.refl output.log={}/dials.refine.log output.experiments={}/refined.expt output.reflections={}/refined.refl scan_varying=True {} beam.force_static=False {} {} {}".format(
                 protRefine._getExtraPath(),
                 protRefine._getExtraPath(),
@@ -504,7 +505,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 protSvRefine._getExtraPath(),
                 beamParams_sv,
                 crystalParams,
-                detectorParams,
+                detectorParams_sv,
                 gonioParams,
             )
             self.assertCommand(protSvRefine, refineCLsv,
