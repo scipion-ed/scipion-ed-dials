@@ -27,16 +27,11 @@
 # **************************************************************************
 
 import os
-import re
-from glob import glob
-from pathlib import Path
 
 import pyworkflow.protocol as pwprot
 import dials.utils as dutils
 
-from pwed.objects import IndexedSpot, SetOfIndexedSpots
 from pwed.protocols import EdBaseProtocol
-from dials.convert import writeJson, readRefl, writeRefl, copyDialsFile
 from dials.constants import *
 
 

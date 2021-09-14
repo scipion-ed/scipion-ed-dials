@@ -26,19 +26,13 @@
 # *
 # **************************************************************************
 
-import os
-import re
-from glob import glob
-from pathlib import Path
 import textwrap
 
 import pyworkflow.protocol as pwprot
 import pyworkflow.utils as pwutils
 import dials.utils as dutils
 
-from pwed.objects import IndexedSpot, SetOfIndexedSpots
 from pwed.protocols import EdBaseProtocol
-from dials.convert import writeJson, readRefl, writeRefl, copyDialsFile
 from dials.constants import *
 
 
@@ -444,7 +438,8 @@ class DialsProtScaling(EdBaseProtocol):
     def _validate(self):
         errors = []
         if self.swappedResolution():
-            errors.append(f"High ({self.getDMin()} Å) and low ({self.getDMax()} Å) resolution limits appear swapped.")
+            errors.append(
+                f"High ({self.getDMin()} Å) and low ({self.getDMax()} Å) resolution limits appear swapped.")
         return errors
 
     def _summary(self):
@@ -617,10 +612,10 @@ class DialsProtScaling(EdBaseProtocol):
             imageGroups.append(self.imageGroup20)
 
         return imageGroups
-    
+
     def getDMax(self):
         return self.dMax.get()
-    
+
     def getDMin(self):
         return self.dMin.get()
 

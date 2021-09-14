@@ -26,18 +26,16 @@
 # *
 # **************************************************************************
 
-import os
 import json
 import textwrap
 
 import pyworkflow.protocol as pwprot
 import dials.utils as dutils
 
-from pwed.objects import DiffractionImage, SetOfDiffractionImages, DiffractionSpot, SetOfSpots, IndexedSpot, SetOfIndexedSpots
+from pwed.objects import IndexedSpot
 from pwed.protocols import EdProtIndexSpots
 from dials.protocols import DialsProtBase, HtmlBase, RefineParamsBase
-from pwed.convert import find_subranges
-from dials.convert import writeJson, readRefl, writeRefl, writeRefinementPhil, copyDialsFile
+from dials.convert import readRefl, copyDialsFile
 from dials.constants import *
 
 

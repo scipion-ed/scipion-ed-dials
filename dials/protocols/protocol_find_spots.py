@@ -32,7 +32,7 @@ import pyworkflow.protocol as pwprot
 from dials.protocols import DialsProtBase, CliBase, PhilBase, HtmlBase
 import dials.utils as dutils
 
-from pwed.objects import DiffractionImage, SetOfDiffractionImages, DiffractionSpot, SetOfSpots
+from pwed.objects import DiffractionSpot
 from pwed.protocols import EdProtFindSpots
 from pwed.convert import find_subranges
 from dials.convert import writeJson, readRefl, copyDialsFile

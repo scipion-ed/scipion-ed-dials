@@ -28,11 +28,9 @@
 
 import os
 
-import pyworkflow.protocol as pwprot
 from dials.protocols import DialsProtBase, CliBase, PhilBase
 import dials.utils as dutils
 
-from pwed.objects import DiffractionImage, SetOfDiffractionImages
 from pwed.protocols import ProtImportDiffractionImages
 
 

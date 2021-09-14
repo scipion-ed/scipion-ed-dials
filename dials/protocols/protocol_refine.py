@@ -31,11 +31,10 @@ import os
 import pyworkflow.protocol as pwprot
 import dials.utils as dutils
 
-from pwed.objects import IndexedSpot, SetOfIndexedSpots
+from pwed.objects import IndexedSpot
 from pwed.protocols import EdProtRefineSpots
 from dials.protocols import DialsProtBase, PhilBase, CliBase, HtmlBase, RefineParamsBase
-from pwed.convert import find_subranges
-from dials.convert import writeJson, readRefl, writeRefl, writeRefinementPhil, copyDialsFile, writeRestraintsPhil
+from dials.convert import readRefl, writeRestraintsPhil
 from dials.constants import *
 
 

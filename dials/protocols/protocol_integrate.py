@@ -27,17 +27,14 @@
 # **************************************************************************
 
 import os
-import re
-from glob import glob
-from pathlib import Path
 
 import pyworkflow.protocol as pwprot
 import dials.utils as dutils
 
-from pwed.objects import IndexedSpot, SetOfIndexedSpots, IndexedSpot, SetOfIndexedSpots
+from pwed.objects import IndexedSpot
 from pwed.protocols import EdProtIntegrateSpots
 from pwed.convert import find_subranges
-from dials.convert import writeJson, readRefl, writeRefl, writeRefinementPhil, copyDialsFile
+from dials.convert import readRefl
 from dials.constants import *
 
 
@@ -227,7 +224,8 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots):
     def _validate(self):
         errors = []
         if self.swappedResolution():
-            errors.append(f"High ({self.getDMin()} Å) and low ({self.getDMax()} Å) resolution limits appear swapped.")
+            errors.append(
+                f"High ({self.getDMin()} Å) and low ({self.getDMax()} Å) resolution limits appear swapped.")
         return errors
 
     def _summary(self):
@@ -317,10 +315,10 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots):
 
     def _checkWriteRefl(self):
         return self.getSetRefl() != self.getInputReflFile()
-    
+
     def getDMax(self):
         return self.dMax.get()
-    
+
     def getDMin(self):
         return self.dMin.get()
 
