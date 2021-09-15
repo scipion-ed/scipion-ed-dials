@@ -51,15 +51,15 @@ class DialsProtBase(EdBaseProtocol):
 
     # -------------------------- UTILS functions ------------------------------
 
-    def getInputModelFile(self):
-        if self.getSetModel():
-            return self.getSetModel()
+    def getInputModelFile(self, inputSource=None):
+        if self.getSetModel(inputSource):
+            return self.getSetModel(inputSource)
         else:
             return self._getExtraPath(self.INPUT_EXPT_FILENAME)
 
-    def getInputReflFile(self):
-        if self.getSetRefl():
-            return self.getSetRefl()
+    def getInputReflFile(self, inputSource=None):
+        if self.getSetRefl(inputSource):
+            return self.getSetRefl(inputSource)
         else:
             return self._getExtraPath(self.INPUT_REFL_FILENAME)
 
@@ -72,8 +72,10 @@ class DialsProtBase(EdBaseProtocol):
     def getOutputReflFile(self):
         return self._getExtraPath(self.OUTPUT_REFL_FILENAME)
 
-    def _getModelSources(self):
+    def _getModelSources(self, inputSource=None):
         sources = []
+        if inputSource is not None:
+            sources.append(inputSource)
         try:
             sources.append(self.inputImages.get())
         except AttributeError:
@@ -86,18 +88,19 @@ class DialsProtBase(EdBaseProtocol):
             sources.append(self.inputSet.get())
         except AttributeError:
             pass
+
         return sources
 
-    def getSetModel(self):
-        for source in self._getModelSources():
+    def getSetModel(self, inputSource=None):
+        for source in self._getModelSources(inputSource):
             try:
                 if dutils.existsPath(source.getDialsModel()):
                     return source.getDialsModel()
             except TypeError:
                 pass
 
-    def getSetRefl(self):
-        for source in self._getModelSources():
+    def getSetRefl(self, inputSource=None):
+        for source in self._getModelSources(inputSource):
             try:
                 if dutils.existsPath(source.getDialsRefl()):
                     return source.getDialsRefl()
@@ -111,11 +114,11 @@ class DialsProtBase(EdBaseProtocol):
     def getLogOutput(self):
         return ''
 
-    def _checkWriteModel(self):
-        return self.getSetModel() != self.getInputModelFile()
+    def _checkWriteModel(self, inputSource=None):
+        return self.getSetModel(inputSource) != self.getInputModelFile(inputSource)
 
-    def _checkWriteRefl(self):
-        return self.getSetRefl() != self.getInputReflFile()
+    def _checkWriteRefl(self, inputSource=None):
+        return self.getSetRefl(inputSource) != self.getInputReflFile(inputSource)
 
     def _initialParams(self, program):
         # Base method that can more easily be overridden when needed
