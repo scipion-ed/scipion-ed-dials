@@ -44,12 +44,12 @@ class DialsProtBase(EdBaseProtocol):
     OUTPUT_REFL_FILENAME = 'output.refl'
     OUTPUT_HTML_FILENAME = 'dials.report.html'
 
-    # -------------------------- STEPS functions -------------------------------
+    # -------------------------- STEPS functions -----------------------------
 
     def makeHtmlReportStep(self):
         HtmlBase.makeHtmlReportStep(self)
 
-    # -------------------------- UTILS functions ------------------------------
+    # -------------------------- UTILS functions -----------------------------
 
     def getInputModelFile(self, inputSource=None):
         if self.getSetModel(inputSource):
@@ -122,7 +122,10 @@ class DialsProtBase(EdBaseProtocol):
 
     def _initialParams(self, program):
         # Base method that can more easily be overridden when needed
-        params = f"{self.getInputModelFile()} {self.getInputReflFile()} output.log={self.getLogFilePath(program)} output.experiments={self.getOutputModelFile()} output.reflections={self.getOutputReflFile()}"
+        params = (f"{self.getInputModelFile()} {self.getInputReflFile()} "
+                  f"output.log={self.getLogFilePath(program)} "
+                  f"output.experiments={self.getOutputModelFile()} "
+                  f"output.reflections={self.getOutputReflFile()}")
 
         return params
 
@@ -161,7 +164,8 @@ class CliBase(EdBaseProtocol):
                               expertLevel=pwprot.LEVEL_ADVANCED)
         group.addParam('commandLineInput', pwprot.StringParam,
                        default='',
-                       help="Anything added here will be added at the end of the command line")
+                       help="Anything added here will be added at the "
+                       "end of the command line")
 
     def _getCommandLineInput(self):
         if self.commandLineInput.get():
@@ -172,50 +176,64 @@ class CliBase(EdBaseProtocol):
 
 class RefineParamsBase(EdBaseProtocol):
 
-    # -------------------------- DEFINE param functions -----------------------
+    # -------------------------- DEFINE param functions ----------------------
 
     def _defineParametrisations(self, form):
         group = form.addGroup('Model parametrisation')
 
         group.addHidden('beamFixAll', pwprot.BooleanParam,
                         label='Fix all beam parameters?', default=False,
-                        help="Whether to fix beam parameters. By default, in_spindle_plane is selected, and one of the two"
-                        "parameters is fixed. If a goniometer is present this leads to the beam orientation being restricted to a"
-                        "direction in the initial spindle-beam plane. Wavelength is also fixed by default, to allow refinement of"
-                        "the unit cell volume.",
+                        help="Whether to fix beam parameters. By default, "
+                        "in_spindle_plane is selected, and one of the two "
+                        "parameters is fixed. If a goniometer is present "
+                        "this leads to the beam orientation being restricted"
+                        " to a direction in the initial spindle-beam plane. "
+                        "Wavelength is also fixed by default, to allow "
+                        "refinement of the unit cell volume.",
                         )
 
         group.addParam('beamFixInSpindlePlane', pwprot.BooleanParam,
                        label='Fix beam in spindle plane?', default=True,
                        condition="beamFixAll==False",
-                       help="Whether to fix beam parameters. By default, in_spindle_plane is selected, and one of the two"
-                       "parameters is fixed. If a goniometer is present this leads to the beam orientation being restricted to a"
-                       "direction in the initial spindle-beam plane. Wavelength is also fixed by default, to allow refinement of"
-                       "the unit cell volume.",
+                       help="Whether to fix beam parameters. By default, "
+                       "in_spindle_plane is selected, and one of the two "
+                       "parameters is fixed. If a goniometer is present this "
+                       "leads to the beam orientation being restricted to a "
+                       "direction in the initial spindle-beam plane. "
+                       "Wavelength is also fixed by default, to allow "
+                       "refinement of the unit cell volume.",
                        )
 
         group.addParam('beamFixOutSpindlePlane', pwprot.BooleanParam,
                        label='Fix beam out of spindle plane?', default=False,
                        condition="beamFixAll==False",
-                       help="Whether to fix beam parameters. By default, in_spindle_plane is selected, and one of the two"
-                       "parameters is fixed. If a goniometer is present this leads to the beam orientation being restricted to"
-                       "a direction in the initial spindle-beam plane. Wavelength is also fixed by default, to allow refinement"
-                       "of the unit cell volume.",
+                       help="Whether to fix beam parameters. By default, "
+                       "in_spindle_plane is selected, and one of the two "
+                       "parameters is fixed. If a goniometer is present "
+                       "this leads to the beam orientation being restricted "
+                       "to a direction in the initial spindle-beam plane. "
+                       "Wavelength is also fixed by default, to allow "
+                       "refinement of the unit cell volume.",
                        )
 
         group.addParam('beamFixWavelength', pwprot.BooleanParam,
                        label='Fix beam wavelength?', default=True,
                        condition="beamFixAll==False",
-                       help="Whether to fix beam parameters. By default, in_spindle_plane is selected, and one of the two"
-                       "parameters is fixed. If a goniometer is present this leads to the beam orientation being restricted"
-                       "to a direction in the initial spindle-beam plane. Wavelength is also fixed by default, to allow"
+                       help="Whether to fix beam parameters. By default, "
+                       "in_spindle_plane is selected, and one of the two "
+                       "parameters is fixed. If a goniometer is present this "
+                       "leads to the beam orientation being restricted to a "
+                       "direction in the initial spindle-beam plane. "
+                       "Wavelength is also fixed by default, to allow "
                        "refinement of the unit cell volume.",
                        )
 
         group.addParam('beamForceStatic', pwprot.BooleanParam,
-                       label='Force static parametrisation for the beam? (only applies to scan-varying refinement)',
+                       label="Force static parametrisation for the beam? "
+                       "(only applies to scan-varying refinement)",
                        default=True,
-                       help="Force a static parameterisation for the beam when doing scan-varying refinement",
+                       help="Force a static parametrisation for the beam "
+                       "when doing scan-varying refinement",
                        )
 
         group.addParam('crystalFixCell', pwprot.BooleanParam,
@@ -230,47 +248,54 @@ class RefineParamsBase(EdBaseProtocol):
 
         group.addHidden('detectorFixAll', pwprot.BooleanParam,
                         label='Fix all detector parameters?', default=False,
-                        help="Fix detector parameters. The translational parameters (position) may be set"
+                        help="Fix detector parameters. The translational "
+                        "parameters (position) may be set"
                         "separately to the orientation.",
                         )
 
         group.addParam('detectorFixPosition', pwprot.BooleanParam,
                        label='Fix detector position?', default=False,
-                       help="Fix detector parameters. The translational parameters (position) may be set"
+                       help="Fix detector parameters. The translational "
+                       "parameters (position) may be set"
                        "separately to the orientation.",
                        condition="detectorFixAll==False",
                        )
 
         group.addParam('detectorFixOrientation', pwprot.BooleanParam,
                        label='Fix detector orientation?', default=False,
-                       help="Fix detector parameters. The translational parameters (position) may be set"
+                       help="Fix detector parameters. The translational "
+                       "parameters (position) may be set"
                        "separately to the orientation.",
                        condition="detectorFixAll==False",
                        )
 
         group.addParam('detectorFixDistance', pwprot.BooleanParam,
                        label='Fix detector distance?', default=True,
-                       help="Fix detector parameters. The translational parameters (position) may be set"
+                       help="Fix detector parameters. The translational "
+                       "parameters (position) may be set"
                        "separately to the orientation.",
                        condition="detectorFixAll==False",
                        )
 
         group.addParam('goniometerFixInBeamPlane', pwprot.BooleanParam,
                        label='Fix goniometer in beam plane?', default=True,
-                       help="Whether to fix goniometer parameters. By default, fix all."
-                       "Alternatively the setting matrix can be constrained to allow"
-                       "rotation only within the spindle-beam plane or to allow"
-                       "rotation only around an axis that lies in that plane. Set to"
-                       "None to refine the in two orthogonal directions.",
+                       help="Whether to fix goniometer parameters. By default,"
+                       " fix all. Alternatively the setting matrix can be "
+                       "constrained to allow rotation only within the spindle-"
+                       "beam plane or to allow rotation only around an axis "
+                       "that lies in that plane. Set to None to refine the in "
+                       "two orthogonal directions.",
                        )
 
         group.addParam('goniometerFixOutBeamPlane', pwprot.BooleanParam,
-                       label='Fix goniometer out of beam plane?', default=True,
-                       help="Whether to fix goniometer parameters. By default, fix all."
-                       "Alternatively the setting matrix can be constrained to allow"
-                       "rotation only within the spindle-beam plane or to allow"
-                       "rotation only around an axis that lies in that plane. Set to"
-                       "None to refine the in two orthogonal directions.",
+                       label='Fix goniometer out of beam plane?',
+                       default=True,
+                       help="Whether to fix goniometer parameters. By default,"
+                       " fix all. Alternatively the setting matrix can be "
+                       "constrained to allow rotation only within the spindle-"
+                       "beam plane or to allow rotation only around an axis "
+                       "that lies in that plane. Set to None to refine the in "
+                       "two orthogonal directions.",
                        )
 
     def getBeamFixParams(self):
@@ -288,8 +313,7 @@ class RefineParamsBase(EdBaseProtocol):
             if self.beamFixWavelength:
                 beamfix += "*"
             beamfix += "wavelength'"
-        beamfixparams = " refinement.parameterisation.beam.fix={}".format(
-            "".join(beamfix))
+        beamfixparams = f" refinement.parameterisation.beam.fix={''.join(beamfix)}"
         return beamfixparams
 
     def getCrystalFixParams(self):
@@ -304,8 +328,7 @@ class RefineParamsBase(EdBaseProtocol):
             if self.crystalFixOrientation:
                 crystalfix += "*"
             crystalfix += "orientation'"
-        crystalfixparams = " refinement.parameterisation.crystal.fix={}".format(
-            ''.join(crystalfix))
+        crystalfixparams = f" refinement.parameterisation.crystal.fix={''.join(crystalfix)}"
         return crystalfixparams
 
     def getDetectorFixParams(self):
@@ -323,8 +346,7 @@ class RefineParamsBase(EdBaseProtocol):
             if self.detectorFixDistance:
                 detectorfix += "*"
             detectorfix += "distance'"
-        detectorfixparams = " refinement.parameterisation.detector.fix={}".format(
-            ''.join(detectorfix))
+        detectorfixparams = f" refinement.parameterisation.detector.fix={''.join(detectorfix)}"
         return detectorfixparams
 
     def getGonioFixParams(self):
@@ -339,8 +361,7 @@ class RefineParamsBase(EdBaseProtocol):
             if self.goniometerFixOutBeamPlane:
                 goniofix += "*"
             goniofix += "out_beam_plane'"
-        goniofixparams = " refinement.parameterisation.goniometer.fix={}".format(
-            "".join(goniofix))
+        goniofixparams = f" refinement.parameterisation.goniometer.fix={''.join(goniofix)}"
         return goniofixparams
 
 
@@ -349,12 +370,14 @@ class HtmlBase(EdBaseProtocol):
         # Add a section for creating an html report
         form.addSection('HTML report')
         form.addParam('makeReport', pwprot.BooleanParam,
-                      label='Do you want to create an HTML report for the output?', default=False,
+                      label='Do you want to create an HTML report for the output?',
+                      default=False,
                       help="",
                       )
 
         form.addParam('showReport', pwprot.BooleanParam,
-                      label='Do you want to open the report as soon as the protocol is done?', default=False,
+                      label='Do you want to open the report as soon as the protocol is done?',
+                      default=False,
                       help="",
                       condition="makeReport",
                       )
@@ -367,7 +390,12 @@ class HtmlBase(EdBaseProtocol):
                        label='External dependencies: ',
                        choices=self.extDepOptions,
                        default=REMOTE,
-                       help="Whether to use remote external dependencies (files relocatable but requires an internet connection), local (does not require internet connection but files may not be relocatable) or embed all external dependencies (inflates the html file size).",
+                       help="Whether to use remote external dependencies "
+                       "(files relocatable but requires an internet "
+                       "connection), local (does not require internet "
+                       "connection but files may not be relocatable) or "
+                       "embed all external dependencies (inflates the html"
+                       " file size).",
                        )
 
         group.addParam('pixelsPerBin', pwprot.IntParam,
@@ -382,7 +410,9 @@ class HtmlBase(EdBaseProtocol):
                        default=None,
                        allowsNull=True,
                        expertLevel=pwprot.LEVEL_ADVANCED,
-                       help="Magnitude in pixels of shifts mapped to the extreme colours in the heatmap plots centroid_diff_x and centroid_diff_y",
+                       help="Magnitude in pixels of shifts mapped to the "
+                       "extreme colours in the heatmap plots centroid_diff_x"
+                       " and centroid_diff_y",
                        )
 
         # Allow adding anything else with command line syntax
@@ -391,7 +421,8 @@ class HtmlBase(EdBaseProtocol):
                               condition="makeReport",)
         group.addParam('commandLineInputReport', pwprot.StringParam,
                        default='',
-                       help="Anything added here will be added at the end of the command line")
+                       help="Anything added here will be added at the end"
+                       " of the command line")
 
     # -------------------------- STEPS functions -------------------------------
 
@@ -412,7 +443,11 @@ class HtmlBase(EdBaseProtocol):
     def _prepCommandlineReport(self):
         "Create the command line input to run dials programs"
         # Input basic parameters
-        params = f"{DialsProtBase.getOutputModelFile(self)} {DialsProtBase.getOutputReflFile(self)} output.html={HtmlBase.getOutputHtmlFile(self)} output.external_dependencies={self.extDepOptions[self.externalDependencies.get()]}"
+        params = (f"{DialsProtBase.getOutputModelFile(self)} "
+                  f"{DialsProtBase.getOutputReflFile(self)} "
+                  f"output.html={HtmlBase.getOutputHtmlFile(self)} "
+                  f"output.external_dependencies="
+                  f"{self.extDepOptions[self.externalDependencies.get()]}")
 
         if self.pixelsPerBin.get():
             params += f" pixels_per_bin={self.pixelsPerBin.get()}"
@@ -434,7 +469,8 @@ class PhilBase(EdBaseProtocol):
                       allowsNull=True,
                       default=None,
                       label="Add phil file",
-                      help="Enter the path to a phil file that you want to add to include.")
+                      help="Enter the path to a phil file that you want "
+                      "to add to include.")
 
     def _addPhilPath(self):
         if self.extraPhilPath.get():
