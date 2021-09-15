@@ -26,17 +26,16 @@
 # *
 # **************************************************************************
 
-import os
-
 import pyworkflow.protocol as pwprot
-import dials.utils as dutils
+import dials.convert as dconv
 
 from pwed.objects import ExportFile
 from pwed.protocols import EdProtExport
+from dials.protocols import DialsProtBase, PhilBase, CliBase
 from dials.constants import *
 
 
-class DialsProtExport(EdProtExport):
+class DialsProtExport(EdProtExport, DialsProtBase):
     """ Protocol for exporting results using Dials
     """
 
@@ -64,53 +63,65 @@ class DialsProtExport(EdProtExport):
                                'xds_ascii', 'json'],
                       default=MTZ,
                       display=pwprot.EnumParam.DISPLAY_HLIST,
-                      help="The output file format. Please note that XDS_ASCII is incompatible with scaled data."
+                      help="The output file format. Please note that "
+                      "XDS_ASCII is incompatible with scaled data."
                       )
 
         group = form.addGroup('mtz', condition=f"exportFormat=={MTZ}")
 
         group.addParam('mtzCombinePartials', pwprot.BooleanParam,
                        label='Combine partial reflections?', default=True,
-                       help="Combine partials that have the same partial id into one reflection, with an updated partiality given by the sum of the individual partialities.",
+                       help="Combine partials that have the same partial "
+                       "id into one reflection, with an updated partiality "
+                       "given by the sum of the individual partialities.",
                        )
 
         group.addParam('mtzPartialityThreshold', pwprot.FloatParam,
                        label='Partiality threshold',
-                       default=0.99, allowsNull=True, condition="mtzCombinePartials==True",
-                       help="All reflections with partiality values above the partiality threshold will be retained. This is done after any combination of partials if applicable.",
+                       default=0.99, allowsNull=True,
+                       condition="mtzCombinePartials==True",
+                       help="All reflections with partiality values above "
+                       "the partiality threshold will be retained. This is "
+                       "done after any combination of partials if applicable.",
                        )
 
         group.addParam('mtzMinIsigi', pwprot.FloatParam,
                        label='min I/Sig(I)',
                        default=-5, allowsNull=True,
-                       help="Exclude reflections with unfeasible values of I/Sig(I)",
+                       help="Exclude reflections with unfeasible "
+                       "values of I/Sig(I)",
                        )
 
         group.addParam('mtzForceStaticModel', pwprot.BooleanParam,
                        label='Force static model?', default=False,
-                       help="Force program to use static model even if scan varying is present",
+                       help="Force program to use static model even if "
+                       "scan varying is present",
                        )
 
         group.addParam('mtzFilter_ice', pwprot.BooleanParam, default=False,
                        label='Filter ice?',
-                       help="Filter out reflections at typical ice ring resolutions before max_cell estimation.")
+                       help="Filter out reflections at typical ice ring "
+                       "resolutions before max_cell estimation.")
 
         group.addParam('mtzDMin', pwprot.FloatParam,
                        label='d_min',
                        default=None, allowsNull=True,
-                       help="Filter out reflections with d-spacing below d_min",
+                       help="Filter out reflections with d-spacing "
+                       "below d_min",
                        )
 
         group.addParam('mtzHklout', pwprot.StringParam,
                        label='Output file',
                        default="",
-                       help="The output MTZ filename, defaults to integrated_<jobID>.mtz",
+                       help="The output MTZ filename, defaults to "
+                       "integrated_<jobID>.mtz",
                        )
 
         group.addParam('mtzCrystalName', pwprot.StringParam,
                        label='Crystal name',
                        default='XTAL',
-                       help="The name of the crystal, for the mtz file metadata",
+                       help="The name of the crystal "
+                       "for the mtz file metadata",
                        )
 
         group = form.addGroup(
@@ -130,7 +141,8 @@ class DialsProtExport(EdProtExport):
 
         group.addParam('sadabsPredict', pwprot.BooleanParam,
                        label='Predict from static model', default=False,
-                       help="Compute centroids with static model, not observations",
+                       help="Compute centroids with static model, "
+                       "not observations",
                        )
 
         group = form.addGroup(
@@ -150,7 +162,8 @@ class DialsProtExport(EdProtExport):
         group.addParam('nxsInstrumentShortName', pwprot.StringParam,
                        label='Short instrument name',
                        default='Unknown',
-                       help="Short name for instrument/beamline, perhaps the acronym",
+                       help="Short name for instrument/beamline, "
+                       "perhaps the acronym",
                        )
 
         group.addParam('nxsSourceName', pwprot.StringParam,
@@ -171,7 +184,8 @@ class DialsProtExport(EdProtExport):
         group.addParam('mmcifHklout', pwprot.StringParam,
                        label='Output name',
                        default='',
-                       help="The output CIF file, defaults to <jobID>_integrated.cif.",
+                       help="The output CIF file, defaults to "
+                       "<jobID>_integrated.cif.",
                        )
 
         group = form.addGroup(
@@ -197,25 +211,17 @@ class DialsProtExport(EdProtExport):
         group.addParam('jsonNDigits', pwprot.IntParam,
                        label='Number of decimal places?',
                        default=6, allowsNull=True,
-                       help="Number of decimal places to be used for representing the reciprocal lattice points.",
+                       help="Number of decimal places to be used for "
+                       "representing the reciprocal lattice points.",
                        )
 
         # Allow an easy way to import a phil file with parameters
-        form.addParam('extraPhilPath', pwprot.PathParam,
-                      expertLevel=pwprot.LEVEL_ADVANCED,
-                      allowsNull=True,
-                      default=None,
-                      label="Add phil file",
-                      help="Enter the path to a phil file that you want to add to include.")
+        PhilBase._definePhilParams(self, form)
 
         # Allow adding anything else with command line syntax
-        group = form.addGroup('Raw command line input parameters',
-                              expertLevel=pwprot.LEVEL_ADVANCED)
-        group.addParam('commandLineInput', pwprot.StringParam,
-                       default='',
-                       help="Anything added here will be added at the end of the command line")
+        CliBase._defineCliParams(self, form)
 
-   # -------------------------- INSERT functions ------------------------------
+    # -------------------------- INSERT functions ----------------------------
 
     def _insertAllSteps(self):
         self._insertFunctionStep(
@@ -223,19 +229,19 @@ class DialsProtExport(EdProtExport):
         self._insertFunctionStep('exportStep')
         self._insertFunctionStep('createOutputStep')
 
-    # -------------------------- STEPS functions -------------------------------
+    # -------------------------- STEPS functions -----------------------------
     def convertInputStep(self, inputSpotId):
         inputSet = self.inputSet.get()
         self.info(f"Number of spots: {inputSet.getSize()}")
         # Write new model and/or reflection file if no was supplied from set
         if self._checkWriteModel():
-            self.writeJson(inputSet, self.getInputModelFile())
+            dconv.writeJson(inputSet, self.getInputModelFile())
         if self._checkWriteRefl():
-            self.writeRefl(inputSet, self.getInputReflFile())
+            dconv.writeRefl(inputSet, self.getInputReflFile())
 
     def exportStep(self):
         program = 'dials.export'
-        arguments = self._prepCommandline(program)
+        arguments = self._prepareCommandline(program)
         try:
             self.runJob(program, arguments)
         except:
@@ -250,7 +256,7 @@ class DialsProtExport(EdProtExport):
         outputSet.write()
         self._defineOutputs(exportedFileSet=outputSet)
 
-        # -------------------------- INFO functions -------------------------------
+    # -------------------------- INFO functions ------------------------------
     def _validate(self):
         errors = []
         return errors
@@ -261,20 +267,69 @@ class DialsProtExport(EdProtExport):
             summary.append(self.getDatasets())
 
         return summary
+    # -------------------------- BASE methods to be overridden ---------------
+
+    INPUT_EXPT_FILENAME = 'integrated_model.expt'
+    INPUT_REFL_FILENAME = 'integrated_reflections.refl'
+
+    def _initialParams(self, program):
+        # Base method that can more easily be overridden when needed
+        params = (f"{self.getInputModelFile()} {self.getInputReflFile()} "
+                  f"{self.getOutput()} "
+                  f"output.log={self.getLogFilePath(program)}")
+
+        return params
+
+    def _extraParams(self):
+        params = ""
+        if self.exportFormat.get() is MTZ:
+            if self.mtzCombinePartials:
+                params += " mtz.combine_partials=True"
+
+            params += (f" mtz.partiality_threshold="
+                       f"{self.mtzPartialityThreshold.get()}")
+
+            params += f" mtz.min_isigi={self.mtzMinIsigi.get()}"
+
+            if self.mtzForceStaticModel:
+                params += " mtz.force_static_model=True"
+
+            if self.mtzFilter_ice:
+                params += " mtz.filter_ice_rings=True"
+
+            if self.mtzDMin.get() is not None:
+                params += f" mtz.d_min={self.mtzDMin.get()}"
+
+            params += f" mtz.crystal_name={self.mtzCrystalName.get()}"
+
+        elif self.exportFormat.get() is SADABS:
+            if self.sadabsRun.get() != 1:
+                params += f" sadabs.run={self.sadabsRun.get()}"
+
+            if self.sadabsPredict:
+                params += " sadabs.predict=True"
+
+        elif self.exportFormat.get() is NXS:
+            params += (f" nxs.instrument_name="
+                       f"{self.nxsInstrumentName.get()}")
+
+            params += (f" nxs.instrument_short_name="
+                       f"{self.nxsInstrumentShortName.get()}")
+
+            params += f" nxs.source_name={self.nxsSourceName.get()}"
+
+            params += (f" nxs.source_short_name="
+                       f"{self.nxsSourceShortName.get()}")
+
+        elif self.exportFormat.get() is JSON:
+            if self.jsonCompact is False:
+                params += " json.compact=False"
+
+            if self.jsonNDigits.get() != 6:
+                params += f" json.n_digits={self.jsonNDigits.get()}"
+        return params
 
     # -------------------------- UTILS functions ------------------------------
-
-    def getInputModelFile(self):
-        if self.getSetModel():
-            return self.getSetModel()
-        else:
-            return self._getExtraPath('integrated_model.expt')
-
-    def getInputReflFile(self):
-        if self.getSetRefl():
-            return self.getSetRefl()
-        else:
-            return self._getExtraPath('integrated_reflections.refl')
 
     def getFormat(self):
         return self.exportFormat.get()
@@ -327,23 +382,6 @@ class DialsProtExport(EdProtExport):
 
         return self.outDir(name)
 
-    def existsPath(self, path):
-        return os.path.exists(path)
-
-    def getSetModel(self):
-        inputSet = self.inputSet.get()
-        if self.existsPath(inputSet.getDialsModel()):
-            return inputSet.getDialsModel()
-        else:
-            return None
-
-    def getSetRefl(self):
-        inputSet = self.inputSet.get()
-        if self.existsPath(inputSet.getDialsRefl()):
-            return inputSet.getDialsRefl()
-        else:
-            return None
-
     def outDir(self, fn=None):
         if fn is None:
             return self._getExtraPath()
@@ -371,77 +409,3 @@ class DialsProtExport(EdProtExport):
                    xdsAsciiStr, jsonStr]
         outputString = f"format={formats[idx]} {nameStr[idx]}"
         return outputString
-
-    def getDatasets(self):
-        return dutils.getDatasets(self.getInputModelFile())
-
-    def getLogOutput(self):
-        logOutput = ''
-        return logOutput
-
-    def getExtraPhilsPath(self):
-        return self.extraPhilPath.get('').strip()
-
-    def _checkWriteModel(self):
-        return self.getSetModel() != self.getInputModelFile()
-
-    def _checkWriteRefl(self):
-        return self.getSetRefl() != self.getInputReflFile()
-
-    def _prepCommandline(self, program):
-        "Create the command line input to run dials programs"
-
-        # Input basic parameters
-        logPath = f"{self._getLogsPath()}/{program}.log"
-        params = f"{self.getInputModelFile()} {self.getInputReflFile()} {self.getOutput()} output.log={logPath}"
-
-        # Update the command line with additional parameters
-        if self.exportFormat.get() is MTZ:
-            if self.mtzCombinePartials:
-                params += " mtz.combine_partials=True"
-
-            params += f" mtz.partiality_threshold={self.mtzPartialityThreshold.get()}"
-
-            params += f" mtz.min_isigi={self.mtzMinIsigi.get()}"
-
-            if self.mtzForceStaticModel:
-                params += " mtz.force_static_model=True"
-
-            if self.mtzFilter_ice:
-                params += " mtz.filter_ice_rings=True"
-
-            if self.mtzDMin.get() is not None:
-                params += f" mtz.d_min={self.mtzDMin.get()}"
-
-            params += f" mtz.crystal_name={self.mtzCrystalName.get()}"
-
-        elif self.exportFormat.get() is SADABS:
-            if self.sadabsRun.get() != 1:
-                params += f" sadabs.run={self.sadabsRun.get()}"
-
-            if self.sadabsPredict:
-                params += " sadabs.predict=True"
-
-        elif self.exportFormat.get() is NXS:
-            params += f" nxs.instrument_name={self.nxsInstrumentName.get()}"
-
-            params += f" nxs.instrument_short_name={self.nxsInstrumentShortName.get()}"
-
-            params += f" nxs.source_name={self.nxsSourceName.get()}"
-
-            params += f" nxs.source_short_name={self.nxsSourceShortName.get()}"
-
-        elif self.exportFormat.get() is JSON:
-            if self.jsonCompact is False:
-                params += " json.compact=False"
-
-            if self.jsonNDigits.get() != 6:
-                params += f" json.n_digits={self.jsonNDigits.get()}"
-
-        if self.extraPhilPath.get():
-            params += f" {self.getExtraPhilsPath()}"
-
-        if self.commandLineInput.get():
-            params += f" {self.commandLineInput.get()}"
-
-        return params
