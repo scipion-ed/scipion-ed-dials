@@ -56,13 +56,13 @@ def writeRestraintsPhil(fn='restraints.phil', values=None, sigmas=None):
         return
 
     contentString = [
-        "                        values={}".format(fixInput(values))
+        f"                        values={fixInput(values)}"
     ]
     # Only add the string with sigmas if there are any specific sigmas to add
     if sigmas is not None:
         contentString += [
-            "                        sigmas={}".format(fixInput(sigmas))]
-
+            f"                        sigmas={fixInput(sigmas)}"]
+    finString = '\n'.join(contentString)
     template = [
         "refinement",
         "{",
@@ -76,7 +76,7 @@ def writeRestraintsPhil(fn='restraints.phil', values=None, sigmas=None):
         "                {",
         "                    tie_to_target",
         "                    {",
-        "{}".format("\n".join(contentString)),
+        f"{finString}",
         "                    }",
         "                }",
         "            }",

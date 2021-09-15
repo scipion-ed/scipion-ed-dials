@@ -26,24 +26,20 @@
 # *
 # **************************************************************************
 
-import os
-import re
-from glob import glob
-from pathlib import Path
 import json
 import textwrap
 
 import pyworkflow.protocol as pwprot
 import dials.utils as dutils
 
-from pwed.objects import DiffractionImage, SetOfDiffractionImages, DiffractionSpot, SetOfSpots, IndexedSpot, SetOfIndexedSpots
+from pwed.objects import IndexedSpot
 from pwed.protocols import EdProtIndexSpots
-from pwed.convert import find_subranges
-from dials.convert import writeJson, readRefl, writeRefl, writeRefinementPhil, copyDialsFile
+from dials.protocols import DialsProtBase, HtmlBase, RefineParamsBase
+from dials.convert import readRefl, copyDialsFile
 from dials.constants import *
 
 
-class DialsProtIndexSpots(EdProtIndexSpots):
+class DialsProtIndexSpots(EdProtIndexSpots, DialsProtBase):
     """ Protocol for indexing spots using Dials
     """
     _label = 'index'
@@ -53,7 +49,7 @@ class DialsProtIndexSpots(EdProtIndexSpots):
     def _defineParams(self, form):
         # EdProtIndexSpots._defineParams(self, form)
 
-        # Check which parts of indexing to perform. Reindexing is probably to small to warrant
+        # Check which parts of indexing to perform. Reindexing is probably too small to warrant
         # its own protocol.
         form.addSection(label='Input')
 
@@ -158,78 +154,7 @@ class DialsProtIndexSpots(EdProtIndexSpots):
                        'so this is not recommended for typical use.'
                        )
 
-        group = form.addGroup('Model parametrisation',
-                              condition='doIndex')
-
-        group.addParam('beamFixInSpindlePlane', pwprot.BooleanParam,
-                       label='Fix beam in spindle plane?', default=True,
-                       help="Whether to fix beam parameters. By default, in_spindle_plane is selected, and one of the two"
-                       "parameters is fixed. If a goniometer is present this leads to the beam orientation being restricted to a"
-                       "direction in the initial spindle-beam plane. Wavelength is also fixed by default, to allow refinement of"
-                       "the unit cell volume.",
-                       )
-
-        group.addParam('beamFixOutSpindlePlane', pwprot.BooleanParam,
-                       label='Fix beam out of spindle plane?', default=False,
-                       help="Whether to fix beam parameters. By default, in_spindle_plane is selected, and one of the two"
-                       "parameters is fixed. If a goniometer is present this leads to the beam orientation being restricted to"
-                       "a direction in the initial spindle-beam plane. Wavelength is also fixed by default, to allow refinement"
-                       "of the unit cell volume.",
-                       )
-
-        group.addParam('beamFixWavelength', pwprot.BooleanParam,
-                       label='Fix beam wavelength?', default=True,
-                       help="Whether to fix beam parameters. By default, in_spindle_plane is selected, and one of the two"
-                       "parameters is fixed. If a goniometer is present this leads to the beam orientation being restricted"
-                       "to a direction in the initial spindle-beam plane. Wavelength is also fixed by default, to allow"
-                       "refinement of the unit cell volume.",
-                       )
-
-        group.addParam('crystalFixCell', pwprot.BooleanParam,
-                       label='Crystal: Fix cell?', default=False,
-                       help="Fix crystal parameters",
-                       )
-
-        group.addParam('crystalFixOrientation', pwprot.BooleanParam,
-                       label='Crystal: Fix orientation?', default=False,
-                       help="Fix crystal parameters",
-                       )
-
-        group.addParam('detectorFixPosition', pwprot.BooleanParam,
-                       label='Fix detector position?', default=False,
-                       help="Fix detector parameters. The translational parameters (position) may be set"
-                       "separately to the orientation.",
-                       )
-
-        group.addParam('detectorFixOrientation', pwprot.BooleanParam,
-                       label='Fix detector orientation?', default=False,
-                       help="Fix detector parameters. The translational parameters (position) may be set"
-                       "separately to the orientation.",
-                       )
-
-        group.addParam('detectorFixDistance', pwprot.BooleanParam,
-                       label='Fix detector distance?', default=True,
-                       help="Fix detector parameters. The translational parameters (position) may be set"
-                       "separately to the orientation.",
-                       )
-        
-        group.addParam('goniometerFixInBeamPlane', pwprot.BooleanParam,
-                       label='Fix goniometer in beam plane?', default=True,
-                       help="Whether to fix goniometer parameters. By default, fix all."
-                       "Alternatively the setting matrix can be constrained to allow"
-                       "rotation only within the spindle-beam plane or to allow"
-                       "rotation only around an axis that lies in that plane. Set to"
-                       "None to refine the in two orthogonal directions.",
-                       )
-
-        group.addParam('goniometerFixOutBeamPlane', pwprot.BooleanParam,
-                       label='Fix goniometer out of beam plane?', default=True,
-                       help="Whether to fix goniometer parameters. By default, fix all."
-                       "Alternatively the setting matrix can be constrained to allow"
-                       "rotation only within the spindle-beam plane or to allow"
-                       "rotation only around an axis that lies in that plane. Set to"
-                       "None to refine the in two orthogonal directions.",
-                       )
+        RefineParamsBase._defineParametrisations(self, form)
 
         group = form.addGroup('Refinery',
                               expertLevel=pwprot.LEVEL_ADVANCED)
@@ -253,28 +178,29 @@ class DialsProtIndexSpots(EdProtIndexSpots):
         group.addParam('refineBravNproc', pwprot.IntParam,
                        default=4, label="How many processors do you want to use?",
                        help="The number of processes to use.")
-        
+
         group.addParam('copyBeamFix', pwprot.BooleanParam,
-                    default=False,
-                    label="Copy beam parametrisation from indexing?",
-                    help="Do you want to use the indexing parametrisation of the beam instead of the default parametrisation for Bravais setting refinement?",)
-        
+                       default=False,
+                       label="Copy beam parametrisation from indexing?",
+                       help="Do you want to use the indexing parametrisation of the beam instead of the default parametrisation for Bravais setting refinement?",)
+
         group.addParam('copyCrystalFix', pwprot.BooleanParam,
-                    default=False,
-                    label="Copy crystal parametrisation from indexing?",
-                    help="Do you want to use the indexing parametrisation of the crystal instead of the default parametrisation for Bravais setting refinement?",)
-        
+                       default=False,
+                       label="Copy crystal parametrisation from indexing?",
+                       help="Do you want to use the indexing parametrisation of the crystal instead of the default parametrisation for Bravais setting refinement?",)
+
         group.addParam('copyDetectorFix', pwprot.BooleanParam,
-                    default=False,
-                    label="Copy detector parametrisation from indexing?",
-                    help="Do you want to use the indexing parametrisation of the detector instead of the default parametrisation for Bravais setting refinement?",)
-        
+                       default=False,
+                       label="Copy detector parametrisation from indexing?",
+                       help="Do you want to use the indexing parametrisation of the detector instead of the default parametrisation for Bravais setting refinement?",)
+
         group.addParam('copyGonioFix', pwprot.BooleanParam,
-                    default=False,
-                    label="Copy goniometer parametrisation from indexing?",
-                    help="Do you want to use the indexing parametrisation of the goniometer instead of the default parametrisation for Bravais setting refinement?",)
+                       default=False,
+                       label="Copy goniometer parametrisation from indexing?",
+                       help="Do you want to use the indexing parametrisation of the goniometer instead of the default parametrisation for Bravais setting refinement?",)
 
         # Allow an easy way to import a phil file with parameters
+        # Not reusing from base protocols to allow different ones for each function
         group = form.addGroup('Add parameters with phil files',
                               expertLevel=pwprot.LEVEL_ADVANCED,)
         group.addParam('extraPhilPathIndexing', pwprot.PathParam,
@@ -310,51 +236,7 @@ class DialsProtIndexSpots(EdProtIndexSpots):
                        help="Anything added here will be added at the end of the command line for reindexing")
 
         # Add a section for creating an html report
-        form.addSection('HTML report')
-        form.addParam('makeReport', pwprot.BooleanParam,
-                      label='Do you want to create an HTML report for the output?', default=False,
-                      help="",
-                      )
-
-        form.addParam('showReport', pwprot.BooleanParam,
-                      label='Do you want to open the report as soon as the protocol is done?', default=False,
-                      help="",
-                      condition="makeReport",
-                      )
-
-        group = form.addGroup('Parameters',
-                              condition="makeReport",)
-
-        self.extDepOptions = ['remote', 'local', 'embed']
-        group.addParam('externalDependencies', pwprot.EnumParam,
-                       label='External dependencies: ',
-                       choices=self.extDepOptions,
-                       default=REMOTE,
-                       help="Whether to use remote external dependencies (files relocatable but requires an internet connection), local (does not require internet connection but files may not be relocatable) or embed all external dependencies (inflates the html file size).",
-                       )
-
-        group.addParam('pixelsPerBin', pwprot.IntParam,
-                       label='Pixels per bin',
-                       default=40,
-                       GE=1,
-                       allowsNull=True,
-                       )
-
-        group.addParam('centroidDiffMax', pwprot.FloatParam,
-                       label='Centroid diff max',
-                       default=None,
-                       allowsNull=True,
-                       expertLevel=pwprot.LEVEL_ADVANCED,
-                       help="Magnitude in pixels of shifts mapped to the extreme colours in the heatmap plots centroid_diff_x and centroid_diff_y",
-                       )
-
-        # Allow adding anything else with command line syntax
-        group = form.addGroup('HTML report command line parameters',
-                              expertLevel=pwprot.LEVEL_ADVANCED,
-                              condition="makeReport",)
-        group.addParam('commandLineInputReport', pwprot.StringParam,
-                       default='',
-                       help="Anything added here will be added at the end of the command line")
+        HtmlBase._defineHtmlParams(self, form)
 
    # -------------------------- INSERT functions ------------------------------
 
@@ -375,8 +257,8 @@ class DialsProtIndexSpots(EdProtIndexSpots):
     def convertInputStep(self, inputImgId, inputSpotId):
         inputImages = self.inputImages.get()
         inputSpots = self.inputSpots.get()
-        self.info("Number of images: %s" % inputImages.getSize())
-        self.info("Number of spots: %s" % inputSpots.getSpots())
+        self.info(f"Number of images: {inputImages.getSize()}")
+        self.info(f"Number of spots: {inputSpots.getSpots()}")
         # Write new model and/or reflection file if no was supplied from set
         if self._checkWriteModel():
             self.writeJson(inputImages, self.getInputModelFile())
@@ -409,35 +291,28 @@ class DialsProtIndexSpots(EdProtIndexSpots):
         except:
             self.info(self.getError())
 
-    def makeHtmlReportStep(self):
-        prog = 'dials.report'
-        arguments = self._prepCommandlineReport()
-        self.runJob(prog, arguments)
-        if self.showReport:
-            dutils._showHtmlReport(self.getOutputHtmlFile())
-
     def createOutputStep(self):
         # Find the most processed model file and reflection file and copy to output
-        if self.existsPath(self.getReindexedModelFile()):
+        if dutils.existsPath(self.getReindexedModelFile()):
             copyDialsFile(self.getReindexedModelFile(),
                           self.getOutputModelFile())
-        elif self.existsPath(self.getBravaisModelFile(self.getBravaisId())):
+        elif dutils.existsPath(self.getBravaisModelFile(self.getBravaisId())):
             copyDialsFile(self.getBravaisModelFile(self.getBravaisId()),
                           self.getOutputModelFile())
-        elif self.existsPath(self.getIndexedModelFile()):
+        elif dutils.existsPath(self.getIndexedModelFile()):
             copyDialsFile(self.getIndexedModelFile(),
                           self.getOutputModelFile())
 
-        if self.existsPath(self.getReindexedReflFile()):
+        if dutils.existsPath(self.getReindexedReflFile()):
             copyDialsFile(self.getReindexedReflFile(),
                           self.getOutputReflFile())
-        elif self.existsPath(self.getIndexedReflFile()):
+        elif dutils.existsPath(self.getIndexedReflFile()):
             copyDialsFile(self.getIndexedReflFile(),
                           self.getOutputReflFile())
 
             # Check that the indexing created proper output
-        assert(self.existsPath(self.getOutputReflFile()))
-        assert(self.existsPath(self.getOutputModelFile()))
+        assert(dutils.existsPath(self.getOutputReflFile()))
+        assert(dutils.existsPath(self.getOutputModelFile()))
 
         # TODO: Add Diffraction images as well
         outputSet = self._createSetOfIndexedSpots()
@@ -483,32 +358,25 @@ class DialsProtIndexSpots(EdProtIndexSpots):
 
     def _summary(self):
         summary = []
-        if self.getDatasets() not in (None, ''):
-            summary.append(self.getDatasets())
+        if dutils.getDatasets(self) not in (None, ''):
+            summary.append(dutils.getDatasets(self))
 
         return summary
+
+    # -------------------------- BASE methods to be overridden -----------------
+
+    INPUT_EXPT_FILENAME = 'imported.expt'
+    OUTPUT_EXPT_FILENAME = 'indexed.expt'
+    INPUT_REFL_FILENAME = 'strong.refl'
+    OUTPUT_REFL_FILENAME = 'indexed.refl'
+
     # -------------------------- UTILS functions ------------------------------
-
-    def getInputModelFile(self):
-        if self.getSetModel():
-            return self.getSetModel()
-        else:
-            return self._getExtraPath('imported.expt')
-
-    def getInputReflFile(self):
-        if self.getSetRefl():
-            return self.getSetRefl()
-        else:
-            return self._getExtraPath('strong.refl')
 
     def getIndexedModelFile(self):
         return self._getTmpPath('indexed.expt')
 
     def getIndexedReflFile(self):
         return self._getTmpPath('indexed.refl')
-
-    def getDatasets(self):
-        return dutils.getDatasets(self.getInputModelFile())
 
     def getLogOutput(self):
         logOutput = ''
@@ -529,7 +397,7 @@ class DialsProtIndexSpots(EdProtIndexSpots):
         except FileNotFoundError:
             indexOutput = None
         if indexOutput not in (None, ''):
-            indexOut = "\n{}".format(textwrap.dedent(indexOutput))
+            indexOut = f"\n{textwrap.dedent(indexOutput)}"
         else:
             indexOut = indexOutput
         return indexOut
@@ -544,7 +412,7 @@ class DialsProtIndexSpots(EdProtIndexSpots):
         except FileNotFoundError:
             bravaisOutput = None
         if bravaisOutput not in (None, ''):
-            bravaisOut = "\n{}".format(textwrap.dedent(bravaisOutput))
+            bravaisOut = f"\n{textwrap.dedent(bravaisOutput)}"
         else:
             bravaisOut = bravaisOutput
         return bravaisOut
@@ -565,7 +433,7 @@ class DialsProtIndexSpots(EdProtIndexSpots):
             return keys[0]
 
     def getBravaisModelFile(self, fileId):
-        fn = "bravais_setting_{}.expt".format(fileId)
+        fn = f"bravais_setting_{fileId}.expt"
         return self.getBravaisPath(fn)
 
     def getChangeOfBasisOp(self, fileId):
@@ -585,7 +453,7 @@ class DialsProtIndexSpots(EdProtIndexSpots):
 
     def getBravaisSummary(self):
         fn = self.getBravaisPath('bravais_summary.json')
-        if self.existsPath(fn):
+        if dutils.existsPath(fn):
             with open(fn) as f:
                 summary = json.load(f)
             return summary
@@ -598,16 +466,8 @@ class DialsProtIndexSpots(EdProtIndexSpots):
     def getReindexedReflFile(self):
         return self._getTmpPath('reindexed.refl')
 
-    def getOutputModelFile(self):
-        return self._getExtraPath('indexed.expt')
-
-    def getOutputReflFile(self):
-        return self._getExtraPath('indexed.refl')
-
-    def getOutputHtmlFile(self):
-        return self._getExtraPath('dials.report.html')
-
     # Placeholder for using phils as default
+
     def getPhilPath(self):
         return self._getTmpPath('index.phil')
 
@@ -621,103 +481,6 @@ class DialsProtIndexSpots(EdProtIndexSpots):
     def getExtraPhilsPathReindexing(self):
         return self.extraPhilPathReindexing.get('').strip()
 
-    def existsPath(self, path):
-        return os.path.exists(path)
-
-    def getSetModel(self):
-        inputImages = self.inputImages.get()
-        inputSpots = self.inputSpots.get()
-        if self.existsPath(inputSpots.getDialsModel()):
-            return inputSpots.getDialsModel()
-        elif self.existsPath(inputImages.getDialsModel()):
-            return inputImages.getDialsModel()
-        else:
-            return None
-
-    def getSetRefl(self):
-        inputImages = self.inputImages.get()
-        inputSpots = self.inputSpots.get()
-        if self.existsPath(inputSpots.getDialsRefl()):
-            return inputSpots.getDialsRefl()
-        elif self.existsPath(inputImages.getDialsRefl()):
-            return inputImages.getDialsRefl()
-        else:
-            return None
-
-    def getLogFilePath(self, program='dials.index'):
-        logPath = "{}/{}.log".format(self._getLogsPath(), program)
-        return logPath
-    
-    def getBeamFixParams(self):
-        beamfix = []
-        if self.beamFixInSpindlePlane and self.beamFixOutSpindlePlane and self.beamFixWavelength:
-            beamfix += "'*all in_spindle_plane out_spindle_plane wavelength'"
-        else:
-            beamfix += "'all "
-            if self.beamFixInSpindlePlane:
-                beamfix += "*"
-            beamfix += "in_spindle_plane "
-            if self.beamFixOutSpindlePlane:
-                beamfix += "*"
-            beamfix += "out_spindle_plane "
-            if self.beamFixWavelength:
-                beamfix += "*"
-            beamfix += "wavelength'"
-        beamfixparams = " refinement.parameterisation.beam.fix={}".format(
-            "".join(beamfix))
-        return beamfixparams
-    
-    def getCrystalFixParams(self):
-        crystalfix = []
-        if self.crystalFixCell and self.crystalFixOrientation:
-            crystalfix += "'*all cell orientation'"
-        else:
-            crystalfix += "'all "
-            if self.crystalFixCell:
-                crystalfix += "*"
-            crystalfix += "cell "
-            if self.crystalFixOrientation:
-                crystalfix += "*"
-            crystalfix += "orientation'"
-        crystalfixparams = " refinement.parameterisation.crystal.fix={}".format(
-                ''.join(crystalfix))
-        return crystalfixparams
-
-    def getDetectorFixParams(self):
-        detectorfix = []
-        if self.detectorFixPosition and self.detectorFixOrientation and self.detectorFixDistance:
-            detectorfix += "'*all position orientation distance'"
-        else:
-            detectorfix += "'all "
-            if self.detectorFixPosition:
-                detectorfix += "*"
-            detectorfix += "position "
-            if self.detectorFixOrientation:
-                detectorfix += "*"
-            detectorfix += "orientation "
-            if self.detectorFixDistance:
-                detectorfix += "*"
-            detectorfix += "distance'"
-        detectorfixparams = " refinement.parameterisation.detector.fix={}".format(
-            ''.join(detectorfix))
-        return detectorfixparams
-
-    def getGonioFixParams(self):
-        goniofix = []
-        if self.goniometerFixInBeamPlane and self.goniometerFixOutBeamPlane:
-            goniofix += "'*all in_beam_plane out_beam_plane'"
-        else:
-            goniofix += "'all "
-            if self.goniometerFixInBeamPlane:
-                goniofix += "*"
-            goniofix += "in_beam_plane "
-            if self.goniometerFixOutBeamPlane:
-                goniofix += "*"
-            goniofix += "out_beam_plane'"
-        goniofixparams = " refinement.parameterisation.goniometer.fix={}".format(
-            "".join(goniofix))
-        return goniofixparams
-
     def _checkWriteModel(self):
         return self.getSetModel() != self.getInputModelFile()
 
@@ -729,73 +492,59 @@ class DialsProtIndexSpots(EdProtIndexSpots):
 
         # Input basic parameters
         logPath = self.getLogFilePath(program)
-        params = "{} {} output.log={} output.experiments={} output.reflections={}".format(
-            self.getInputModelFile(),
-            self.getInputReflFile(),
-            logPath,
-            self.getIndexedModelFile(),
-            self.getIndexedReflFile(),
-        )
+        params = f"{self.getInputModelFile()} {self.getInputReflFile()} output.log={logPath} output.experiments={self.getIndexedModelFile()} output.reflections={self.getIndexedReflFile()}"
 
         # Update the command line with additional parameters
 
         if self.indexNproc.get() not in (None, 1):
-            params += " indexing.nproc={}".format(self.indexNproc.get())
+            params += f" indexing.nproc={self.indexNproc.get()}"
 
         if self.enterSpaceGroup.get():
-            params += " indexing.known_symmetry.space_group={}".format(
-                self.knownSpaceGroup.get())
+            params += f" indexing.known_symmetry.space_group={self.knownSpaceGroup.get()}"
 
         if self.enterUnitCell.get():
-            params += " indexing.known_symmetry.unit_cell={}".format(
-                self.knownUnitCell.get())
+            params += f" indexing.known_symmetry.unit_cell={self.knownUnitCell.get()}"
 
         if self.indexMmSearchScope.get() not in (None, 4.0):
-            params += " indexing.mm_search_scope={}".format(
-                self.indexMmSearchScope.get())
+            params += f" indexing.mm_search_scope={self.indexMmSearchScope.get()}"
 
         if self.indexWideSearchBinning.get() not in (None, 2):
-            params += " indexing.wide_search_binning={}".format(
-                self.indexWideSearchBinning.get())
+            params += f" indexing.wide_search_binning={self.indexWideSearchBinning.get()}"
 
         if self.indexMinCellVolume.get() not in (None, 25):
-            params += " indexing.min_cell_volume={}".format(
-                self.indexMinCellVolume.get())
+            params += f" indexing.min_cell_volume={self.indexMinCellVolume.get()}"
 
         if self.indexMinCell.get() not in (None, 3.0):
-            params += " indexing.min_cell={}".format(self.indexMinCell.get())
+            params += f" indexing.min_cell={self.indexMinCell.get()}"
 
         if self.indexMaxCell.get() is not None:
-            params += " indexing.max_cell={}".format(self.indexMaxCell.get())
+            params += f" indexing.max_cell={self.indexMaxCell.get()}"
 
         if self.misindexCheckGridScope.get() not in (None, 0):
-            params += " check_misindexing.grid_search_scope={}".format(
-                self.misindexCheckGridScope.get())
+            params += f" check_misindexing.grid_search_scope={self.misindexCheckGridScope.get()}"
 
         if self.doFilter_ice.get():
-            params += " indexing.max_cell_estimation.filter_ice={}".format(
-                self.doFilter_ice.get())
+            params += f" indexing.max_cell_estimation.filter_ice={self.doFilter_ice.get()}"
 
         if self.refineNproc.get() not in (None, 1):
-            params += " refinement.nproc={}".format(self.refineNproc.get())
+            params += f" refinement.nproc={self.refineNproc.get()}"
 
-        params += self.getBeamFixParams()
+        params += RefineParamsBase.getBeamFixParams(self)
 
-        params += self.getCrystalFixParams()
+        params += RefineParamsBase.getCrystalFixParams(self)
 
-        params += self.getDetectorFixParams()
+        params += RefineParamsBase.getDetectorFixParams(self)
 
-        params += self.getGonioFixParams()
+        params += RefineParamsBase.getGonioFixParams(self)
 
         if self.refineryMaxIterations.get() is not None:
-            params += " refinery.max_iterations={}".format(
-                self.refineryMaxIterations.get())
+            params += f" refinery.max_iterations={self.refineryMaxIterations.get()}"
 
         if self.extraPhilPathIndexing.get():
-            params += " {}".format(self.getExtraPhilsPathIndexing())
+            params += f" {self.getExtraPhilsPathIndexing()}"
 
         if self.commandLineInputIndexing.get():
-            params += " {}".format(self.commandLineInputIndexing.get())
+            params += f" {self.commandLineInputIndexing.get()}"
 
         return params
 
@@ -803,74 +552,48 @@ class DialsProtIndexSpots(EdProtIndexSpots):
         "Create the command line input to run dials programs"
         # Input basic parameters
         logPath = self.getLogFilePath(program)
-        params = "{} {} output.log={} output.directory={}".format(
-            self.getIndexedModelFile(), self.getIndexedReflFile(), logPath, self.getBravaisPath())
+        params = f"{self.getIndexedModelFile()} {self.getIndexedReflFile()} output.log={logPath} output.directory={self.getBravaisPath()}"
 
         # Update the command line with additional parameters
 
         if self.refineBravNproc.get() not in (None, 4):
-            params += " nproc={}".format(self.refineBravNproc.get())
-        
+            params += f" nproc={self.refineBravNproc.get()}"
+
         if self.copyBeamFix:
-            params += self.getBeamFixParams()
-        
+            params += RefineParamsBase.getBeamFixParams(self)
+
         if self.copyCrystalFix:
-            params += self.getCrystalFixParams()
-        
+            params += RefineParamsBase.getCrystalFixParams(self)
+
         if self.copyDetectorFix:
-            params += self.getDetectorFixParams()
-        
+            params += RefineParamsBase.getDetectorFixParams(self)
+
         if self.copyGonioFix:
-            params += self.getGonioFixParams()
+            params += RefineParamsBase.getGonioFixParams(self)
 
         if self.extraPhilPathBravais.get():
-            params += " {}".format(self.getExtraPhilsPathBravais())
+            params += f" {self.getExtraPhilsPathBravais()}"
 
         if self.commandLineInputBravais.get():
-            params += " {}".format(self.commandLineInputBravais.get())
+            params += f" {self.commandLineInputBravais.get()}"
 
         return params
 
     def _prepReindexCommandline(self, program):
         "Create the command line input to run dials programs"
         # Input basic parameters
-        params = "change_of_basis_op={}".format(
-            self.getChangeOfBasisOp(self.getBravaisId()))
+        params = f"change_of_basis_op={self.getChangeOfBasisOp(self.getBravaisId())}"
 
         if self.doReindexModel.get():
-            params += " {} output.experiments={}".format(
-                self.getIndexedModelFile(), self.getReindexedModelFile())
+            params += f" {self.getIndexedModelFile()} output.experiments={self.getReindexedModelFile()}"
 
         if self.doReindexReflections.get():
-            params += " {} output.reflections={}".format(
-                self.getIndexedReflFile(), self.getReindexedReflFile())
+            params += f" {self.getIndexedReflFile()} output.reflections={self.getReindexedReflFile()}"
 
         if self.extraPhilPathReindexing.get():
-            params += " {}".format(self.getExtraPhilsPathReindexing())
+            params += f" {self.getExtraPhilsPathReindexing()}"
 
         if self.commandLineInputReindexing.get():
-            params += " {}".format(self.commandLineInputReindexing.get())
-
-        return params
-
-    def _prepCommandlineReport(self):
-        "Create the command line input to run dials programs"
-        # Input basic parameters
-        params = "{} {} output.html={} output.external_dependencies={}".format(
-            self.getOutputModelFile(),
-            self.getOutputReflFile(),
-            self.getOutputHtmlFile(),
-            self.extDepOptions[self.externalDependencies.get()]
-        )
-
-        if self.pixelsPerBin.get():
-            params += " pixels_per_bin={}".format(self.pixelsPerBin.get())
-
-        if self.centroidDiffMax.get():
-            params += " centroid_diff_max={}".format(
-                self.centroidDiffMax.get())
-
-        if self.commandLineInputReport.get() not in (None, ''):
-            params += " {}".format(self.commandLineInputReport.get())
+            params += f" {self.commandLineInputReindexing.get()}"
 
         return params

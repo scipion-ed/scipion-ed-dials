@@ -26,24 +26,20 @@
 # *
 # **************************************************************************
 
-import os
-import re
-from glob import glob
-from pathlib import Path
 import textwrap
 
 import pyworkflow.protocol as pwprot
 import pyworkflow.utils as pwutils
 import dials.utils as dutils
+import dials.convert as dconv
 
-from pwed.objects import IndexedSpot, SetOfIndexedSpots
-from pwed.protocols import EdBaseProtocol
-from dials.convert import writeJson, readRefl, writeRefl, copyDialsFile
+from pwed.protocols import EdProtScaling
+from dials.protocols import DialsProtBase, PhilBase, CliBase
 from dials.constants import *
 
 
-class DialsProtScaling(EdBaseProtocol):
-    """ Protocol for integrating spots using Dials
+class DialsProtScaling(EdProtScaling, DialsProtBase):
+    """ Protocol for scaling spots using Dials
     """
     _label = 'scale'
 
@@ -64,7 +60,8 @@ class DialsProtScaling(EdBaseProtocol):
                       help="")
 
         form.addParam('showReport', pwprot.BooleanParam,
-                      label='Do you want to view the HTML report after the processing?',
+                      label="Do you want to view the HTML report after the"
+                      " processing?",
                       default=False,
                       )
 
@@ -86,28 +83,39 @@ class DialsProtScaling(EdBaseProtocol):
                        label='Partiality cutoff',
                        default=0.4,
                        allowsNull=True,
-                       help="Value below which reflections are removed from the dataset due to low partiality.",
-                       expertLevel=pwprot.LEVEL_ADVANCED,)
+                       help="Value below which reflections are removed "
+                       "from the dataset due to low partiality.",
+                       expertLevel=pwprot.LEVEL_ADVANCED,
+                       )
 
         group.addParam('minIsigi', pwprot.FloatParam,
                        label='min I/sigma(I)',
                        default=-5,
                        allowsNull=True,
-                       help="Value below which reflections are removed from the dataset due to low I/sigI in either profile or summation intensity estimates",
-                       expertLevel=pwprot.LEVEL_ADVANCED,)
+                       help="Value below which reflections are removed "
+                       "from the dataset due to low I/sigI in either "
+                       "profile or summation intensity estimates",
+                       expertLevel=pwprot.LEVEL_ADVANCED,
+                       )
 
         group = form.addGroup('Scaling options')
         group.addParam('checkConsistentIndexing', pwprot.BooleanParam,
                        default=False,
                        label='Check indexing consistency between datasets?',
-                       help="If True, run dials.cosym on all data in the data preparation step, to ensure consistent indexing.",)
+                       help="If True, run dials.cosym on all data in the "
+                       "data preparation step, to ensure consistent indexing.",
+                       )
 
         group.addParam('outlierRejection', pwprot.EnumParam,
                        label='Outlier rejection',
                        choices=['standard', 'simple'],
                        default=STANDARD,
-                       help="Choice of outlier rejection routine. Standard may take a significant amount of time to run for large datasets or high multiplicities, whereas simple should be quick for these datasets.",
-                       expertLevel=pwprot.LEVEL_ADVANCED,)
+                       help="Choice of outlier rejection routine. Standard "
+                       "may take a significant amount of time to run for "
+                       "large datasets or high multiplicities, whereas simple"
+                       " should be quick for these datasets.",
+                       expertLevel=pwprot.LEVEL_ADVANCED,
+                       )
 
         group.addParam('outlierZmax', pwprot.FloatParam,
                        label="Outlier z-max",
@@ -123,7 +131,23 @@ class DialsProtScaling(EdBaseProtocol):
                        choices=['None', 'delta CC(1/2)'],
                        default=NONE,
                        display=pwprot.EnumParam.DISPLAY_HLIST,
-                       help="Optionally use a filter to remove some datasets or groups of images based on the contribution to CC(1/2). CC(1/2) will be calculated for all datasets or groups of images combined. Each dataset or group will then be removed and a new CC(1/2) calculated and compared to the orginial, giving a ranking of all individual contributions to the overall CC(1/2). The mean and the standard deviation of these indiviual contributions are calculated. All datasets or image groups that reduce CC(1/2) with more than a number of standard deviations (default 4.0) from the mean will be removed. The cycle is then repeated by comparing to the overall CC(1/2) of the remaining datasets until no datasets are removed or further removals would violate the limits set by the user (max cycles, max percent removed, and minimum completeness).",
+                       help="Optionally use a filter to remove some "
+                       "datasets or groups of images based on the contribution"
+                       " to CC(1/2). CC(1/2) will be calculated for all "
+                       "datasets or groups of images combined. Each dataset "
+                       "or group will then be removed and a new CC(1/2) "
+                       "calculated and compared to the orginial, giving a "
+                       "ranking of all individual contributions to the overall"
+                       " CC(1/2). The mean and the standard deviation of these"
+                       " indiviual contributions are calculated. All datasets "
+                       "or image groups that reduce CC(1/2) with more than a "
+                       "number of standard deviations (default 4.0) from the "
+                       "mean will be removed. The cycle is then repeated by "
+                       "comparing to the overall CC(1/2) of the remaining "
+                       "datasets until no datasets are removed or further "
+                       "removals would violate the limits set by the user "
+                       "(max cycles, max percent removed, and minimum "
+                       "completeness).",
                        )
 
         group.addParam("ccHalfMaxCycles", pwprot.IntParam,
@@ -131,14 +155,14 @@ class DialsProtScaling(EdBaseProtocol):
                        default=6,
                        GE=1,
                        allowsNull=True,
-                       condition="filteringMethod=={}".format(DELTA_CC_HALF),
+                       condition=f"filteringMethod=={DELTA_CC_HALF}",
                        )
 
         group.addParam("ccHalfMaxPercentRemoved", pwprot.FloatParam,
                        label="Max percent removed",
                        default=10,
                        allowsNull=True,
-                       condition="filteringMethod=={}".format(DELTA_CC_HALF),
+                       condition=f"filteringMethod=={DELTA_CC_HALF}",
                        )
 
         group.addParam("ccHalfMinCompleteness", pwprot.FloatParam,
@@ -147,7 +171,7 @@ class DialsProtScaling(EdBaseProtocol):
                        GE=1,
                        LE=100,
                        allowsNull=True,
-                       condition="filteringMethod=={}".format(DELTA_CC_HALF),
+                       condition=f"filteringMethod=={DELTA_CC_HALF}",
                        )
 
         group.addParam("ccHalfMode", pwprot.EnumParam,
@@ -155,7 +179,8 @@ class DialsProtScaling(EdBaseProtocol):
                        choices=["dataset", "image group"],
                        default=DATASET,
                        display=pwprot.EnumParam.DISPLAY_HLIST,
-                       help="Perform analysis on whole datasets or batch groups",
+                       help="Perform analysis on whole datasets or "
+                       "batch groups",
                        condition="filteringMethod==1",
                        )
 
@@ -164,22 +189,26 @@ class DialsProtScaling(EdBaseProtocol):
                        default=10,
                        GE=1,
                        allowsNull=True,
-                       condition="ccHalfMode=={}".format(IMAGE_GROUP),
-                       help="The number of images to group together when calculating delta CC(1/2) in image_group mode",
+                       condition=f"ccHalfMode=={IMAGE_GROUP}",
+                       help="The number of images to group together "
+                       "when calculating delta CC(1/2) in image_group "
+                       "mode",
                        )
 
         group.addParam("ccHalfStdcutoff", pwprot.FloatParam,
                        label="Std cutoff",
                        default=4.0,
                        allowsNull=True,
-                       help="Datasets with a ΔCC½ below (mean(ΔCC½) - (std cutoff)*standard_deviation(ΔCC½)) are removed",
+                       help="Datasets with a ΔCC½ below (mean(ΔCC½) - "
+                       "(std cutoff)*standard_deviation(ΔCC½)) are removed",
                        condition="filteringMethod==1",
                        )
 
         group = form.addGroup('Selections')
 
         group.addParam('excludeImages', pwprot.BooleanParam,
-                       label='Do you want to exclude images from a dataset?', default=False,
+                       label='Do you want to exclude images from a dataset?',
+                       default=False,
                        help="",
                        )
 
@@ -187,34 +216,56 @@ class DialsProtScaling(EdBaseProtocol):
                        label='How many groups of images do you want to exclude?',
                        default=0,
                        condition="excludeImages",
-                       help="If you want to use more than 20 groups, you will need to add it as command line parameters under advanced options",
+                       help="If you want to use more than 20 groups, you will "
+                       "need to add it as command line parameters under "
+                       "advanced options",
                        )
 
         group.addParam('imageGroup1', pwprot.StringParam,
                        label='Image group 1',
                        default=None,
                        allowsNull=True,
-                       condition="excludeImages and numberOfExclusions in range(1,21)",
-                       help="Input in the format exp:start:end\nExclude a range of images (start,stop) from the dataset with experiment identifier exp  (inclusive of frames start, stop). For the first dataset listed in {}, the identifier exp is typically 0. For the next it is 1, and so on.\nTo exclude images 22, 23 and 24 from the second dataset listed, the syntax is 1:22:24.".format(
-                           inputsetsLabel),
+                       condition="excludeImages and numberOfExclusions "
+                       "in range(1,21)",
+                       help=f"Input in the format exp:start:end\nExclude a "
+                       f"range of images (start,stop) from the dataset with "
+                       f"experiment identifier exp  (inclusive of frames "
+                       f"start, stop). For the first dataset listed in "
+                       f"{inputsetsLabel}, the identifier exp is typically"
+                       f" 0. For the next it is 1, and so on.\nTo exclude "
+                       f"images 22, 23 and 24 from the second dataset "
+                       f"listed, the syntax is 1:22:24.",
                        )
 
         group.addParam('imageGroup2', pwprot.StringParam,
                        label='Image group 2',
                        default=None,
                        allowsNull=True,
-                       condition='excludeImages and numberOfExclusions in range(2,21)',
-                       help="Input in the format exp: start: end\nExclude a range of images(start, stop) from the dataset with experiment identifier exp(inclusive of frames start, stop). For the first dataset listed in {}, the identifier exp is typically 0. For the next it is 1, and so on.\nTo exclude images 22, 23 and 24 from the second dataset listed, the syntax is 1: 22: 24.".format(
-                           inputsetsLabel),
+                       condition="excludeImages and numberOfExclusions in "
+                       "range(2,21)",
+                       help=f"Input in the format exp: start: end\nExclude a "
+                       f"range of images(start, stop) from the dataset with "
+                       f"experiment identifier exp(inclusive of frames start, "
+                       f"stop). For the first dataset listed in {inputsetsLabel},"
+                       f" the identifier exp is typically 0. For the next it is "
+                       f"1, and so on.\nTo exclude images 22, 23 and 24 from the "
+                       f"second dataset listed, the syntax is 1: 22: 24.",
                        )
 
         group.addParam('imageGroup3', pwprot.StringParam,
                        label='Image group 3',
                        default=None,
                        allowsNull=True,
-                       condition='excludeImages and numberOfExclusions in range(3,21)',
-                       help="Input in the format exp:start:end\nExclude a range of images (start,stop) from the dataset with experiment identifier exp  (inclusive of frames start, stop). For the first dataset listed in {}, the identifier exp is typically 0. For the next it is 1, and so on.\nTo exclude images 22, 23 and 24 from the second dataset listed, the syntax is 1:22:24.".format(
-                           inputsetsLabel),
+                       condition="excludeImages and numberOfExclusions in "
+                       "range(3,21)",
+                       help=f"Input in the format exp:start:end\nExclude "
+                       f"a range of images (start,stop) from the dataset "
+                       f"with experiment identifier exp  (inclusive of "
+                       f"frames start, stop). For the first dataset listed "
+                       f"in {inputsetsLabel}, the identifier exp is typically"
+                       f" 0. For the next it is 1, and so on.\nTo exclude "
+                       f"images 22, 23 and 24 from the second dataset listed, "
+                       f"the syntax is 1:22:24.",
                        )
 
         group.addParam('imageGroup4', pwprot.StringParam,
@@ -222,8 +273,14 @@ class DialsProtScaling(EdBaseProtocol):
                        default=None,
                        allowsNull=True,
                        condition='excludeImages and numberOfExclusions in range(4,21)',
-                       help="Input in the format exp:start:end\nExclude a range of images (start,stop) from the dataset with experiment identifier exp  (inclusive of frames start, stop). For the first dataset listed in {}, the identifier exp is typically 0. For the next it is 1, and so on.\nTo exclude images 22, 23 and 24 from the second dataset listed, the syntax is 1:22:24.".format(
-                           inputsetsLabel),
+                       help=f"Input in the format exp:start:end\nExclude a "
+                       f"range of images (start,stop) from the dataset with "
+                       f"experiment identifier exp  (inclusive of frames "
+                       f"start, stop). For the first dataset listed in "
+                       f"{inputsetsLabel}, the identifier exp is typically "
+                       f"0. For the next it is 1, and so on.\nTo exclude images"
+                       f" 22, 23 and 24 from the second dataset listed, the "
+                       f"syntax is 1:22:24.",
                        )
 
         group.addParam('imageGroup5', pwprot.StringParam,
@@ -231,8 +288,13 @@ class DialsProtScaling(EdBaseProtocol):
                        default=None,
                        allowsNull=True,
                        condition='excludeImages and numberOfExclusions in range(5,21)',
-                       help="Input in the format exp:start:end\nExclude a range of images (start,stop) from the dataset with experiment identifier exp  (inclusive of frames start, stop). For the first dataset listed in {}, the identifier exp is typically 0. For the next it is 1, and so on.\nTo exclude images 22, 23 and 24 from the second dataset listed, the syntax is 1:22:24.".format(
-                           inputsetsLabel),
+                       help=f"Input in the format exp:start:end\nExclude a range of"
+                       f" images (start,stop) from the dataset with experiment "
+                       f"identifier exp  (inclusive of frames start, stop). For "
+                       f"the first dataset listed in {inputsetsLabel}, the identifier"
+                       f" exp is typically 0. For the next it is 1, and so on.\n"
+                       f"To exclude images 22, 23 and 24 from the second dataset "
+                       f"listed, the syntax is 1:22:24.",
                        )
 
         group.addParam('imageGroup6', pwprot.StringParam,
@@ -240,8 +302,13 @@ class DialsProtScaling(EdBaseProtocol):
                        default=None,
                        allowsNull=True,
                        condition='excludeImages and numberOfExclusions in range(6,21)',
-                       help="Input in the format exp:start:end\nExclude a range of images (start,stop) from the dataset with experiment identifier exp  (inclusive of frames start, stop). For the first dataset listed in {}, the identifier exp is typically 0. For the next it is 1, and so on.\nTo exclude images 22, 23 and 24 from the second dataset listed, the syntax is 1:22:24.".format(
-                           inputsetsLabel),
+                       help=f"Input in the format exp:start:end\nExclude a range of"
+                       f" images (start,stop) from the dataset with experiment "
+                       f"identifier exp  (inclusive of frames start, stop). For "
+                       f"the first dataset listed in {inputsetsLabel}, the identifier"
+                       f" exp is typically 0. For the next it is 1, and so on.\n"
+                       f"To exclude images 22, 23 and 24 from the second dataset "
+                       f"listed, the syntax is 1:22:24.",
                        )
 
         group.addParam('imageGroup7', pwprot.StringParam,
@@ -249,8 +316,13 @@ class DialsProtScaling(EdBaseProtocol):
                        default=None,
                        allowsNull=True,
                        condition='excludeImages and numberOfExclusions in range(7,21)',
-                       help="Input in the format exp:start:end\nExclude a range of images (start,stop) from the dataset with experiment identifier exp  (inclusive of frames start, stop). For the first dataset listed in {}, the identifier exp is typically 0. For the next it is 1, and so on.\nTo exclude images 22, 23 and 24 from the second dataset listed, the syntax is 1:22:24.".format(
-                           inputsetsLabel),
+                       help=f"Input in the format exp:start:end\nExclude a range of"
+                       f" images (start,stop) from the dataset with experiment "
+                       f"identifier exp  (inclusive of frames start, stop). For "
+                       f"the first dataset listed in {inputsetsLabel}, the identifier"
+                       f" exp is typically 0. For the next it is 1, and so on.\n"
+                       f"To exclude images 22, 23 and 24 from the second dataset "
+                       f"listed, the syntax is 1:22:24.",
                        )
 
         group.addParam('imageGroup8', pwprot.StringParam,
@@ -258,8 +330,13 @@ class DialsProtScaling(EdBaseProtocol):
                        default=None,
                        allowsNull=True,
                        condition='excludeImages and numberOfExclusions in range(8,21)',
-                       help="Input in the format exp:start:end\nExclude a range of images (start,stop) from the dataset with experiment identifier exp  (inclusive of frames start, stop). For the first dataset listed in {}, the identifier exp is typically 0. For the next it is 1, and so on.\nTo exclude images 22, 23 and 24 from the second dataset listed, the syntax is 1:22:24.".format(
-                           inputsetsLabel),
+                       help=f"Input in the format exp:start:end\nExclude a range of"
+                       f" images (start,stop) from the dataset with experiment "
+                       f"identifier exp  (inclusive of frames start, stop). For "
+                       f"the first dataset listed in {inputsetsLabel}, the identifier"
+                       f" exp is typically 0. For the next it is 1, and so on.\n"
+                       f"To exclude images 22, 23 and 24 from the second dataset "
+                       f"listed, the syntax is 1:22:24.",
                        )
 
         group.addParam('imageGroup9', pwprot.StringParam,
@@ -267,8 +344,13 @@ class DialsProtScaling(EdBaseProtocol):
                        default=None,
                        allowsNull=True,
                        condition='excludeImages and numberOfExclusions in range(9,21)',
-                       help="Input in the format exp:start:end\nExclude a range of images (start,stop) from the dataset with experiment identifier exp  (inclusive of frames start, stop). For the first dataset listed in {}, the identifier exp is typically 0. For the next it is 1, and so on.\nTo exclude images 22, 23 and 24 from the second dataset listed, the syntax is 1:22:24.".format(
-                           inputsetsLabel),
+                       help=f"Input in the format exp:start:end\nExclude a range of"
+                       f" images (start,stop) from the dataset with experiment "
+                       f"identifier exp  (inclusive of frames start, stop). For "
+                       f"the first dataset listed in {inputsetsLabel}, the identifier"
+                       f" exp is typically 0. For the next it is 1, and so on.\n"
+                       f"To exclude images 22, 23 and 24 from the second dataset "
+                       f"listed, the syntax is 1:22:24.",
                        )
 
         group.addParam('imageGroup10', pwprot.StringParam,
@@ -276,8 +358,13 @@ class DialsProtScaling(EdBaseProtocol):
                        default=None,
                        allowsNull=True,
                        condition='excludeImages and numberOfExclusions in range(10,21)',
-                       help="Input in the format exp:start:end\nExclude a range of images (start,stop) from the dataset with experiment identifier exp  (inclusive of frames start, stop). For the first dataset listed in {}, the identifier exp is typically 0. For the next it is 1, and so on.\nTo exclude images 22, 23 and 24 from the second dataset listed, the syntax is 1:22:24.".format(
-                           inputsetsLabel),
+                       help=f"Input in the format exp:start:end\nExclude a range of"
+                       f" images (start,stop) from the dataset with experiment "
+                       f"identifier exp  (inclusive of frames start, stop). For "
+                       f"the first dataset listed in {inputsetsLabel}, the identifier"
+                       f" exp is typically 0. For the next it is 1, and so on.\n"
+                       f"To exclude images 22, 23 and 24 from the second dataset "
+                       f"listed, the syntax is 1:22:24.",
                        )
 
         group.addParam('imageGroup11', pwprot.StringParam,
@@ -285,8 +372,13 @@ class DialsProtScaling(EdBaseProtocol):
                        default=None,
                        allowsNull=True,
                        condition='excludeImages and numberOfExclusions in range(11,21)',
-                       help="Input in the format exp:start:end\nExclude a range of images (start,stop) from the dataset with experiment identifier exp  (inclusive of frames start, stop). For the first dataset listed in {}, the identifier exp is typically 0. For the next it is 1, and so on.\nTo exclude images 22, 23 and 24 from the second dataset listed, the syntax is 1:22:24.".format(
-                           inputsetsLabel),
+                       help=f"Input in the format exp:start:end\nExclude a range of"
+                       f" images (start,stop) from the dataset with experiment "
+                       f"identifier exp  (inclusive of frames start, stop). For "
+                       f"the first dataset listed in {inputsetsLabel}, the identifier"
+                       f" exp is typically 0. For the next it is 1, and so on.\n"
+                       f"To exclude images 22, 23 and 24 from the second dataset "
+                       f"listed, the syntax is 1:22:24.",
                        )
 
         group.addParam('imageGroup12', pwprot.StringParam,
@@ -294,8 +386,13 @@ class DialsProtScaling(EdBaseProtocol):
                        default=None,
                        allowsNull=True,
                        condition='excludeImages and numberOfExclusions in range(12,21)',
-                       help="Input in the format exp:start:end\nExclude a range of images (start,stop) from the dataset with experiment identifier exp  (inclusive of frames start, stop). For the first dataset listed in {}, the identifier exp is typically 0. For the next it is 1, and so on.\nTo exclude images 22, 23 and 24 from the second dataset listed, the syntax is 1:22:24.".format(
-                           inputsetsLabel),
+                       help=f"Input in the format exp:start:end\nExclude a range of"
+                       f" images (start,stop) from the dataset with experiment "
+                       f"identifier exp  (inclusive of frames start, stop). For "
+                       f"the first dataset listed in {inputsetsLabel}, the identifier"
+                       f" exp is typically 0. For the next it is 1, and so on.\n"
+                       f"To exclude images 22, 23 and 24 from the second dataset "
+                       f"listed, the syntax is 1:22:24.",
                        )
 
         group.addParam('imageGroup13', pwprot.StringParam,
@@ -303,8 +400,13 @@ class DialsProtScaling(EdBaseProtocol):
                        default=None,
                        allowsNull=True,
                        condition='excludeImages and numberOfExclusions in range(13,21)',
-                       help="Input in the format exp:start:end\nExclude a range of images (start,stop) from the dataset with experiment identifier exp  (inclusive of frames start, stop). For the first dataset listed in {}, the identifier exp is typically 0. For the next it is 1, and so on.\nTo exclude images 22, 23 and 24 from the second dataset listed, the syntax is 1:22:24.".format(
-                           inputsetsLabel),
+                       help=f"Input in the format exp:start:end\nExclude a range of"
+                       f" images (start,stop) from the dataset with experiment "
+                       f"identifier exp  (inclusive of frames start, stop). For "
+                       f"the first dataset listed in {inputsetsLabel}, the identifier"
+                       f" exp is typically 0. For the next it is 1, and so on.\n"
+                       f"To exclude images 22, 23 and 24 from the second dataset "
+                       f"listed, the syntax is 1:22:24.",
                        )
 
         group.addParam('imageGroup14', pwprot.StringParam,
@@ -312,8 +414,13 @@ class DialsProtScaling(EdBaseProtocol):
                        default=None,
                        allowsNull=True,
                        condition='excludeImages and numberOfExclusions in range(14,21)',
-                       help="Input in the format exp:start:end\nExclude a range of images (start,stop) from the dataset with experiment identifier exp  (inclusive of frames start, stop). For the first dataset listed in {}, the identifier exp is typically 0. For the next it is 1, and so on.\nTo exclude images 22, 23 and 24 from the second dataset listed, the syntax is 1:22:24.".format(
-                           inputsetsLabel),
+                       help=f"Input in the format exp:start:end\nExclude a range of"
+                       f" images (start,stop) from the dataset with experiment "
+                       f"identifier exp  (inclusive of frames start, stop). For "
+                       f"the first dataset listed in {inputsetsLabel}, the identifier"
+                       f" exp is typically 0. For the next it is 1, and so on.\n"
+                       f"To exclude images 22, 23 and 24 from the second dataset "
+                       f"listed, the syntax is 1:22:24.",
                        )
 
         group.addParam('imageGroup15', pwprot.StringParam,
@@ -321,8 +428,13 @@ class DialsProtScaling(EdBaseProtocol):
                        default=None,
                        allowsNull=True,
                        condition='excludeImages and numberOfExclusions in range(15,21)',
-                       help="Input in the format exp:start:end\nExclude a range of images (start,stop) from the dataset with experiment identifier exp  (inclusive of frames start, stop). For the first dataset listed in {}, the identifier exp is typically 0. For the next it is 1, and so on.\nTo exclude images 22, 23 and 24 from the second dataset listed, the syntax is 1:22:24.".format(
-                           inputsetsLabel),
+                       help=f"Input in the format exp:start:end\nExclude a range of"
+                       f" images (start,stop) from the dataset with experiment "
+                       f"identifier exp  (inclusive of frames start, stop). For "
+                       f"the first dataset listed in {inputsetsLabel}, the identifier"
+                       f" exp is typically 0. For the next it is 1, and so on.\n"
+                       f"To exclude images 22, 23 and 24 from the second dataset "
+                       f"listed, the syntax is 1:22:24.",
                        )
 
         group.addParam('imageGroup16', pwprot.StringParam,
@@ -330,8 +442,13 @@ class DialsProtScaling(EdBaseProtocol):
                        default=None,
                        allowsNull=True,
                        condition='excludeImages and numberOfExclusions in range(16,21)',
-                       help="Input in the format exp:start:end\nExclude a range of images (start,stop) from the dataset with experiment identifier exp  (inclusive of frames start, stop). For the first dataset listed in {}, the identifier exp is typically 0. For the next it is 1, and so on.\nTo exclude images 22, 23 and 24 from the second dataset listed, the syntax is 1:22:24.".format(
-                           inputsetsLabel),
+                       help=f"Input in the format exp:start:end\nExclude a range of"
+                       f" images (start,stop) from the dataset with experiment "
+                       f"identifier exp  (inclusive of frames start, stop). For "
+                       f"the first dataset listed in {inputsetsLabel}, the identifier"
+                       f" exp is typically 0. For the next it is 1, and so on.\n"
+                       f"To exclude images 22, 23 and 24 from the second dataset "
+                       f"listed, the syntax is 1:22:24.",
                        )
 
         group.addParam('imageGroup17', pwprot.StringParam,
@@ -339,8 +456,13 @@ class DialsProtScaling(EdBaseProtocol):
                        default=None,
                        allowsNull=True,
                        condition='excludeImages and numberOfExclusions in range(17,21)',
-                       help="Input in the format exp:start:end\nExclude a range of images (start,stop) from the dataset with experiment identifier exp  (inclusive of frames start, stop). For the first dataset listed in {}, the identifier exp is typically 0. For the next it is 1, and so on.\nTo exclude images 22, 23 and 24 from the second dataset listed, the syntax is 1:22:24.".format(
-                           inputsetsLabel),
+                       help=f"Input in the format exp:start:end\nExclude a range of"
+                       f" images (start,stop) from the dataset with experiment "
+                       f"identifier exp  (inclusive of frames start, stop). For "
+                       f"the first dataset listed in {inputsetsLabel}, the identifier"
+                       f" exp is typically 0. For the next it is 1, and so on.\n"
+                       f"To exclude images 22, 23 and 24 from the second dataset "
+                       f"listed, the syntax is 1:22:24.",
                        )
 
         group.addParam('imageGroup18', pwprot.StringParam,
@@ -348,8 +470,13 @@ class DialsProtScaling(EdBaseProtocol):
                        default=None,
                        allowsNull=True,
                        condition='excludeImages and numberOfExclusions in range(18,21)',
-                       help="Input in the format exp:start:end\nExclude a range of images (start,stop) from the dataset with experiment identifier exp  (inclusive of frames start, stop). For the first dataset listed in {}, the identifier exp is typically 0. For the next it is 1, and so on.\nTo exclude images 22, 23 and 24 from the second dataset listed, the syntax is 1:22:24.".format(
-                           inputsetsLabel),
+                       help=f"Input in the format exp:start:end\nExclude a range of"
+                       f" images (start,stop) from the dataset with experiment "
+                       f"identifier exp  (inclusive of frames start, stop). For "
+                       f"the first dataset listed in {inputsetsLabel}, the identifier"
+                       f" exp is typically 0. For the next it is 1, and so on.\n"
+                       f"To exclude images 22, 23 and 24 from the second dataset "
+                       f"listed, the syntax is 1:22:24.",
                        )
 
         group.addParam('imageGroup19', pwprot.StringParam,
@@ -357,8 +484,13 @@ class DialsProtScaling(EdBaseProtocol):
                        default=None,
                        allowsNull=True,
                        condition='excludeImages and numberOfExclusions in range(19,21)',
-                       help="Input in the format exp:start:end\nExclude a range of images (start,stop) from the dataset with experiment identifier exp  (inclusive of frames start, stop). For the first dataset listed in {}, the identifier exp is typically 0. For the next it is 1, and so on.\nTo exclude images 22, 23 and 24 from the second dataset listed, the syntax is 1:22:24.".format(
-                           inputsetsLabel),
+                       help=f"Input in the format exp:start:end\nExclude a range of"
+                       f" images (start,stop) from the dataset with experiment "
+                       f"identifier exp  (inclusive of frames start, stop). For "
+                       f"the first dataset listed in {inputsetsLabel}, the identifier"
+                       f" exp is typically 0. For the next it is 1, and so on.\n"
+                       f"To exclude images 22, 23 and 24 from the second dataset "
+                       f"listed, the syntax is 1:22:24.",
                        )
 
         group.addParam('imageGroup20', pwprot.StringParam,
@@ -366,30 +498,27 @@ class DialsProtScaling(EdBaseProtocol):
                        default=None,
                        allowsNull=True,
                        condition='excludeImages and numberOfExclusions in range(20,21)',
-                       help="Input in the format exp:start:end\nExclude a range of images (start,stop) from the dataset with experiment identifier exp  (inclusive of frames start, stop). For the first dataset listed in {}, the identifier exp is typically 0. For the next it is 1, and so on.\nTo exclude images 22, 23 and 24 from the second dataset listed, the syntax is 1:22:24.".format(
-                           inputsetsLabel),
+                       help=f"Input in the format exp:start:end\nExclude a range of"
+                       f" images (start,stop) from the dataset with experiment "
+                       f"identifier exp  (inclusive of frames start, stop). For "
+                       f"the first dataset listed in {inputsetsLabel}, the identifier"
+                       f" exp is typically 0. For the next it is 1, and so on.\n"
+                       f"To exclude images 22, 23 and 24 from the second dataset "
+                       f"listed, the syntax is 1:22:24.",
                        )
 
         # Allow an easy way to import a phil file with parameters
-        form.addParam('extraPhilPath', pwprot.PathParam,
-                      expertLevel=pwprot.LEVEL_ADVANCED,
-                      allowsNull=True,
-                      default=None,
-                      label="Add phil file",
-                      help="Enter the path to a phil file that you want to add to include.")
+        PhilBase._definePhilParams(self, form)
 
         # Allow adding anything else with command line syntax
-        group = form.addGroup('Raw command line input parameters',
-                              expertLevel=pwprot.LEVEL_ADVANCED)
-        group.addParam('commandLineInput', pwprot.StringParam,
-                       default='',
-                       help="Anything added here will be added at the end of the command line")
+        CliBase._defineCliParams(self, form)
 
    # -------------------------- INSERT functions ------------------------------
 
     def _insertAllSteps(self):
         self._insertFunctionStep(
-            'convertInputStep', [inputSet.get().getObjId() for inputSet in self.inputSets])
+            'convertInputStep',
+            [inputSet.get().getObjId() for inputSet in self.inputSets])
         self._insertFunctionStep('scaleStep')
         if self.showReport:
             self._insertFunctionStep('showHtmlReportStep')
@@ -399,19 +528,18 @@ class DialsProtScaling(EdBaseProtocol):
     def convertInputStep(self, inputSpotId):
         for iS in self.inputSets:
             inputSet = iS.get()
-            self.info("ObjId: %s" %
-                      inputSet.getObjId())
-            self.info("Number of images: %s" % inputSet.getSize())
-            self.info("Number of spots: %s" % inputSet.getSpots())
+            self.info(f"ObjId: {inputSet.getObjId()}")
+            self.info(f"Number of images: {inputSet.getSize()}")
+            self.info(f"Number of spots: {inputSet.getSpots()}")
             # Write new model and/or reflection file if no was supplied from set
             if self._checkWriteModel(inputSet):
-                self.writeJson(inputSet, self.getInputModelFile(inputSet))
+                dconv.writeJson(inputSet, self.getInputModelFile(inputSet))
             if self._checkWriteRefl(inputSet):
-                self.writeRefl(inputSet, self.getInputReflFile(inputSet))
+                dconv.writeRefl(inputSet, self.getInputReflFile(inputSet))
 
     def scaleStep(self):
         program = 'dials.scale'
-        arguments = self._prepCommandline(program)
+        arguments = self._prepareCommandline(program)
         try:
             self.runJob(program, arguments)
         except:
@@ -444,7 +572,9 @@ class DialsProtScaling(EdBaseProtocol):
     def _validate(self):
         errors = []
         if self.swappedResolution():
-            errors.append(f"High ({self.getDMin()} Å) and low ({self.getDMax()} Å) resolution limits appear swapped.")
+            errors.append(
+                f"High ({self.getDMin()} Å) and low ({self.getDMax()} Å) "
+                f"resolution limits appear swapped.")
         return errors
 
     def _summary(self):
@@ -455,114 +585,52 @@ class DialsProtScaling(EdBaseProtocol):
 
         nSets = len(self.inputSets)
         if nSets > 1:
-            summary.append(
-                '\nScaled {} different datasets together'.format(nSets))
+            summary.append(f'\nScaled {nSets} different datasets together')
         elif nSets == 1:
             summary.append('\nScaled a single dataset')
 
         if self.getDMin() is not None:
-            summary.append(
-                'High resolution cutoff at {} Å'.format(self.getDMin()))
+            summary.append(f'High resolution cutoff at {self.getDMin()} Å')
+
         if self.getDMax() is not None:
-            summary.append(
-                'Low resolution cutoff at {} Å'.format(self.getDMax()))
+            summary.append(f'Low resolution cutoff at {self.getDMax()} Å')
+
         if self.checkConsistentIndexing:
             summary.append(
                 'Reindexed all datasets with dials.cosym before scaling')
+
         if self.filteringMethod.get() is DELTA_CC_HALF:
             if self.ccHalfMode.get() is DATASET:
                 mode = 'datasets'
             elif self.ccHalfMode.get() is IMAGE_GROUP:
                 mode = 'image groups'
-            summary.append('Filtered {} based on ΔCC½ with std cutoff {}'.format(
-                mode, self.ccHalfStdcutoff.get()))
+
+            summary.append(f"Filtered {mode} based on ΔCC½ with std "
+                           f"cutoff {self.ccHalfStdcutoff.get()}")
         if self.excludeImages:
             for iG in self.getImageExclusions():
-                summary.append('Excluded images {}'.format(iG.get()))
-        if self.commandLineInput.get() != '':
-            summary.append('Additional command line input:\n{}'.format(
-                self.commandLineInput.get()))
+                summary.append(f'Excluded images {iG.get()}')
+        if self._getCLI() != '':
+            summary.append(f"Additional command line input:\n"
+                           f"{self._getCLI().strip()}")
 
         if self.getSpaceGroupLogOutput() not in (None, ''):
             summary.append(self.getSpaceGroupLogOutput())
 
         return summary
+    # -------------------------- BASE methods to be overridden -----------------
 
-    # -------------------------- UTILS functions ------------------------------
-    def getInputModelFile(self, inputSet):
-        if self.getSetModel(inputSet):
-            return self.getSetModel(inputSet)
-        else:
-            return self._getExtraPath('symmetrized.expt')
-
-    def getInputReflFile(self, inputSet):
-        if self.getSetRefl(inputSet):
-            return self.getSetRefl(inputSet)
-        else:
-            return self._getExtraPath('symmetrized.refl')
-
-    def getOutputModelFile(self):
-        return self._getExtraPath('scaled.expt')
-
-    def getOutputReflFile(self):
-        return self._getExtraPath('scaled.refl')
+    INPUT_EXPT_FILENAME = 'symmetrized.expt'
+    OUTPUT_EXPT_FILENAME = 'scaled.expt'
+    INPUT_REFL_FILENAME = 'symmetrized.refl'
+    OUTPUT_REFL_FILENAME = 'scaled.refl'
+    OUTPUT_HTML_FILENAME = 'dials.scale.html'
 
     def getOutputHtmlFile(self):
-        return self._getExtraPath('dials.scale.html')
-
-    def getOutputScaleJson(self):
-        return self._getExtraPath('scale_and_filter_results.json')
-
-    def getLogFilePath(self, program='dials.scale'):
-        logPath = "{}/{}.log".format(self._getLogsPath(), program)
-        return logPath
-
-    def getPhilPath(self):
-        return self._getTmpPath('scale.phil')
-
-    # Add additional phil file
-    def getExtraPhilsPath(self):
-        return self.extraPhilPath.get('').strip()
-
-    def getSetModel(self, inputSet):
-        if pwutils.exists(inputSet.getDialsModel()):
-            return inputSet.getDialsModel()
-        else:
-            return None
-
-    def getSetRefl(self, inputSet):
-        if pwutils.exists(inputSet.getDialsRefl()):
-            return inputSet.getDialsRefl()
-        else:
-            return None
-
-    def getAllInputFiles(self):
-        files = ""
-        for iS in self.inputSets:
-            files += "{} {} ".format(self.getInputModelFile(iS.get()),
-                                     self.getInputReflFile(iS.get()))
-        return files.strip()
+        return self._getExtraPath(self.OUTPUT_HTML_FILENAME)
 
     def getDatasets(self):
         return dutils.getDatasets(self.getOutputModelFile())
-
-    def getSpaceGroupLogOutput(self):
-        spaceGroup = dutils.readLog(
-            self.getLogFilePath(),
-            'Space group being used',
-            'Scaling models have been initialised')
-        return spaceGroup
-
-    def getMergingStatisticsLogOutput(self):
-        mergingStats = dutils.readLog(
-            self.getLogFilePath(),
-            'Merging statistics',
-            'Writing html report')
-        if mergingStats not in (None, ''):
-            mergeStats = "\n{}".format(textwrap.dedent(mergingStats))
-        else:
-            mergeStats = mergingStats
-        return mergeStats
 
     def getLogOutput(self):
         logOutput = ''
@@ -572,6 +640,114 @@ class DialsProtScaling(EdBaseProtocol):
         if self.getMergingStatisticsLogOutput() not in (None, ''):
             logOutput += self.getMergingStatisticsLogOutput()
         return logOutput
+
+    def _initialParams(self, program):
+        # Base method that can more easily be overridden when needed
+        params = (f"{self.getAllInputFiles()} "
+                  f"output.log={self.getLogFilePath(program)} "
+                  f"output.experiments={self.getOutputModelFile()} "
+                  f"output.reflections={self.getOutputReflFile()} "
+                  f"output.html={self.getOutputHtmlFile()} "
+                  f"filtering.output.scale_and_filter_results="
+                  f"{self.getOutputScaleJson()}")
+
+        return params
+
+    def _extraParams(self):
+        params = ""
+        if self.getDMin():
+            params += f" cut_data.d_min={self.getDMin()}"
+
+        if self.getDMax():
+            params += f" cut_data.d_max={self.getDMax()}"
+
+        if self.partialityCutoff.get():
+            params += f" cut_data.partiality_cutoff={self.partialityCutoff.get()}"
+
+        if self.minIsigi.get():
+            params += f" cut_data.min_isigi={self.minIsigi.get()}"
+        # Scaling options
+
+        if self.checkConsistentIndexing.get():
+            params += (f" scaling_options.check_consistent_indexing="
+                       f"{self.checkConsistentIndexing.get()}")
+
+        if self.outlierRejection.get() is STANDARD:
+            params += " outlier_rejection=standard"
+        elif self.outlierRejection.get() is SIMPLE:
+            params += " outlier_rejection=simple"
+
+        if self.outlierZmax.get():
+            params += f" outlier_zmax={self.outlierZmax.get()}"
+
+        # Filtering
+
+        if self.filteringMethod.get() is DELTA_CC_HALF:
+            params += " filtering.method=deltacchalf"
+        elif self.filteringMethod.get() is NONE:
+            params += " filtering.method=None"
+
+        if self.ccHalfMaxCycles.get():
+            params += (f" filtering.deltacchalf.max_cycles="
+                       f"{self.ccHalfMaxCycles.get()}")
+
+        if self.ccHalfMaxPercentRemoved.get():
+            params += (f" filtering.deltacchalf.max_percent_removed="
+                       f"{self.ccHalfMaxPercentRemoved.get()}")
+
+        if self.ccHalfMinCompleteness.get():
+            params += (f" filtering.deltacchalf.min_completeness="
+                       f"{self.ccHalfMinCompleteness.get()}")
+
+        if self.ccHalfMode.get() is DATASET:
+            params += " filtering.deltacchalf.mode=dataset"
+        elif self.ccHalfMode.get() is IMAGE_GROUP:
+            params += " filtering.deltacchalf.mode=image_group"
+
+        if self.ccHalfGroupSize.get():
+            params += (
+                f" filtering.deltacchalf.group_size={self.ccHalfGroupSize.get()}")
+
+        if self.ccHalfStdcutoff.get():
+            params += (
+                f" filtering.deltacchalf.stdcutoff={self.ccHalfStdcutoff.get()}")
+
+        if self.excludeImages:
+            for iG in self.getImageExclusions():
+                params += f" exclude_images={iG.get()}"
+        return params
+
+    # -------------------------- UTILS functions ------------------------------
+
+    def getOutputScaleJson(self):
+        return self._getExtraPath('scale_and_filter_results.json')
+
+    def getPhilPath(self):
+        return self._getTmpPath('scale.phil')
+
+    def getAllInputFiles(self):
+        files = ""
+        for iS in self.inputSets:
+            files += f"{self.getInputModelFile(iS.get())} {self.getInputReflFile(iS.get())} "
+        return files.strip()
+
+    def getSpaceGroupLogOutput(self):
+        spaceGroup = dutils.readLog(
+            self.getLogFilePath(program='dials.scale'),
+            'Space group being used',
+            'Scaling models have been initialised')
+        return spaceGroup
+
+    def getMergingStatisticsLogOutput(self):
+        mergingStats = dutils.readLog(
+            self.getLogFilePath(program='dials.scale'),
+            'Merging statistics',
+            'Writing html report')
+        if mergingStats not in (None, ''):
+            mergeStats = f"\n{textwrap.dedent(mergingStats)}"
+        else:
+            mergeStats = mergingStats
+        return mergeStats
 
     def getImageExclusions(self):
         imageGroups = []
@@ -617,10 +793,10 @@ class DialsProtScaling(EdBaseProtocol):
             imageGroups.append(self.imageGroup20)
 
         return imageGroups
-    
+
     def getDMax(self):
         return self.dMax.get()
-    
+
     def getDMin(self):
         return self.dMin.get()
 
@@ -632,100 +808,3 @@ class DialsProtScaling(EdBaseProtocol):
         else:
             # If at least one value is None, then no swap is possible
             return False
-
-    def _checkWriteModel(self, inputSet):
-        return self.getSetModel(inputSet) != self.getInputModelFile(inputSet)
-
-    def _checkWriteRefl(self, inputSet):
-        return self.getSetRefl(inputSet) != self.getInputReflFile(inputSet)
-
-    def _prepCommandline(self, program):
-        "Create the command line input to run dials programs"
-
-        # Input basic parameters
-        logPath = self.getLogFilePath(program)
-        params = "{} output.log={} output.experiments={} output.reflections={} output.html={} filtering.output.scale_and_filter_results={}".format(
-            self.getAllInputFiles(),
-            logPath,
-            self.getOutputModelFile(),
-            self.getOutputReflFile(),
-            self.getOutputHtmlFile(),
-            self.getOutputScaleJson()
-        )
-
-        # Update the command line with additional parameters
-
-        # Cut data
-
-        if self.getDMin():
-            params += " cut_data.d_min={}".format(self.getDMin())
-
-        if self.getDMax():
-            params += " cut_data.d_max={}".format(self.getDMax())
-
-        if self.partialityCutoff.get():
-            params += " cut_data.partiality_cutoff={}".format(
-                self.partialityCutoff.get())
-
-        if self.minIsigi.get():
-            params += " cut_data.min_isigi={}".format(self.minIsigi.get())
-
-        # Scaling options
-
-        if self.checkConsistentIndexing.get():
-            params += " scaling_options.check_consistent_indexing={}".format(
-                self.checkConsistentIndexing.get())
-
-        if self.outlierRejection.get() is STANDARD:
-            params += " outlier_rejection=standard"
-        elif self.outlierRejection.get() is SIMPLE:
-            params += " outlier_rejection=simple"
-
-        if self.outlierZmax.get():
-            params += " outlier_zmax={}".format(self.outlierZmax.get())
-
-        # Filtering
-
-        if self.filteringMethod.get() is DELTA_CC_HALF:
-            params += " filtering.method=deltacchalf"
-        elif self.filteringMethod.get() is NONE:
-            params += " filtering.method=None"
-
-        if self.ccHalfMaxCycles.get():
-            params += " filtering.deltacchalf.max_cycles={}".format(
-                self.ccHalfMaxCycles.get())
-
-        if self.ccHalfMaxPercentRemoved.get():
-            params += " filtering.deltacchalf.max_percent_removed={}".format(
-                self.ccHalfMaxPercentRemoved.get())
-
-        if self.ccHalfMinCompleteness.get():
-            params += " filtering.deltacchalf.min_completeness={}".format(
-                self.ccHalfMinCompleteness.get())
-
-        if self.ccHalfMode.get() is DATASET:
-            params += " filtering.deltacchalf.mode=dataset"
-        elif self.ccHalfMode.get() is IMAGE_GROUP:
-            params += " filtering.deltacchalf.mode=image_group"
-
-        if self.ccHalfGroupSize.get():
-            params += " filtering.deltacchalf.group_size={}".format(
-                self.ccHalfGroupSize.get())
-
-        if self.ccHalfStdcutoff.get():
-            params += " filtering.deltacchalf.stdcutoff={}".format(
-                self.ccHalfStdcutoff.get())
-
-        if self.excludeImages:
-            for iG in self.getImageExclusions():
-                params += " exclude_images={}".format(iG.get())
-
-        # Unrestrained command line input
-
-        if self.extraPhilPath.get():
-            params += " {}".format(self.getExtraPhilsPath())
-
-        if self.commandLineInput.get():
-            params += " {}".format(self.commandLineInput.get())
-
-        return params
