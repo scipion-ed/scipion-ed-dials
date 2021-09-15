@@ -61,12 +61,15 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         cls.dataPath = os.environ.get("SCIPION_ED_TESTDATA")
 
         if not os.path.exists(cls.dataPath):
-            raise Exception("Can not run DIALS tests, missing file:\n  %s"
-                            % cls.dataPath)
+            raise Exception(
+                f"Can not run DIALS tests, missing file:\n  {cls.dataPath}")
 
     # Functions for running protocols
 
-    def _runImportImages(self, filesPath, filesPattern='SMV/data/00{TI}.img', **kwargs):
+    def _runImportImages(self,
+                         filesPath,
+                         filesPattern='SMV/data/00{TI}.img',
+                         **kwargs):
         protImport = self.newProtocol(
             ProtImportDiffractionImages,
             filesPath=filesPath,
@@ -75,7 +78,10 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         self.launchProtocol(protImport)
         return protImport
 
-    def _runDialsImportImages(self, filesPath, filesPattern='SMV/data/00{TI}.img', **kwargs):
+    def _runDialsImportImages(self,
+                              filesPath,
+                              filesPattern='SMV/data/00{TI}.img',
+                              **kwargs):
         protImport = self.newProtocol(
             DialsProtImportDiffractionImages,
             filesPath=filesPath,
@@ -135,7 +141,10 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         return protExport
 
     # Helper functions
-    def makePathList(self, scanRange, digits=3, location=None, pattern='SMV/data/00{TI}.img', wildcard='{TI}'):
+    def makePathList(self, scanRange, digits=3,
+                     location=None,
+                     pattern='SMV/data/00{TI}.img',
+                     wildcard='{TI}'):
         first, last = scanRange.split(',')
         numbers = range(int(first), int(last)+1)
         replacements = [str(num).zfill(digits) for num in numbers]
@@ -200,8 +209,8 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         return experiment
 
     def checkLogDataset(self, protocol, dataset, logOutput=''):
-        datasetString = "Source of data:\n{}".format(
-            os.path.join(dataset, 'SMV/data'))
+        datasetString = (f"Source of data:\n"
+                         f"{os.path.join(dataset, 'SMV/data')}")
         self.assertEqual(protocol.getDatasets(), datasetString)
         outputCompare = protocol.getLogOutput().split('\n')[0]
         self.assertEqual(outputCompare.strip(), logOutput.strip())
@@ -227,7 +236,8 @@ class TestEdDialsProtocols(pwtests.BaseTest):
     def assertFileExists(self, file):
         self.assertTrue(os.path.exists(file))
 
-    def comparePhils(self, goodPhil='restraints.phil', testPhil=None):
+    def comparePhils(self, goodPhil='restraints.phil',
+                     testPhil=None):
         self.assertIsNotNone(goodPhil)
         self.assertIsNotNone(testPhil)
         with open(goodPhil, 'r') as f1:
@@ -244,18 +254,25 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         multiDataset = []
 
         # Define parameter reference strings
-        beamParams = "refinement.parameterisation.beam.fix='all *in_spindle_plane out_spindle_plane *wavelength'"
-        beamParamsAll = "refinement.parameterisation.beam.fix='*all in_spindle_plane out_spindle_plane wavelength'"
-        beamParamsSv = "refinement.parameterisation.beam.fix='all in_spindle_plane out_spindle_plane *wavelength'"
-        crystalParams = "refinement.parameterisation.crystal.fix='all cell orientation'"
-        detectorParamsAll = "refinement.parameterisation.detector.fix='*all position orientation distance'"
-        detectorParamsNoFix = "refinement.parameterisation.detector.fix='all position orientation distance'"
-        gonioParams = "refinement.parameterisation.goniometer.fix='*all in_beam_plane out_beam_plane'"
+        beamParams = ("refinement.parameterisation.beam.fix='all "
+                      "*in_spindle_plane out_spindle_plane *wavelength'")
+        beamParamsAll = ("refinement.parameterisation.beam.fix='*all "
+                         "in_spindle_plane out_spindle_plane wavelength'")
+        beamParamsSv = ("refinement.parameterisation.beam.fix='all "
+                        "in_spindle_plane out_spindle_plane *wavelength'")
+        crystalParams = ("refinement.parameterisation.crystal.fix='all "
+                         "cell orientation'")
+        detectorParamsAll = ("refinement.parameterisation.detector.fix='*all "
+                             "position orientation distance'")
+        detectorParamsNoFix = ("refinement.parameterisation.detector.fix='all "
+                               "position orientation distance'")
+        gonioParams = ("refinement.parameterisation.goniometer.fix='*all "
+                       "in_beam_plane out_beam_plane'")
 
         # Start the run
         for experiment in self.getLysoTestExperiments():
             exptId = experiment['location']
-            with self.subTest(msg='Pipeline using {}'.format(exptId), experiment=exptId):
+            with self.subTest(msg=f"Pipeline using {exptId}", experiment=exptId):
 
                 dataset = os.path.join(self.dataPath, exptId)
                 multiDataset.append(dataset)
@@ -264,26 +281,25 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 protImport = self._runDialsImportImages(
                     filesPath=dataset,
                     filesPattern=experiment['files_pattern'],
-                    objLabel="dials - import diffraction images\n"
-                    "{}".format(exptId),
+                    objLabel=f"dials - import diffraction images\n{exptId}",
                     replaceRotationAxis=True,
                     rotationAxis=experiment['rotation_axis'],
                     overwriteDetectorDistance=experiment['distance'],
                 )
                 if experiment['distance'] != None:
-                    distance = " distance={}".format(experiment['distance'])
+                    distance = f" distance={experiment['distance']}"
                 else:
                     distance = ''
 
-            pathlist = self.makePathList(
-                experiment['scan_range'], location=dataset, pattern=experiment['files_pattern'])
-            importCL = '{} output.log={}/dials.import.log output.experiments={}/imported.expt goniometer.axes={}{}'.format(
-                " ".join(pathlist),
-                protImport._getLogsPath(),
-                protImport._getExtraPath(),
-                experiment['rotation_axis'],
-                distance.rstrip()
-            )
+            pathlist = self.makePathList(experiment['scan_range'],
+                                         location=dataset,
+                                         pattern=experiment['files_pattern'])
+            importCL = (
+                f"{' '.join(pathlist)} "
+                f"output.log={protImport._getLogsPath()}/dials.import.log "
+                f"output.experiments={protImport._getExtraPath()}/imported.expt "
+                f"goniometer.axes={experiment['rotation_axis']}"
+                f"{distance.rstrip()}")
 
             self.assertCommand(protImport, importCL,
                                program='dials.import')
@@ -307,12 +323,21 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 thresholdAlgorithm=DISPERSION_EXTENDED)
             inputModel = protFindSpots.getInputModelFile()
             self.assertFileExists(inputModel)
-            findSpotCL = '{}/imported.expt output.log={}/dials.find_spots.log output.reflections={}/strong.refl spotfinder.scan_range={} spotfinder.filter.d_min={} spotfinder.filter.max_spot_size=1000 spotfinder.filter.max_strong_pixel_fraction=0.25 spotfinder.filter.max_separation=2.0 spotfinder.filter.untrusted.rectangle=0,516,255,261 spotfinder.filter.untrusted.rectangle=255,261,0,516 spotfinder.threshold.algorithm=dispersion_extended spotfinder.threshold.dispersion.sigma_background=6.0 spotfinder.threshold.dispersion.sigma_strong=3.0 spotfinder.threshold.dispersion.kernel_size=3,3'.format(
-                protImport._getExtraPath(),
-                protFindSpots._getLogsPath(),
-                protFindSpots._getExtraPath(),
-                experiment['scan_range'],
-                experiment['d_min'],)
+            findSpotCL = (
+                f"{protImport._getExtraPath()}/imported.expt "
+                f"output.log={protFindSpots._getLogsPath()}/dials.find_spots.log "
+                f"output.reflections={protFindSpots._getExtraPath()}/strong.refl "
+                f"spotfinder.scan_range={experiment['scan_range']} "
+                f"spotfinder.filter.d_min={experiment['d_min']} "
+                f"spotfinder.filter.max_spot_size=1000 "
+                f"spotfinder.filter.max_strong_pixel_fraction=0.25 "
+                f"spotfinder.filter.max_separation=2.0 "
+                f"spotfinder.filter.untrusted.rectangle=0,516,255,261 "
+                f"spotfinder.filter.untrusted.rectangle=255,261,0,516 "
+                f"spotfinder.threshold.algorithm=dispersion_extended "
+                f"spotfinder.threshold.dispersion.sigma_background=6.0 "
+                f"spotfinder.threshold.dispersion.sigma_strong=3.0 "
+                f"spotfinder.threshold.dispersion.kernel_size=3,3")
             self.assertCommand(protFindSpots, findSpotCL,
                                program='dials.find_spots')
             foundspotset = getattr(
@@ -344,27 +369,22 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             indexLogs = protIndex._getLogsPath()
             indexExtra = protIndex._getExtraPath()
 
-            indexCL = "{}/imported.expt {}/strong.refl output.log={}/dials.index.log output.experiments={}/indexed.expt output.reflections={}/indexed.refl {} {} {} {}".format(
-                protImport._getExtraPath(),
-                protFindSpots._getExtraPath(),
-                indexLogs,
-                indexTmp,
-                indexTmp,
-                beamParamsAll,
-                crystalParams,
-                detectorParamsAll,
-                gonioParams,
-            )
-            refBravCL = "{}/indexed.expt {}/indexed.refl output.log={}/dials.refine_bravais_settings.log output.directory={}".format(
-                indexTmp,
-                indexTmp,
-                indexLogs,
-                indexTmp,
-            )
-            reindexCL = 'change_of_basis_op=a,b,c {}/indexed.refl output.reflections={}/reindexed.refl'.format(
-                indexTmp,
-                indexTmp,
-            )
+            indexCL = (
+                f"{protImport._getExtraPath()}/imported.expt "
+                f"{protFindSpots._getExtraPath()}/strong.refl "
+                f"output.log={indexLogs}/dials.index.log "
+                f"output.experiments={indexTmp}/indexed.expt "
+                f"output.reflections={indexTmp}/indexed.refl "
+                f"{beamParamsAll} {crystalParams} "
+                f"{detectorParamsAll} {gonioParams}")
+            refBravCL = (
+                f"{indexTmp}/indexed.expt "
+                f"{indexTmp}/indexed.refl "
+                f"output.log={indexLogs}/dials.refine_bravais_settings.log "
+                f"output.directory={indexTmp}")
+            reindexCL = (
+                f"change_of_basis_op=a,b,c {indexTmp}/indexed.refl "
+                f"output.reflections={indexTmp}/reindexed.refl")
             self.assertEqual(protIndex._prepIndexCommandline(
                 'dials.index'), indexCL)
             self.assertEqual(protIndex._prepBravaisCommandline(
@@ -378,6 +398,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             self.checkLogDataset(protIndex, dataset)
 
             with self.subTest(msg='Testing with restraints in phil file'):
+                spaceGroup = experiment['space_group'].replace(' ', '')
                 protIndexPhil = self._runIndex(
                     objLabel="dials - index known space group",
                     inputImages=protImport.outputDiffractionImages,
@@ -389,23 +410,20 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                     beamFixOutSpindlePlane=True,
                     beamFixWavelength=True,
                     enterSpaceGroup=True,
-                    knownSpaceGroup=experiment['space_group'].replace(" ", ""),
+                    knownSpaceGroup=spaceGroup,
                 )
                 indexTmpPhil = protIndexPhil._getTmpPath()
                 indexLogsPhil = protIndexPhil._getLogsPath()
                 indexExtraPhil = protIndexPhil._getExtraPath()
-                indexCLPhil = "{}/imported.expt {}/strong.refl output.log={}/dials.index.log output.experiments={}/indexed.expt output.reflections={}/indexed.refl indexing.known_symmetry.space_group={} {} {} {} {}".format(
-                    protImport._getExtraPath(),
-                    protFindSpots._getExtraPath(),
-                    indexLogsPhil,
-                    indexTmpPhil,
-                    indexTmpPhil,
-                    experiment['space_group'].replace(" ", ""),
-                    beamParamsAll,
-                    crystalParams,
-                    detectorParamsAll,
-                    gonioParams,
-                )
+                indexCLPhil = (
+                    f"{protImport._getExtraPath()}/imported.expt "
+                    f"{protFindSpots._getExtraPath()}/strong.refl "
+                    f"output.log={indexLogsPhil}/dials.index.log "
+                    f"output.experiments={indexTmpPhil}/indexed.expt "
+                    f"output.reflections={indexTmpPhil}/indexed.refl "
+                    f"indexing.known_symmetry.space_group={spaceGroup} "
+                    f"{beamParamsAll} {crystalParams} "
+                    f"{detectorParamsAll} {gonioParams}")
                 self.assertEqual(protIndexPhil._prepIndexCommandline(
                     'dials.index'), indexCLPhil)
                 indexedSetPhil = getattr(
@@ -425,18 +443,15 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                     targetUnitCell=experiment['unit_cell'],
                     targetSigmas=experiment['unit_cell_sigmas'],
                 )
-                refineCLstaticPhil = "{}/indexed.expt {}/indexed.refl output.log={}/dials.refine.log output.experiments={}/refined.expt output.reflections={}/refined.refl scan_varying=False {} {} {} {} {}/restraints.phil".format(
-                    indexExtraPhil,
-                    indexExtraPhil,
-                    protRefinePhil._getLogsPath(),
-                    protRefinePhil._getExtraPath(),
-                    protRefinePhil._getExtraPath(),
-                    beamParams,
-                    crystalParams,
-                    detectorParamsNoFix,
-                    gonioParams,
-                    protRefinePhil._getExtraPath(),
-                )
+                refineCLstaticPhil = (
+                    f"{indexExtraPhil}/indexed.expt "
+                    f"{indexExtraPhil}/indexed.refl "
+                    f"output.log={protRefinePhil._getLogsPath()}/dials.refine.log "
+                    f"output.experiments={protRefinePhil._getExtraPath()}/refined.expt "
+                    f"output.reflections={protRefinePhil._getExtraPath()}/refined.refl "
+                    f"scan_varying=False {beamParams} {crystalParams} "
+                    f"{detectorParamsNoFix} {gonioParams} "
+                    f"{protRefinePhil._getExtraPath()}/restraints.phil")
                 self.assertCommand(protRefinePhil, refineCLstaticPhil,
                                    program='dials.refine')
                 refinedsetPhil = getattr(
@@ -464,17 +479,14 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 scanVaryingNew=UNSET,
                 detectorFixAll=True,
             )
-            refineCLstatic = "{}/indexed.expt {}/indexed.refl output.log={}/dials.refine.log output.experiments={}/refined.expt output.reflections={}/refined.refl {} {} {} {}".format(
-                indexExtra,
-                indexExtra,
-                protRefine._getLogsPath(),
-                protRefine._getExtraPath(),
-                protRefine._getExtraPath(),
-                beamParams,
-                crystalParams,
-                detectorParamsAll,
-                gonioParams,
-            )
+            refineCLstatic = (
+                f"{indexExtra}/indexed.expt "
+                f"{indexExtra}/indexed.refl "
+                f"output.log={protRefine._getLogsPath()}/dials.refine.log "
+                f"output.experiments={protRefine._getExtraPath()}/refined.expt "
+                f"output.reflections={protRefine._getExtraPath()}/refined.refl "
+                f"{beamParams} {crystalParams} "
+                f"{detectorParamsAll} {gonioParams}")
             self.assertCommand(protRefine, refineCLstatic,
                                program='dials.refine')
             refinedset = getattr(protRefine, 'outputRefinedSpots', None)
@@ -495,17 +507,15 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 beamForceStatic=False,
                 detectorFixAll=True,
             )
-            refineCLsv = "{}/refined.expt {}/refined.refl output.log={}/dials.refine.log output.experiments={}/refined.expt output.reflections={}/refined.refl scan_varying=True {} beam.force_static=False {} {} {}".format(
-                protRefine._getExtraPath(),
-                protRefine._getExtraPath(),
-                protSvRefine._getLogsPath(),
-                protSvRefine._getExtraPath(),
-                protSvRefine._getExtraPath(),
-                beamParamsSv,
-                crystalParams,
-                detectorParamsAll,
-                gonioParams,
-            )
+            refineCLsv = (
+                f"{protRefine._getExtraPath()}/refined.expt "
+                f"{protRefine._getExtraPath()}/refined.refl "
+                f"output.log={protSvRefine._getLogsPath()}/dials.refine.log "
+                f"output.experiments={protSvRefine._getExtraPath()}/refined.expt "
+                f"output.reflections={protSvRefine._getExtraPath()}/refined.refl "
+                f"scan_varying=True {beamParamsSv} "
+                f"beam.force_static=False {crystalParams} "
+                f"{detectorParamsAll} {gonioParams}")
             self.assertCommand(protSvRefine, refineCLsv,
                                program='dials.refine')
             svRefinedset = getattr(
@@ -527,17 +537,15 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 beamForceStatic=False,
                 detectorFixAll=True,
             )
-            refineCLsvOld = "{}/refined.expt {}/refined.refl output.log={}/dials.refine.log output.experiments={}/refined.expt output.reflections={}/refined.refl scan_varying=True {} beam.force_static=False {} {} {}".format(
-                protRefine._getExtraPath(),
-                protRefine._getExtraPath(),
-                protSvRefineOld._getLogsPath(),
-                protSvRefineOld._getExtraPath(),
-                protSvRefineOld._getExtraPath(),
-                beamParamsSv,
-                crystalParams,
-                detectorParamsAll,
-                gonioParams,
-            )
+            refineCLsvOld = (
+                f"{protRefine._getExtraPath()}/refined.expt "
+                f"{protRefine._getExtraPath()}/refined.refl "
+                f"output.log={protSvRefineOld._getLogsPath()}/dials.refine.log "
+                f"output.experiments={protSvRefineOld._getExtraPath()}/refined.expt "
+                f"output.reflections={protSvRefineOld._getExtraPath()}/refined.refl "
+                f"scan_varying=True {beamParamsSv} "
+                f"beam.force_static=False {crystalParams} "
+                f"{detectorParamsAll} {gonioParams}")
             self.assertCommand(protSvRefineOld, refineCLsvOld,
                                program='dials.refine')
             svRefinedsetOld = getattr(
@@ -549,21 +557,21 @@ class TestEdDialsProtocols(pwtests.BaseTest):
 
             # Run integration
             protIntegrate = self._runIntegrate(
-                # objLabel="Dials integration: {}".format(exptId),
+                # objLabel=f"Dials integration: {exptId}",
                 inputSet=protSvRefine.outputRefinedSpots,
                 nproc=8,
-                commandLineInput='prediction.d_min={}'.format(
-                    experiment['d_min']),
+                commandLineInput=f"prediction.d_min={experiment['d_min']}",
             )
-            integrateCL = "{}/refined.expt {}/refined.refl output.log={}/dials.integrate.log output.experiments={}/integrated_model.expt output.reflections={}/integrated_reflections.refl output.phil={}/dials.integrate.phil nproc=8 prediction.d_min={}".format(
-                protSvRefine._getExtraPath(),
-                protSvRefine._getExtraPath(),
-                protIntegrate._getLogsPath(),
-                protIntegrate._getExtraPath(),
-                protIntegrate._getExtraPath(),
-                protIntegrate._getExtraPath(),
-                experiment['d_min']
-            )
+            integrateCL = (
+                f"{protSvRefine._getExtraPath()}/refined.expt "
+                f"{protSvRefine._getExtraPath()}/refined.refl "
+                f"output.log={protIntegrate._getLogsPath()}/dials.integrate.log "
+                f"output.experiments={protIntegrate._getExtraPath()}/"
+                f"integrated_model.expt "
+                f"output.reflections={protIntegrate._getExtraPath()}/"
+                f"integrated_reflections.refl "
+                f"output.phil={protIntegrate._getExtraPath()}/dials.integrate.phil "
+                f"nproc=8 prediction.d_min={experiment['d_min']}")
             self.assertCommand(protIntegrate, integrateCL,
                                program='dials.integrate')
             integratedset = getattr(
@@ -579,35 +587,43 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 objLabel="dials - symmetry check",
                 inputSet=protIntegrate.outputIntegratedSpots,
             )
-            symmCL = "{}/integrated_model.expt {}/integrated_reflections.refl output.log={}/dials.symmetry.log output.experiments={}/symmetrized.expt output.reflections={}/symmetrized.refl".format(
-                protIntegrate._getExtraPath(),
-                protIntegrate._getExtraPath(),
-                protSymmetry._getLogsPath(),
-                protSymmetry._getExtraPath(),
-                protSymmetry._getExtraPath(),
-            )
+            symmCL = (
+                f"{protIntegrate._getExtraPath()}/integrated_model.expt "
+                f"{protIntegrate._getExtraPath()}/integrated_reflections.refl "
+                f"output.log={protSymmetry._getLogsPath()}/dials.symmetry.log "
+                f"output.experiments={protSymmetry._getExtraPath()}/symmetrized.expt "
+                f"output.reflections={protSymmetry._getExtraPath()}/symmetrized.refl")
+
             self.assertCommand(protSymmetry, symmCL, 'dials.symmetry')
             symmetrizedset = getattr(
                 protSymmetry, 'outputSymmetrizedSpots', None)
             self.assertIsNotNone(protSymmetry.outputSymmetrizedSpots)
             self.assertFileExists(symmetrizedset.getDialsModel())
             self.assertFileExists(symmetrizedset.getDialsRefl())
-            self.checkLogDataset(protSymmetry, dataset,
-                                 'Recommended space group: {}'.format(experiment['space_group']))
+            self.checkLogDataset(
+                protSymmetry, dataset,
+                f"Recommended space group: {experiment['space_group']}")
 
             protScaling = self._runScaling(
                 objLabel="dials - scaling",
                 inputSets=[protIntegrate.outputIntegratedSpots],
             )
-            scaleCL = "{}/integrated_model.expt {}/integrated_reflections.refl output.log={}/dials.scale.log output.experiments={}/scaled.expt output.reflections={}/scaled.refl output.html={}/dials.scale.html filtering.output.scale_and_filter_results={}/scale_and_filter_results.json cut_data.partiality_cutoff=0.4 cut_data.min_isigi=-5.0 outlier_rejection=standard outlier_zmax=6.0 filtering.method=None filtering.deltacchalf.max_cycles=6 filtering.deltacchalf.max_percent_removed=10.0 filtering.deltacchalf.mode=dataset filtering.deltacchalf.group_size=10 filtering.deltacchalf.stdcutoff=4.0".format(
-                protIntegrate._getExtraPath(),
-                protIntegrate._getExtraPath(),
-                protScaling._getLogsPath(),
-                protScaling._getExtraPath(),
-                protScaling._getExtraPath(),
-                protScaling._getExtraPath(),
-                protScaling._getExtraPath(),
-            )
+            scaleCL = (
+                f"{protIntegrate._getExtraPath()}/integrated_model.expt "
+                f"{protIntegrate._getExtraPath()}/integrated_reflections.refl "
+                f"output.log={protScaling._getLogsPath()}/dials.scale.log "
+                f"output.experiments={protScaling._getExtraPath()}/scaled.expt "
+                f"output.reflections={protScaling._getExtraPath()}/scaled.refl "
+                f"output.html={protScaling._getExtraPath()}/dials.scale.html "
+                f"filtering.output.scale_and_filter_results="
+                f"{protScaling._getExtraPath()}/scale_and_filter_results.json "
+                f"cut_data.partiality_cutoff=0.4 cut_data.min_isigi=-5.0 "
+                f"outlier_rejection=standard outlier_zmax=6.0 filtering.method=None "
+                f"filtering.deltacchalf.max_cycles=6 "
+                f"filtering.deltacchalf.max_percent_removed=10.0 "
+                f"filtering.deltacchalf.mode=dataset "
+                f"filtering.deltacchalf.group_size=10 "
+                f"filtering.deltacchalf.stdcutoff=4.0")
             self.assertCommand(protScaling, scaleCL, 'dials.scale')
             scaledset = getattr(
                 protScaling, 'outputScaledSpots', None)
@@ -630,17 +646,25 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             )
             scaledExtra0 = scaleProt[0]._getExtraPath()
             scaledExtra1 = scaleProt[1]._getExtraPath()
-            multiScaleCL = "{}/scaled.expt {}/scaled.refl {}/scaled.expt {}/scaled.refl output.log={}/dials.scale.log output.experiments={}/scaled.expt output.reflections={}/scaled.refl output.html={}/dials.scale.html filtering.output.scale_and_filter_results={}/scale_and_filter_results.json cut_data.partiality_cutoff=0.4 cut_data.min_isigi=-5.0 scaling_options.check_consistent_indexing=True outlier_rejection=standard outlier_zmax=6.0 filtering.method=None filtering.deltacchalf.max_cycles=6 filtering.deltacchalf.max_percent_removed=10.0 filtering.deltacchalf.mode=dataset filtering.deltacchalf.group_size=10 filtering.deltacchalf.stdcutoff=4.0".format(
-                scaledExtra0,
-                scaledExtra0,
-                scaledExtra1,
-                scaledExtra1,
-                protMultiScaling._getLogsPath(),
-                protMultiScaling._getExtraPath(),
-                protMultiScaling._getExtraPath(),
-                protMultiScaling._getExtraPath(),
-                protMultiScaling._getExtraPath(),
-            )
+            multiScaleCL = (
+                f"{scaledExtra0}/scaled.expt "
+                f"{scaledExtra0}/scaled.refl "
+                f"{scaledExtra1}/scaled.expt "
+                f"{scaledExtra1}/scaled.refl "
+                f"output.log={protMultiScaling._getLogsPath()}/dials.scale.log "
+                f"output.experiments={protMultiScaling._getExtraPath()}/scaled.expt "
+                f"output.reflections={protMultiScaling._getExtraPath()}/scaled.refl "
+                f"output.html={protMultiScaling._getExtraPath()}/dials.scale.html "
+                f"filtering.output.scale_and_filter_results="
+                f"{protMultiScaling._getExtraPath()}/scale_and_filter_results.json "
+                f"cut_data.partiality_cutoff=0.4 cut_data.min_isigi=-5.0 "
+                f"scaling_options.check_consistent_indexing=True "
+                f"outlier_rejection=standard outlier_zmax=6.0 filtering.method=None "
+                f"filtering.deltacchalf.max_cycles=6 "
+                f"filtering.deltacchalf.max_percent_removed=10.0 "
+                f"filtering.deltacchalf.mode=dataset "
+                f"filtering.deltacchalf.group_size=10 "
+                f"filtering.deltacchalf.stdcutoff=4.0")
             self.assertCommand(protMultiScaling, multiScaleCL, 'dials.scale')
             multiscaledset = getattr(
                 protMultiScaling, 'outputScaledSpots', None)
@@ -649,8 +673,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             self.assertFileExists(multiscaledset.getDialsRefl())
             compareDatasets = 'Source of data:'
             for ds in multiDataset:
-                compareDatasets += "\n{}".format(
-                    os.path.join(self.dataPath, ds, 'SMV/data'))
+                compareDatasets += f"\n{os.path.join(self.dataPath, ds, 'SMV/data')}"
             self.assertEqual(protMultiScaling.getDatasets(), compareDatasets)
 
             protExportMtz = self._runExport(
@@ -658,13 +681,14 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 exportFormat=MTZ,
             )
 
-            exportMtzCL = "{}/scaled.expt {}/scaled.refl format=mtz mtz.hklout={}/integrated_{}.mtz output.log={}/dials.export.log mtz.combine_partials=True mtz.partiality_threshold=0.99 mtz.min_isigi=-5.0 mtz.crystal_name=XTAL".format(
-                protMultiScaling._getExtraPath(),
-                protMultiScaling._getExtraPath(),
-                protExportMtz._getExtraPath(),
-                protExportMtz.getObjId(),
-                protExportMtz._getLogsPath()
-            )
+            exportMtzCL = (
+                f"{protMultiScaling._getExtraPath()}/scaled.expt "
+                f"{protMultiScaling._getExtraPath()}/scaled.refl "
+                f"format=mtz mtz.hklout={protExportMtz._getExtraPath()}/"
+                f"integrated_{protExportMtz.getObjId()}.mtz "
+                f"output.log={protExportMtz._getLogsPath()}/dials.export.log "
+                f"mtz.combine_partials=True mtz.partiality_threshold=0.99 "
+                f"mtz.min_isigi=-5.0 mtz.crystal_name=XTAL")
             self.assertCommand(protExportMtz, exportMtzCL, "dials.export")
             exportedmtzset = getattr(protExportMtz, 'exportedFileSet', None)
             self.assertIsNotNone(protExportMtz.exportedFileSet)
@@ -682,29 +706,30 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         dataset = os.path.join(self.dataPath, exptId)
 
         # Define parameter strings
-        beamParams = "refinement.parameterisation.beam.fix='all *in_spindle_plane out_spindle_plane *wavelength'"
-        crystalParams = "refinement.parameterisation.crystal.fix='all cell orientation'"
-        detectorParamsDistance = "refinement.parameterisation.detector.fix='all position orientation *distance'"
-        gonioParams = "refinement.parameterisation.goniometer.fix='*all in_beam_plane out_beam_plane'"
+        beamParams = ("refinement.parameterisation.beam.fix="
+                      "'all *in_spindle_plane out_spindle_plane *wavelength'")
+        crystalParams = ("refinement.parameterisation.crystal.fix="
+                         "'all cell orientation'")
+        detectorParamsDistance = ("refinement.parameterisation.detector.fix="
+                                  "'all position orientation *distance'")
+        gonioParams = ("refinement.parameterisation.goniometer.fix="
+                       "'*all in_beam_plane out_beam_plane'")
 
         # Run import
         protImport = self._runDialsImportImages(
             filesPath=dataset,
             filesPattern=experiment['files_pattern'],
-            objLabel="dials - import diffraction images\n"
-            "{}".format(exptId),
+            objLabel=f"dials - import diffraction images\n{exptId}",
             replaceRotationAxis=experiment['replace_rotation_axis'],
             rotationAxis=experiment['rotation_axis'],
             useTemplate=experiment['useTemplate'],
             tsReplacement=experiment['tsReplacement'],
         )
-        importCL = 'template={}/Garnet_Cont_{}.img output.log={}/dials.import.log output.experiments={}/imported.expt goniometer.axes={}'.format(
-            dataset,
-            experiment['tsReplacement'],
-            protImport._getLogsPath(),
-            protImport._getExtraPath(),
-            experiment['rotation_axis'],
-        )
+        importCL = (
+            f"template={dataset}/Garnet_Cont_{experiment['tsReplacement']}.img "
+            f"output.log={protImport._getLogsPath()}/dials.import.log "
+            f"output.experiments={protImport._getExtraPath()}/imported.expt "
+            f"goniometer.axes={experiment['rotation_axis']}")
 
         self.assertCommand(protImport, importCL,
                            program='dials.import')
@@ -715,7 +740,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         self.assertIsNotNone(importedset)
         setModel = importedset.getDialsModel()
         self.assertFileExists(setModel)
-        datasetString = "Source of data:\n{}".format(dataset)
+        datasetString = f"Source of data:\n{dataset}"
         self.assertEqual(protImport.getDatasets(), datasetString)
         outputCompare = protImport.getLogOutput().split('\n')[0]
         self.assertEqual(outputCompare.strip(), ''.strip())
@@ -733,17 +758,21 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         )
         inputModel = protFindSpots.getInputModelFile()
         self.assertFileExists(inputModel)
-        findSpotCL = '{}/imported.expt output.log={}/dials.find_spots.log output.reflections={}/strong.refl spotfinder.scan_range=1,566 spotfinder.filter.d_min={} spotfinder.filter.d_max={} spotfinder.filter.min_spot_size={} spotfinder.filter.max_spot_size={} spotfinder.filter.max_strong_pixel_fraction=0.25 spotfinder.filter.max_separation={} spotfinder.threshold.algorithm=dispersion spotfinder.threshold.dispersion.sigma_background={} spotfinder.threshold.dispersion.sigma_strong=3.0 spotfinder.threshold.dispersion.kernel_size=3,3'.format(
-            protImport._getExtraPath(),
-            protFindSpots._getLogsPath(),
-            protFindSpots._getExtraPath(),
-            experiment['d_min'],
-            experiment['d_max'],
-            experiment['min_spot_size'],
-            experiment['max_spot_size'],
-            experiment['max_separation'],
-            experiment['sigma_background'],
-        )
+        findSpotCL = (f"{protImport._getExtraPath()}/imported.expt "
+                      f"output.log={protFindSpots._getLogsPath()}/dials.find_spots.log "
+                      f"output.reflections={protFindSpots._getExtraPath()}/strong.refl "
+                      f"spotfinder.scan_range=1,566 "
+                      f"spotfinder.filter.d_min={experiment['d_min']} "
+                      f"spotfinder.filter.d_max={experiment['d_max']} "
+                      f"spotfinder.filter.min_spot_size={experiment['min_spot_size']} "
+                      f"spotfinder.filter.max_spot_size={experiment['max_spot_size']} "
+                      f"spotfinder.filter.max_strong_pixel_fraction=0.25 "
+                      f"spotfinder.filter.max_separation={experiment['max_separation']} "
+                      f"spotfinder.threshold.algorithm=dispersion "
+                      f"spotfinder.threshold.dispersion.sigma_background="
+                      f"{experiment['sigma_background']} "
+                      f"spotfinder.threshold.dispersion.sigma_strong=3.0 "
+                      f"spotfinder.threshold.dispersion.kernel_size=3,3")
         self.assertCommand(protFindSpots, findSpotCL,
                            program="dials.find_spots")
         foundspotset = getattr(
@@ -753,12 +782,13 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                          experiment['found_spots'])
         self.assertFileExists(foundspotset.getDialsModel())
         self.assertFileExists(foundspotset.getDialsRefl())
-        datasetString = "Source of data:\n{}".format(dataset)
+        datasetString = f"Source of data:\n{dataset}"
         self.assertEqual(protFindSpots.getDatasets(), datasetString)
         outputCompare = protFindSpots.getLogOutput().split('\n')[0]
         self.assertEqual(outputCompare.strip(),
                          'Histogram of per-image spot count for imageset 0:'.strip())
-        with self.subTest(msg="Testing validation of resolution limits in Find Spots protocol"):
+        with self.subTest(
+                msg="Testing validation of resolution limits in Find Spots protocol"):
             with self.assertRaises(Exception):
                 self._runFindSpots(
                     protImport.outputDiffractionImages,
@@ -779,27 +809,21 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         indexLogs = protIndex._getLogsPath()
         indexExtra = protIndex._getExtraPath()
 
-        indexCL = "{}/imported.expt {}/strong.refl output.log={}/dials.index.log output.experiments={}/indexed.expt output.reflections={}/indexed.refl {} {} {} {}".format(
-            protImport._getExtraPath(),
-            protFindSpots._getExtraPath(),
-            indexLogs,
-            indexTmp,
-            indexTmp,
-            beamParams,
-            crystalParams,
-            detectorParamsDistance,
-            gonioParams,
-        )
-        refBravCL = "{}/indexed.expt {}/indexed.refl output.log={}/dials.refine_bravais_settings.log output.directory={}".format(
-            indexTmp,
-            indexTmp,
-            indexLogs,
-            indexTmp,
-        )
-        reindexCL = 'change_of_basis_op=a,b,c {}/indexed.refl output.reflections={}/reindexed.refl'.format(
-            indexTmp,
-            indexTmp,
-        )
+        indexCL = (
+            f"{protImport._getExtraPath()}/imported.expt "
+            f"{protFindSpots._getExtraPath()}/strong.refl "
+            f"output.log={indexLogs}/dials.index.log "
+            f"output.experiments={indexTmp}/indexed.expt "
+            f"output.reflections={indexTmp}/indexed.refl "
+            f"{beamParams} {crystalParams} "
+            f"{detectorParamsDistance} {gonioParams}")
+        refBravCL = (
+            f"{indexTmp}/indexed.expt {indexTmp}/indexed.refl "
+            f"output.log={indexLogs}/dials.refine_bravais_settings.log "
+            f"output.directory={indexTmp}")
+        reindexCL = (
+            f"change_of_basis_op=a,b,c {indexTmp}/indexed.refl "
+            f"output.reflections={indexTmp}/reindexed.refl")
         self.assertEqual(protIndex._prepIndexCommandline(
             'dials.index'), indexCL)
         self.assertEqual(protIndex._prepBravaisCommandline(
@@ -810,11 +834,12 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         self.assertIsNotNone(protIndex.outputIndexedSpots)
         self.assertFileExists(indexedset.getDialsModel())
         self.assertFileExists(indexedset.getDialsRefl())
-        datasetString = "Source of data:\n{}".format(dataset)
+        datasetString = f"Source of data:\n{dataset}"
         self.assertEqual(protIndex.getDatasets(), datasetString)
         outputCompare = protIndex.getLogOutput().split('\n')[0]
         self.assertEqual(outputCompare.strip(), ''.strip())
-        with self.subTest(msg="Testing refine_bravais_settings with copied parameters"):
+        with self.subTest(
+                msg="Testing refine_bravais_settings with copied parameters"):
             protIndexCopy = self._runIndex(
                 objLabel="dials - index and refine bravais setting with copied parameters",
                 inputImages=protImport.outputDiffractionImages,
@@ -828,16 +853,11 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             )
             indexTmpCopy = protIndexCopy._getTmpPath()
             indexLogsCopy = protIndexCopy._getLogsPath()
-            refBravCLCopy = "{}/indexed.expt {}/indexed.refl output.log={}/dials.refine_bravais_settings.log output.directory={} {} {} {} {}".format(
-                indexTmpCopy,
-                indexTmpCopy,
-                indexLogsCopy,
-                indexTmpCopy,
-                beamParams,
-                crystalParams,
-                detectorParamsDistance,
-                gonioParams,
-            )
+            refBravCLCopy = (
+                f"{indexTmpCopy}/indexed.expt {indexTmpCopy}/indexed.refl "
+                f"output.log={indexLogsCopy}/dials.refine_bravais_settings.log "
+                f"output.directory={indexTmpCopy} "
+                f"{beamParams} {crystalParams} {detectorParamsDistance} {gonioParams}")
             self.assertEqual(protIndexCopy._prepBravaisCommandline(
                 'dials.refine_bravais_settings'), refBravCLCopy)
 
@@ -846,24 +866,19 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             inputSet=protIndex.outputIndexedSpots,
             scanVaryingNew=UNSET,
         )
-        refineCLstatic = "{}/indexed.expt {}/indexed.refl output.log={}/dials.refine.log output.experiments={}/refined.expt output.reflections={}/refined.refl {} {} {} {}".format(
-            indexExtra,
-            indexExtra,
-            protRefine._getLogsPath(),
-            protRefine._getExtraPath(),
-            protRefine._getExtraPath(),
-            beamParams,
-            crystalParams,
-            detectorParamsDistance,
-            gonioParams,
-        )
+        refineCLstatic = (
+            f"{indexExtra}/indexed.expt {indexExtra}/indexed.refl "
+            f"output.log={protRefine._getLogsPath()}/dials.refine.log "
+            f"output.experiments={protRefine._getExtraPath()}/refined.expt "
+            f"output.reflections={protRefine._getExtraPath()}/refined.refl "
+            f"{beamParams} {crystalParams} {detectorParamsDistance} {gonioParams}")
         self.assertCommand(protRefine, refineCLstatic,
                            program='dials.refine')
         refinedset = getattr(protRefine, 'outputRefinedSpots', None)
         self.assertIsNotNone(protRefine.outputRefinedSpots)
         self.assertFileExists(refinedset.getDialsModel())
         self.assertFileExists(refinedset.getDialsRefl())
-        datasetString = "Source of data:\n{}".format(dataset)
+        datasetString = f"Source of data:\n{dataset}"
         self.assertEqual(protRefine.getDatasets(), datasetString)
         outputCompare = protRefine.getLogOutput().split('\n')[0]
         self.assertEqual(outputCompare.strip(), ''.strip())
@@ -875,15 +890,16 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             dMin=experiment['d_min'],
             makeReport=True,
         )
-        integrateCL = "{}/refined.expt {}/refined.refl output.log={}/dials.integrate.log output.experiments={}/integrated_model.expt output.reflections={}/integrated_reflections.refl output.phil={}/dials.integrate.phil nproc=8 prediction.d_min={}".format(
-            protRefine._getExtraPath(),
-            protRefine._getExtraPath(),
-            protIntegrate._getLogsPath(),
-            protIntegrate._getExtraPath(),
-            protIntegrate._getExtraPath(),
-            protIntegrate._getExtraPath(),
-            experiment['d_min']
-        )
+        integrateCL = (
+            f"{protRefine._getExtraPath()}/refined.expt "
+            f"{protRefine._getExtraPath()}/refined.refl "
+            f"output.log={protIntegrate._getLogsPath()}/dials.integrate.log "
+            f"output.experiments={protIntegrate._getExtraPath()}/"
+            f"integrated_model.expt "
+            f"output.reflections={protIntegrate._getExtraPath()}/"
+            f"integrated_reflections.refl "
+            f"output.phil={protIntegrate._getExtraPath()}/dials.integrate.phil "
+            f"nproc=8 prediction.d_min={experiment['d_min']}")
         self.assertCommand(protIntegrate, integrateCL,
                            program='dials.integrate')
         integratedset = getattr(
@@ -891,12 +907,13 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         self.assertIsNotNone(protIntegrate.outputIntegratedSpots)
         self.assertFileExists(integratedset.getDialsModel())
         self.assertFileExists(integratedset.getDialsRefl())
-        datasetString = "Source of data:\n{}".format(dataset)
+        datasetString = f"Source of data:\n{dataset}"
         self.assertEqual(protIntegrate.getDatasets(), datasetString)
         outputCompare = protIntegrate.getLogOutput().split('\n')[0]
         self.assertEqual(outputCompare.strip(),
                          'Summary vs resolution'.strip())
-        with self.subTest(msg="Testing validation of resolution limits in Integrate protocol"):
+        with self.subTest(
+                msg="Testing validation of resolution limits in Integrate protocol"):
             with self.assertRaises(Exception):
                 self._runIntegrate(
                     inputSet=protRefine.outputRefinedSpots,
@@ -909,20 +926,19 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             objLabel="dials - symmetry check",
             inputSet=protIntegrate.outputIntegratedSpots,
         )
-        symmCL = "{}/integrated_model.expt {}/integrated_reflections.refl output.log={}/dials.symmetry.log output.experiments={}/symmetrized.expt output.reflections={}/symmetrized.refl".format(
-            protIntegrate._getExtraPath(),
-            protIntegrate._getExtraPath(),
-            protSymmetry._getLogsPath(),
-            protSymmetry._getExtraPath(),
-            protSymmetry._getExtraPath(),
-        )
+        symmCL = (
+            f"{protIntegrate._getExtraPath()}/integrated_model.expt "
+            f"{protIntegrate._getExtraPath()}/integrated_reflections.refl "
+            f"output.log={protSymmetry._getLogsPath()}/dials.symmetry.log "
+            f"output.experiments={protSymmetry._getExtraPath()}/symmetrized.expt "
+            f"output.reflections={protSymmetry._getExtraPath()}/symmetrized.refl")
         self.assertCommand(protSymmetry, symmCL, 'dials.symmetry')
         symmetrizedset = getattr(
             protSymmetry, 'outputSymmetrizedSpots', None)
         self.assertIsNotNone(protSymmetry.outputSymmetrizedSpots)
         self.assertFileExists(symmetrizedset.getDialsModel())
         self.assertFileExists(symmetrizedset.getDialsRefl())
-        datasetString = "Source of data:\n{}".format(dataset)
+        datasetString = f"Source of data:\n{dataset}"
         self.assertEqual(protSymmetry.getDatasets(), datasetString)
         outputCompare = protSymmetry.getLogOutput().split('\n')[0]
         self.assertEqual(outputCompare.strip(),
@@ -932,15 +948,20 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             objLabel="dials - scaling",
             inputSets=[protIntegrate.outputIntegratedSpots],
         )
-        scaleCL = "{}/integrated_model.expt {}/integrated_reflections.refl output.log={}/dials.scale.log output.experiments={}/scaled.expt output.reflections={}/scaled.refl output.html={}/dials.scale.html filtering.output.scale_and_filter_results={}/scale_and_filter_results.json cut_data.partiality_cutoff=0.4 cut_data.min_isigi=-5.0 outlier_rejection=standard outlier_zmax=6.0 filtering.method=None filtering.deltacchalf.max_cycles=6 filtering.deltacchalf.max_percent_removed=10.0 filtering.deltacchalf.mode=dataset filtering.deltacchalf.group_size=10 filtering.deltacchalf.stdcutoff=4.0".format(
-            protIntegrate._getExtraPath(),
-            protIntegrate._getExtraPath(),
-            protScaling._getLogsPath(),
-            protScaling._getExtraPath(),
-            protScaling._getExtraPath(),
-            protScaling._getExtraPath(),
-            protScaling._getExtraPath(),
-        )
+        scaleCL = (
+            f"{protIntegrate._getExtraPath()}/integrated_model.expt "
+            f"{protIntegrate._getExtraPath()}/integrated_reflections.refl "
+            f"output.log={protScaling._getLogsPath()}/dials.scale.log "
+            f"output.experiments={protScaling._getExtraPath()}/scaled.expt "
+            f"output.reflections={protScaling._getExtraPath()}/scaled.refl "
+            f"output.html={protScaling._getExtraPath()}/dials.scale.html "
+            f"filtering.output.scale_and_filter_results={protScaling._getExtraPath()}/"
+            f"scale_and_filter_results.json cut_data.partiality_cutoff=0.4 "
+            f"cut_data.min_isigi=-5.0 outlier_rejection=standard outlier_zmax=6.0 "
+            f"filtering.method=None filtering.deltacchalf.max_cycles=6 "
+            f"filtering.deltacchalf.max_percent_removed=10.0 "
+            f"filtering.deltacchalf.mode=dataset filtering.deltacchalf.group_size=10 "
+            f"filtering.deltacchalf.stdcutoff=4.0")
         self.assertCommand(protScaling, scaleCL, 'dials.scale')
         scaledset = getattr(
             protScaling, 'outputScaledSpots', None)
@@ -964,13 +985,14 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             exportFormat=MTZ,
         )
 
-        exportMtzCL = "{}/scaled.expt {}/scaled.refl format=mtz mtz.hklout={}/integrated_{}.mtz output.log={}/dials.export.log mtz.combine_partials=True mtz.partiality_threshold=0.99 mtz.min_isigi=-5.0 mtz.crystal_name=XTAL".format(
-            protScaling._getExtraPath(),
-            protScaling._getExtraPath(),
-            protExportMtz._getExtraPath(),
-            protExportMtz.getObjId(),
-            protExportMtz._getLogsPath()
-        )
+        exportMtzCL = (
+            f"{protScaling._getExtraPath()}/scaled.expt "
+            f"{protScaling._getExtraPath()}/scaled.refl format=mtz "
+            f"mtz.hklout={protExportMtz._getExtraPath()}/"
+            f"integrated_{protExportMtz.getObjId()}.mtz "
+            f"output.log={protExportMtz._getLogsPath()}/dials.export.log "
+            f"mtz.combine_partials=True mtz.partiality_threshold=0.99 "
+            f"mtz.min_isigi=-5.0 mtz.crystal_name=XTAL")
         self.assertCommand(protExportMtz, exportMtzCL, "dials.export")
         exportedmtzset = getattr(protExportMtz, 'exportedFileSet', None)
         self.assertIsNotNone(protExportMtz.exportedFileSet)
@@ -988,8 +1010,8 @@ class TestEdDialsUtils(pwtests.BaseTest):
         cls.dataPath = os.environ.get("SCIPION_ED_TESTDATA")
 
         if not os.path.exists(cls.dataPath):
-            raise Exception("Can not run utils tests, missing file:\n  %s"
-                            % cls.dataPath)
+            raise Exception(
+                f"Can not run utils tests, missing file:\n  {cls.dataPath}")
 
     @ classmethod
     def tearDownClass(cls):
