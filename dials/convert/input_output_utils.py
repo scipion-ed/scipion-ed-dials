@@ -13,8 +13,8 @@ def writeJson(inputImages, fn='model.expt', idname="ExperimentList", overwriteMo
     imageList = [img.clone() for img in inputImages]
     firstimage = imageList[0]
     lastimage = imageList[-1]
-    templatepath = "{}/#####{}".format(firstimage.getDirName(),
-                                       firstimage.getExtension())
+    templatepath = (
+        f"{firstimage.getDirName()}/#####{firstimage.getExtension()}")
     origin = [-firstimage.getBeamCenterMm()[0], firstimage.getBeamCenterMm()[1],
               -firstimage.getDistance()]
     exposure_time = []
@@ -179,7 +179,7 @@ def writeJson(inputImages, fn='model.expt', idname="ExperimentList", overwriteMo
     ]
 
     output = {
-        "__id__": "{}".format(idname),
+        "__id__": f"{idname}",
         "experiment": [
             {
                 "__id__": "Experiment",
