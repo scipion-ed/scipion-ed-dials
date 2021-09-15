@@ -189,7 +189,7 @@ class DialsProtScaling(EdProtScaling, DialsProtBase):
                        default=10,
                        GE=1,
                        allowsNull=True,
-                       condition="ccHalfMode=={}".format(IMAGE_GROUP),
+                       condition=f"ccHalfMode=={IMAGE_GROUP}",
                        help="The number of images to group together "
                        "when calculating delta CC(1/2) in image_group "
                        "mode",
@@ -528,10 +528,9 @@ class DialsProtScaling(EdProtScaling, DialsProtBase):
     def convertInputStep(self, inputSpotId):
         for iS in self.inputSets:
             inputSet = iS.get()
-            self.info("ObjId: %s" %
-                      inputSet.getObjId())
-            self.info("Number of images: %s" % inputSet.getSize())
-            self.info("Number of spots: %s" % inputSet.getSpots())
+            self.info(f"ObjId: {inputSet.getObjId()}")
+            self.info(f"Number of images: {inputSet.getSize()}")
+            self.info(f"Number of spots: {inputSet.getSpots()}")
             # Write new model and/or reflection file if no was supplied from set
             if self._checkWriteModel(inputSet):
                 dconv.writeJson(inputSet, self.getInputModelFile(inputSet))
@@ -729,8 +728,7 @@ class DialsProtScaling(EdProtScaling, DialsProtBase):
     def getAllInputFiles(self):
         files = ""
         for iS in self.inputSets:
-            files += "{} {} ".format(self.getInputModelFile(iS.get()),
-                                     self.getInputReflFile(iS.get()))
+            files += f"{self.getInputModelFile(iS.get())} {self.getInputReflFile(iS.get())} "
         return files.strip()
 
     def getSpaceGroupLogOutput(self):
@@ -746,7 +744,7 @@ class DialsProtScaling(EdProtScaling, DialsProtBase):
             'Merging statistics',
             'Writing html report')
         if mergingStats not in (None, ''):
-            mergeStats = "\n{}".format(textwrap.dedent(mergingStats))
+            mergeStats = f"\n{textwrap.dedent(mergingStats)}"
         else:
             mergeStats = mergingStats
         return mergeStats

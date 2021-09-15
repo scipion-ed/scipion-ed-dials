@@ -107,8 +107,8 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots, DialsProtBase):
     # -------------------------- STEPS functions -------------------------------
     def convertInputStep(self, inputSpotId):
         inputSet = self.inputSet.get()
-        self.info("Number of images: %s" % inputSet.getSize())
-        self.info("Number of spots: %s" % inputSet.getSpots())
+        self.info(f"Number of images: {inputSet.getSize()}")
+        self.info(f"Number of spots: {inputSet.getSpots()}")
         # Write new model and/or reflection file if no was supplied from set
         if self._checkWriteModel():
             self.writeJson(inputSet, self.getInputModelFile())
@@ -155,7 +155,7 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots, DialsProtBase):
                 outputSet.append(iSpot)
         except Exception as e:
             self.info(
-                "createOutputStep created an exception with the message {}".format(e))
+                f"createOutputStep created an exception with the message {e}")
 
         outputSet.write()
 
@@ -200,20 +200,19 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots, DialsProtBase):
     def _extraParams(self):
         params = ""
         if self.useScanRanges.get() is True:
-            params += " {}".format(self._createScanRanges())
+            params += f" {self._createScanRanges()}"
 
         if self.nproc.get() not in (None, 1):
-            params += " nproc={}".format(self.nproc.get())
+            params += f" nproc={self.nproc.get()}"
 
         if self.doFilter_ice.get():
-            params += " filter.ice_rings={}".format(
-                self.doFilter_ice.get())
+            params += f" filter.ice_rings={self.doFilter_ice.get()}"
 
         if self.getDMin():
-            params += " prediction.d_min={}".format(self.getDMin())
+            params += f" prediction.d_min={self.getDMin()}"
 
         if self.getDMax():
-            params += " prediction.d_max={}".format(self.getDMax())
+            params += f" prediction.d_max={self.getDMax()}"
         return params
 
     # -------------------------- UTILS functions ------------------------------
@@ -245,6 +244,6 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots, DialsProtBase):
         images = [image.getObjId() for image in self.inputImages.get()
                   if image.getIgnore() is not True]
         scanranges = find_subranges(images)
-        scanrange = ' '.join('spotfinder.scan_range={},{}'.format(i, j)
+        scanrange = ' '.join(f'spotfinder.scan_range={i},{j}'
                              for i, j in scanranges)
         return scanrange

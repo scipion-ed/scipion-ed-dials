@@ -76,8 +76,8 @@ class DialsProtSymmetry(DialsProtBase):
     # -------------------------- STEPS functions -------------------------------
     def convertInputStep(self, inputSpotId):
         inputSet = self.inputSet.get()
-        self.info("Number of images: %s" % inputSet.getSize())
-        self.info("Number of spots: %s" % inputSet.getSpots())
+        self.info(f"Number of images: {inputSet.getSize()}")
+        self.info(f"Number of spots: {inputSet.getSpots()}")
         # Write new model and/or reflection file if no was supplied from set
         if self._checkWriteModel():
             dconv.writeJson(inputSet, self.getInputModelFile())

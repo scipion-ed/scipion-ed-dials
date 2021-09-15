@@ -257,8 +257,8 @@ class DialsProtIndexSpots(EdProtIndexSpots, DialsProtBase):
     def convertInputStep(self, inputImgId, inputSpotId):
         inputImages = self.inputImages.get()
         inputSpots = self.inputSpots.get()
-        self.info("Number of images: %s" % inputImages.getSize())
-        self.info("Number of spots: %s" % inputSpots.getSpots())
+        self.info(f"Number of images: {inputImages.getSize()}")
+        self.info(f"Number of spots: {inputSpots.getSpots()}")
         # Write new model and/or reflection file if no was supplied from set
         if self._checkWriteModel():
             self.writeJson(inputImages, self.getInputModelFile())
@@ -397,7 +397,7 @@ class DialsProtIndexSpots(EdProtIndexSpots, DialsProtBase):
         except FileNotFoundError:
             indexOutput = None
         if indexOutput not in (None, ''):
-            indexOut = "\n{}".format(textwrap.dedent(indexOutput))
+            indexOut = f"\n{textwrap.dedent(indexOutput)}"
         else:
             indexOut = indexOutput
         return indexOut
@@ -412,7 +412,7 @@ class DialsProtIndexSpots(EdProtIndexSpots, DialsProtBase):
         except FileNotFoundError:
             bravaisOutput = None
         if bravaisOutput not in (None, ''):
-            bravaisOut = "\n{}".format(textwrap.dedent(bravaisOutput))
+            bravaisOut = f"\n{textwrap.dedent(bravaisOutput)}"
         else:
             bravaisOut = bravaisOutput
         return bravaisOut
@@ -492,13 +492,7 @@ class DialsProtIndexSpots(EdProtIndexSpots, DialsProtBase):
 
         # Input basic parameters
         logPath = self.getLogFilePath(program)
-        params = "{} {} output.log={} output.experiments={} output.reflections={}".format(
-            self.getInputModelFile(),
-            self.getInputReflFile(),
-            logPath,
-            self.getIndexedModelFile(),
-            self.getIndexedReflFile(),
-        )
+        params = f"{self.getInputModelFile()} {self.getInputReflFile()} output.log={logPath} output.experiments={self.getIndexedModelFile()} output.reflections={self.getIndexedReflFile()}"
 
         # Update the command line with additional parameters
 
@@ -558,13 +552,12 @@ class DialsProtIndexSpots(EdProtIndexSpots, DialsProtBase):
         "Create the command line input to run dials programs"
         # Input basic parameters
         logPath = self.getLogFilePath(program)
-        params = "{} {} output.log={} output.directory={}".format(
-            self.getIndexedModelFile(), self.getIndexedReflFile(), logPath, self.getBravaisPath())
+        params = f"{self.getIndexedModelFile()} {self.getIndexedReflFile()} output.log={logPath} output.directory={self.getBravaisPath()}"
 
         # Update the command line with additional parameters
 
         if self.refineBravNproc.get() not in (None, 4):
-            params += " nproc={}".format(self.refineBravNproc.get())
+            params += f" nproc={self.refineBravNproc.get()}"
 
         if self.copyBeamFix:
             params += RefineParamsBase.getBeamFixParams(self)

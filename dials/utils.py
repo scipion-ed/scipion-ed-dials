@@ -47,8 +47,8 @@ def getModelDataPath(exptFile):
 def getDatasets(modelFile):
     datasets = getModelDataPath(modelFile)
     if len(datasets) >= 1:
-        newlineDatasets = '\n'.join('{}'.format(item) for item in datasets)
-        return "Source of data:\n{}".format(newlineDatasets)
+        newlineDatasets = '\n'.join(f'{item}' for item in datasets)
+        return f"Source of data:\n{newlineDatasets}"
     else:
         return ''
 
@@ -78,7 +78,7 @@ def readLog(logfile, start, stop, flush=None):
             elif append:
                 contentList.append(line)
 
-    newlineList = ''.join('{}'.format(item) for item in contentList)
-    content = "{}".format(newlineList)
+    newlineList = ''.join(f'{item}' for item in contentList)
+    content = f"{newlineList}"
 
     return content

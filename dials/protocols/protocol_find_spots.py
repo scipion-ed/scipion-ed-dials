@@ -199,18 +199,18 @@ class DialsProtFindSpots(EdProtFindSpots, DialsProtBase):
     # -------------------------- STEPS functions -------------------------------
     def convertInputStep(self, inputId):
         inputImages = self.inputImages.get()
-        self.info("Number of images: %s" % inputImages.getSize())
+        self.info(f"Number of images: {inputImages.getSize()}")
         fileName = self.getInputModelFile()
         try:
             if os.path.exists(inputImages.getDialsModel()):
                 copyDialsFile(inputImages.getDialsModel(),
                               fn=fileName)
             else:
-                self.info("Writing new input model file {}".format(fileName))
+                self.info(f"Writing new input model file {fileName}")
                 writeJson(inputImages, fn=fileName)
         except TypeError as e:
             self.info(e)
-            self.info("Writing new input model file {}".format(fileName))
+            self.info(f"Writing new input model file {fileName}")
             writeJson(inputImages, fn=fileName)
 
     def findSpotsStep(self):
@@ -363,7 +363,7 @@ class DialsProtFindSpots(EdProtFindSpots, DialsProtBase):
                 images.append(i)
         # Exclude skipped images from the scan range
         scanranges = find_subranges(images)
-        scanrange = ' '.join('spotfinder.scan_range={},{}'.format(i, j)
+        scanrange = ' '.join(f'spotfinder.scan_range={i},{j}'
                              for i, j in scanranges)
         return scanrange
 

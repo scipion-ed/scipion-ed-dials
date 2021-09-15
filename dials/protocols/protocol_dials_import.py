@@ -66,7 +66,7 @@ class DialsProtImportDiffractionImages(ProtImportDiffractionImages, DialsProtBas
     # -------------------------- STEPS functions -------------------------------
     def importStep(self):
         # Run dials import on the images
-        self.info("Rotation axis is {}".format(self.getRotationAxis()))
+        self.info(f"Rotation axis is {self.getRotationAxis()}")
         program = 'dials.import'
         arguments = self._prepareCommandline(program)
         self.runJob(program, arguments)
@@ -97,7 +97,7 @@ class DialsProtImportDiffractionImages(ProtImportDiffractionImages, DialsProtBas
     def getCmdparamStart(self):
         self.loadPatterns()
         if self.useTemplate:
-            return "template={}".format(self._templatePattern)
+            return f"template={self._templatePattern}"
         else:
             fileString = " ".join([i[0] for i in self.getMatchingFiles()])
             return fileString
@@ -105,10 +105,8 @@ class DialsProtImportDiffractionImages(ProtImportDiffractionImages, DialsProtBas
     def _getDialsOverwrites(self):
         params = ""
         if self.getRotationAxis():
-            params += " goniometer.axes={}".format(
-                ",".join(map(str, self.getRotationAxis())))
+            params += f" goniometer.axes={','.join(map(str, self.getRotationAxis()))}"
 
         if self.overwriteDetectorDistance.get() is not None:
-            params += " distance={}".format(
-                self.overwriteDetectorDistance.get())
+            params += f" distance={self.overwriteDetectorDistance.get()}"
         return params

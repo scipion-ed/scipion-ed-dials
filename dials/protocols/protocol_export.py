@@ -67,7 +67,7 @@ class DialsProtExport(EdProtExport):
                       help="The output file format. Please note that XDS_ASCII is incompatible with scaled data."
                       )
 
-        group = form.addGroup('mtz', condition="exportFormat=={}".format(MTZ))
+        group = form.addGroup('mtz', condition=f"exportFormat=={MTZ}")
 
         group.addParam('mtzCombinePartials', pwprot.BooleanParam,
                        label='Combine partial reflections?', default=True,
@@ -114,7 +114,7 @@ class DialsProtExport(EdProtExport):
                        )
 
         group = form.addGroup(
-            'sadabs', condition="exportFormat=={}".format(SADABS))
+            'sadabs', condition=f"exportFormat=={SADABS}")
 
         group.addParam('sadabsHklout', pwprot.StringParam,
                        label='Output filename',
@@ -134,7 +134,7 @@ class DialsProtExport(EdProtExport):
                        )
 
         group = form.addGroup(
-            'Nexus', condition="exportFormat=={}".format(NXS))
+            'Nexus', condition=f"exportFormat=={NXS}")
         group.addParam('nxsHklout', pwprot.StringParam,
                        label='Output filename',
                        default='integrated.nxs',
@@ -166,7 +166,7 @@ class DialsProtExport(EdProtExport):
                        )
 
         group = form.addGroup(
-            'mmcif', condition="exportFormat=={}".format(MMCIF))
+            'mmcif', condition=f"exportFormat=={MMCIF}")
 
         group.addParam('mmcifHklout', pwprot.StringParam,
                        label='Output name',
@@ -175,7 +175,7 @@ class DialsProtExport(EdProtExport):
                        )
 
         group = form.addGroup(
-            'XDS_ASCII', condition="exportFormat=={}".format(XDS_ASCII))
+            'XDS_ASCII', condition=f"exportFormat=={XDS_ASCII}")
 
         group.addParam('xdsAsciiHklout', pwprot.StringParam,
                        label='Output name',
@@ -184,7 +184,7 @@ class DialsProtExport(EdProtExport):
                        )
 
         group = form.addGroup(
-            'json', condition="exportFormat=={}".format(JSON))
+            'json', condition=f"exportFormat=={JSON}")
         group.addParam('jsonFilename', pwprot.StringParam,
                        label='Filename',
                        default='rlp.json',
@@ -226,7 +226,7 @@ class DialsProtExport(EdProtExport):
     # -------------------------- STEPS functions -------------------------------
     def convertInputStep(self, inputSpotId):
         inputSet = self.inputSet.get()
-        self.info("Number of spots: %s" % inputSet.getSize())
+        self.info(f"Number of spots: {inputSet.getSize()}")
         # Write new model and/or reflection file if no was supplied from set
         if self._checkWriteModel():
             self.writeJson(inputSet, self.getInputModelFile())
@@ -303,7 +303,7 @@ class DialsProtExport(EdProtExport):
     def getExport(self):
         if self.getFormat() is MTZ:
             if self.mtzHklout.get() == "":
-                name = "integrated_{}.mtz".format(self.getObjId())
+                name = f"integrated_{self.getObjId()}.mtz"
             else:
                 name = self.mtzHklout.get()
 
@@ -315,7 +315,7 @@ class DialsProtExport(EdProtExport):
 
         if self.getFormat() is MMCIF:
             if self.mmcifHklout.get() == "":
-                name = "integrated_{}.cif".format(self.getObjId())
+                name = f"integrated_{self.getObjId()}.cif"
             else:
                 name = self.mmcifHklout.get()
 
@@ -351,17 +351,17 @@ class DialsProtExport(EdProtExport):
             return self._getExtraPath(fn)
 
     def getOutput(self):
-        mtzStr = "mtz.hklout={}".format(self.getExport())
+        mtzStr = f"mtz.hklout={self.getExport()}"
 
-        sadabsStr = "sadabs.hklout={}".format(self.getExport())
+        sadabsStr = f"sadabs.hklout={self.getExport()}"
 
-        nxsStr = "nxs.hklout={}".format(self.getExport())
+        nxsStr = f"nxs.hklout={self.getExport()}"
 
-        mmcifStr = "mmcif.hklout={}".format(self.getExport())
+        mmcifStr = f"mmcif.hklout={self.getExport()}"
 
-        xdsAsciiStr = "xds_ascii.hklout={}".format(self.getExport())
+        xdsAsciiStr = f"xds_ascii.hklout={self.getExport()}"
 
-        jsonStr = "json.filename={}".format(self.getExport())
+        jsonStr = f"json.filename={self.getExport()}"
 
         idx = self.getFormat()
 
@@ -369,7 +369,7 @@ class DialsProtExport(EdProtExport):
                    'xds_ascii', 'json']
         nameStr = [mtzStr, sadabsStr, nxsStr, mmcifStr,
                    xdsAsciiStr, jsonStr]
-        outputString = "format={} {}".format(formats[idx], nameStr[idx])
+        outputString = f"format={formats[idx]} {nameStr[idx]}"
         return outputString
 
     def getDatasets(self):
@@ -392,24 +392,17 @@ class DialsProtExport(EdProtExport):
         "Create the command line input to run dials programs"
 
         # Input basic parameters
-        logPath = "{}/{}.log".format(self._getLogsPath(), program)
-        params = "{} {} {} output.log={}".format(
-            self.getInputModelFile(),
-            self.getInputReflFile(),
-            self.getOutput(),
-            logPath,
-        )
+        logPath = f"{self._getLogsPath()}/{program}.log"
+        params = f"{self.getInputModelFile()} {self.getInputReflFile()} {self.getOutput()} output.log={logPath}"
 
         # Update the command line with additional parameters
         if self.exportFormat.get() is MTZ:
             if self.mtzCombinePartials:
                 params += " mtz.combine_partials=True"
 
-            params += " mtz.partiality_threshold={}".format(
-                self.mtzPartialityThreshold.get())
+            params += f" mtz.partiality_threshold={self.mtzPartialityThreshold.get()}"
 
-            params += " mtz.min_isigi={}".format(
-                self.mtzMinIsigi.get())
+            params += f" mtz.min_isigi={self.mtzMinIsigi.get()}"
 
             if self.mtzForceStaticModel:
                 params += " mtz.force_static_model=True"
@@ -418,42 +411,37 @@ class DialsProtExport(EdProtExport):
                 params += " mtz.filter_ice_rings=True"
 
             if self.mtzDMin.get() is not None:
-                params += " mtz.d_min={}".format(self.mtzDMin.get())
+                params += f" mtz.d_min={self.mtzDMin.get()}"
 
-            params += " mtz.crystal_name={}".format(
-                self.mtzCrystalName.get())
+            params += f" mtz.crystal_name={self.mtzCrystalName.get()}"
 
         elif self.exportFormat.get() is SADABS:
             if self.sadabsRun.get() != 1:
-                params += " sadabs.run={}".format(self.sadabsRun.get())
+                params += f" sadabs.run={self.sadabsRun.get()}"
 
             if self.sadabsPredict:
                 params += " sadabs.predict=True"
 
         elif self.exportFormat.get() is NXS:
-            params += " nxs.instrument_name={}".format(
-                self.nxsInstrumentName.get())
+            params += f" nxs.instrument_name={self.nxsInstrumentName.get()}"
 
-            params += " nxs.instrument_short_name={}".format(
-                self.nxsInstrumentShortName.get())
+            params += f" nxs.instrument_short_name={self.nxsInstrumentShortName.get()}"
 
-            params += " nxs.source_name={}".format(
-                self.nxsSourceName.get())
+            params += f" nxs.source_name={self.nxsSourceName.get()}"
 
-            params += " nxs.source_short_name={}".format(
-                self.nxsSourceShortName.get())
+            params += f" nxs.source_short_name={self.nxsSourceShortName.get()}"
 
         elif self.exportFormat.get() is JSON:
             if self.jsonCompact is False:
                 params += " json.compact=False"
 
             if self.jsonNDigits.get() != 6:
-                params += " json.n_digits={}".format(self.jsonNDigits.get())
+                params += f" json.n_digits={self.jsonNDigits.get()}"
 
         if self.extraPhilPath.get():
-            params += " {}".format(self.getExtraPhilsPath())
+            params += f" {self.getExtraPhilsPath()}"
 
         if self.commandLineInput.get():
-            params += " {}".format(self.commandLineInput.get())
+            params += f" {self.commandLineInput.get()}"
 
         return params

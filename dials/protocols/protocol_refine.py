@@ -140,8 +140,8 @@ class DialsProtRefineSpots(EdProtRefineSpots, DialsProtBase):
     # -------------------------- STEPS functions -------------------------------
     def convertInputStep(self, inputSpotId):
         inputSet = self.inputSet.get()
-        self.info("Number of images: %s" % inputSet.getSize())
-        self.info("Number of spots: %s" % inputSet.getSpots())
+        self.info(f"Number of images: {inputSet.getSize()}")
+        self.info(f"Number of spots: {inputSet.getSpots()}")
         # Write new model and/or reflection file if no was supplied from set
         if self._checkWriteModel():
             self.writeJson(inputSet, self.getInputModelFile())
@@ -216,7 +216,7 @@ class DialsProtRefineSpots(EdProtRefineSpots, DialsProtBase):
     def _extraParams(self):
         params = ""
         if self.Nproc.get() not in (None, 1):
-            params += " nproc={}".format(self.Nproc.get())
+            params += f" nproc={self.Nproc.get()}"
 
         params += self.getScanVaryingCommand()
 
@@ -224,8 +224,7 @@ class DialsProtRefineSpots(EdProtRefineSpots, DialsProtBase):
 
         if self.beamForceStatic.get() not in (None, True):
             if self.getScanVaryingStatus():
-                params += " beam.force_static={}".format(
-                    self.beamForceStatic.get())
+                params += f" beam.force_static={self.beamForceStatic.get()}"
 
         params += RefineParamsBase.getCrystalFixParams(self)
 
@@ -234,13 +233,12 @@ class DialsProtRefineSpots(EdProtRefineSpots, DialsProtBase):
         params += RefineParamsBase.getGonioFixParams(self)
 
         if self.refineryMaxIterations.get() is not None:
-            params += " refinery.max_iterations={}".format(
-                self.refineryMaxIterations.get())
+            params += f" refinery.max_iterations={self.refineryMaxIterations.get()}"
 
         if self.useRestraint:
             # Make the phil when it is known that it will be used
             self.makeRestraintsPhil()
-            params += " {}".format(self.getRestraintsPhil())
+            params += f" {self.getRestraintsPhil()}"
 
         return params
 
@@ -285,19 +283,13 @@ class DialsProtRefineSpots(EdProtRefineSpots, DialsProtBase):
         "Create the command line input to run dials programs"
 
         # Input basic parameters
-        logPath = "{}/{}.log".format(self._getLogsPath(), program)
-        params = "{} {} output.log={} output.experiments={} output.reflections={}".format(
-            self.getInputModelFile(),
-            self.getInputReflFile(),
-            logPath,
-            self.getOutputModelFile(),
-            self.getOutputReflFile(),
-        )
+        logPath = f"{self._getLogsPath()}/{program}.log"
+        params = f"{self.getInputModelFile()} {self.getInputReflFile()} output.log={logPath} output.experiments={self.getOutputModelFile()} output.reflections={self.getOutputReflFile()}"
 
         # Update the command line with additional parameters
 
         if self.Nproc.get() not in (None, 1):
-            params += " nproc={}".format(self.Nproc.get())
+            params += f" nproc={self.Nproc.get()}"
 
         params += self.getScanVaryingCommand()
 
@@ -315,12 +307,11 @@ class DialsProtRefineSpots(EdProtRefineSpots, DialsProtBase):
             if self.beamFixWavelength:
                 beamfix += "*"
             beamfix += "wavelength'"
-            params += " beam.fix={}".format("".join(beamfix))
+            params += f" beam.fix={''.join(beamfix)}"
 
         if self.beamForceStatic.get() not in (None, True):
             if self.getScanVaryingStatus():
-                params += " beam.force_static={}".format(
-                    self.beamForceStatic.get())
+                params += f" beam.force_static={self.beamForceStatic.get()}"
 
         crystalfix = []
         if self.crystalFixCell and self.crystalFixOrientation:
@@ -333,7 +324,7 @@ class DialsProtRefineSpots(EdProtRefineSpots, DialsProtBase):
             if self.crystalFixOrientation:
                 crystalfix += "*"
             crystalfix += "orientation'"
-            params += " crystal.fix={}".format(''.join(crystalfix))
+            params += f" crystal.fix={''.join(crystalfix)}"
 
         detectorfix = []
         if self.detectorFixAll:
@@ -349,21 +340,20 @@ class DialsProtRefineSpots(EdProtRefineSpots, DialsProtBase):
             if self.detectorFixdistance:
                 detectorfix += "*"
             detectorfix += "distance'"
-        params += " detector.fix={}".format(''.join(detectorfix))
+        params += f" detector.fix={''.join(detectorfix)}"
 
         if self.refineryMaxIterations.get() is not None:
-            params += " refinery.max_iterations={}".format(
-                self.refineryMaxIterations.get())
+            params += f" refinery.max_iterations={self.refineryMaxIterations.get()}"
 
         if self.useRestraint:
             # Make the phil when it is known that it will be used
             self.makeRestraintsPhil()
-            params += " {}".format(self.getRestraintsPhil())
+            params += f" {self.getRestraintsPhil()}"
 
         if self.extraPhilPath.get():
-            params += " {}".format(self.getExtraPhilsPath())
+            params += f" {self.getExtraPhilsPath()}"
 
         if self.commandLineInput.get():
-            params += " {}".format(self.commandLineInput.get())
+            params += f" {self.commandLineInput.get()}"
 
         return params

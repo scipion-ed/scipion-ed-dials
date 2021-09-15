@@ -108,7 +108,7 @@ class DialsProtBase(EdBaseProtocol):
                 pass
 
     def getLogFilePath(self, program='dials.*'):
-        logPath = "{}/{}.log".format(self._getLogsPath(), program)
+        logPath = f"{self._getLogsPath()}/{program}.log"
         return logPath
 
     def getLogOutput(self):

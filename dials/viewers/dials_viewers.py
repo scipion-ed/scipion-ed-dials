@@ -43,16 +43,21 @@ class DialsImageView(pwviewer.CommandView):
 
         if reflectionFile is None:
             pwviewer.CommandView.__init__(
-                self, 'dials.image_viewer "%s" &' % modelFile, **kwargs)
+                self, f"dials.image_viewer '{modelFile}' &", **kwargs)
         else:
-            pwviewer.CommandView.__init__(self, 'dials.image_viewer experiments="%s" reflections="%s" &' % (
-                modelFile, reflectionFile), **kwargs)
+            pwviewer.CommandView.__init__(
+                self,
+                f"dials.image_viewer experiments='{modelFile}' "
+                f"reflections='{reflectionFile}' &",
+                **kwargs)
 
 
 class DialsReciprocalLatticeView(pwviewer.CommandView):
     def __init__(self, modelFile, reflectionFile=None, **kwargs):
-        pwviewer.CommandView.__init__(self, 'dials.reciprocal_lattice_viewer "%s" "%s" &' % (
-            modelFile, reflectionFile), **kwargs)
+        pwviewer.CommandView.__init__(
+            self,
+            f"dials.reciprocal_lattice_viewer '{modelFile}' '{reflectionFile}' &",
+            **kwargs)
 
 
 IMAGE_VIEWER = 0
@@ -60,7 +65,7 @@ RECIPROCAL_VIEWER = 1
 
 
 class DialsFoundSpotsViewer(pwviewer.ProtocolViewer):
-    ''' Vizualisation of Dials imported images and results from spotfinding and indexing '''
+    """ Vizualisation of Dials imported images and results from spotfinding and indexing """
 
     _environments = [pwviewer.DESKTOP_TKINTER]
     _targets = [dialsProt.DialsProtImportDiffractionImages, dialsProt.DialsProtFindSpots, dialsProt.DialsProtIndexSpots,
@@ -69,13 +74,20 @@ class DialsFoundSpotsViewer(pwviewer.ProtocolViewer):
     def _defineParams(self, form):
         form.addSection(label='Pick viewer')
 
-        form.addParam('viewSelection', params.EnumParam, choices=['image viewer', 'reciprocal lattice viewer'],
-                      default=IMAGE_VIEWER, label='Display data with', display=params.EnumParam.DISPLAY_HLIST,
-                      help='*image viewer*: Display the images used in spotfinding. Option to show the found spots on the images\n'
-                      '*reciprocal viewer*: View the found spots in reciprocal space. Does not work if the protocol is importing diffraction images.')
+        form.addParam(
+            'viewSelection', params.EnumParam,
+            choices=['image viewer', 'reciprocal lattice viewer'],
+            default=IMAGE_VIEWER,
+            label='Display data with',
+            display=params.EnumParam.DISPLAY_HLIST,
+            help="*image viewer*: Display the images used in spotfinding. "
+            "Option to show the found spots on the images\n"
+            "*reciprocal viewer*: View the found spots in reciprocal space. "
+            "Does not work if the protocol is importing diffraction images.")
 
         form.addParam('viewSpotsOnImage', params.BooleanParam,
-                      default=True, label='View the found spots on the images?', condition='viewSelection==%d' % IMAGE_VIEWER)
+                      default=True, label='View the found spots on the images?',
+                      condition='viewSelection==%d' % IMAGE_VIEWER)
 
     def _getVisualizeDict(self):
         visualizeDict = {
