@@ -69,7 +69,10 @@ setup(
     # For a discussion on single-sourcing the version across setup.py and the
     # project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version='3.0.2a1',  # Required
+    #
+    # Epoch indicates compatible main Scipion version
+    # major.minor.micro versioning starting with 1.0.0 in the new epoch
+    version='3!1.0.0a0',  # Required
 
     # This is a one-line description or tagline of what your project does. This
     # corresponds to the "Summary" metadata field:

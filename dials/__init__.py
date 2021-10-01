@@ -33,8 +33,9 @@ import pyworkflow.plugin as pwplugin
 import pwed
 from .constants import *
 
-
-__version__ = '3.0.2a1'
+# Epoch indicates compatible main Scipion version
+# major.minor.micro versioning starting with 1.0.0 in the new epoch
+__version__ = '3!.0.0a0'
 _logo = "logo.jpeg"
 
 
