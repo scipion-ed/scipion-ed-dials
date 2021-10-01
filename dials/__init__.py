@@ -26,7 +26,7 @@
 # *
 # **************************************************************************
 """
-This modules contains classes related with EM
+This modules contains classes related with ED
 """
 
 import pyworkflow.plugin as pwplugin
