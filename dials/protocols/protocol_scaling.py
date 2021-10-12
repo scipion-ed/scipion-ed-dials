@@ -553,8 +553,8 @@ class DialsProtScaling(EdProtScaling, DialsProtBase):
 
     def createOutputStep(self):
         # Check that the indexing created proper output
-        assert(pwutils.exists(self.getOutputReflFile()))
-        assert(pwutils.exists(self.getOutputModelFile()))
+        dutils.verifyPathExistence(
+            self.getOutputReflFile(), self.getOutputModelFile())
 
         outputSet = self._createSetOfIndexedSpots()
         outputSet.setDialsModel(self.getOutputModelFile())

@@ -70,7 +70,7 @@ class DialsProtImportDiffractionImages(ProtImportDiffractionImages, DialsProtBas
         program = 'dials.import'
         arguments = self._prepareCommandline(program)
         self.runJob(program, arguments)
-        assert(os.path.exists(self.getOutputModelFile()))
+        dutils.verifyPathExistence(self.getOutputModelFile())
 
     def createOutputStep(self):
         super().createOutputStep(dialsModel=self.getOutputModelFile())

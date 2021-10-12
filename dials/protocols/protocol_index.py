@@ -28,6 +28,7 @@
 
 import json
 import textwrap
+from dials.objects import IsNoneError
 
 import pyworkflow.protocol as pwprot
 import dials.utils as dutils
@@ -281,7 +282,8 @@ class DialsProtIndexSpots(EdProtIndexSpots, DialsProtBase):
         except:
             self.info(self.getError())
             return
-        assert(self.getBravaisSummary() is not None)
+        if self.getBravaisSummary() is None:
+            raise IsNoneError
 
     def reindexStep(self):
         program = 'dials.reindex'
@@ -312,8 +314,8 @@ class DialsProtIndexSpots(EdProtIndexSpots, DialsProtBase):
 
         # Check that the indexing created proper output
         # FIXME Replace asserts with exceptions. Issue #19
-        assert(dutils.existsPath(self.getOutputReflFile()))
-        assert(dutils.existsPath(self.getOutputModelFile()))
+        dutils.verifyPathExistence(self.getOutputReflFile(),
+                                   self.getOutputModelFile())
 
         # TODO: Add Diffraction images as well
         outputSet = self._createSetOfIndexedSpots()
