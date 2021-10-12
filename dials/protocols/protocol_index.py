@@ -438,6 +438,7 @@ class DialsProtIndexSpots(EdProtIndexSpots, DialsProtBase):
         return self.getBravaisPath(fn)
 
     def getChangeOfBasisOp(self, fileId):
+        # This function is likely the problem in issue #10
         summary = self.getBravaisSummary()
         if summary is None:
             # TODO: Add parameter to manually supply default
@@ -588,6 +589,7 @@ class DialsProtIndexSpots(EdProtIndexSpots, DialsProtBase):
     def _prepReindexCommandline(self):
         "Create the command line input to run dials programs"
         # Input basic parameters
+        # FIXME: Fix issue #10
         params = f"change_of_basis_op={self.getChangeOfBasisOp(self.getBravaisId())}"
 
         if self.doReindexModel.get():
