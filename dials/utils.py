@@ -28,6 +28,8 @@ import os.path as p
 import pyworkflow.gui.text as text
 import pyworkflow.utils as pwutils
 
+from dials.objects import *
+
 
 def _showHtmlReport(reportPath):
     if pwutils.exists(reportPath):
@@ -82,3 +84,11 @@ def readLog(logfile, start, stop, flush=None):
     content = f"{newlineList}"
 
     return content
+
+
+def verifyPathExistence(*requiredPaths):
+    for reqPath in requiredPaths:
+        if not existsPath(reqPath):
+            raise MissingPathException
+        else:
+            continue
