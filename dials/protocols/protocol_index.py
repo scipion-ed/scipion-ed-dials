@@ -310,7 +310,8 @@ class DialsProtIndexSpots(EdProtIndexSpots, DialsProtBase):
             copyDialsFile(self.getIndexedReflFile(),
                           self.getOutputReflFile())
 
-            # Check that the indexing created proper output
+        # Check that the indexing created proper output
+        # FIXME Replace asserts with exceptions. Issue #19
         assert(dutils.existsPath(self.getOutputReflFile()))
         assert(dutils.existsPath(self.getOutputModelFile()))
 
@@ -492,7 +493,10 @@ class DialsProtIndexSpots(EdProtIndexSpots, DialsProtBase):
 
         # Input basic parameters
         logPath = self.getLogFilePath(program)
-        params = f"{self.getInputModelFile()} {self.getInputReflFile()} output.log={logPath} output.experiments={self.getIndexedModelFile()} output.reflections={self.getIndexedReflFile()}"
+        params = (f"{self.getInputModelFile()} {self.getInputReflFile()} "
+                  f"output.log={logPath} "
+                  f"output.experiments={self.getIndexedModelFile()} "
+                  f"output.reflections={self.getIndexedReflFile()}")
 
         # Update the command line with additional parameters
 
@@ -500,7 +504,8 @@ class DialsProtIndexSpots(EdProtIndexSpots, DialsProtBase):
             params += f" indexing.nproc={self.indexNproc.get()}"
 
         if self.enterSpaceGroup.get():
-            params += f" indexing.known_symmetry.space_group={self.knownSpaceGroup.get()}"
+            params += (
+                f" indexing.known_symmetry.space_group={self.knownSpaceGroup.get()}")
 
         if self.enterUnitCell.get():
             params += f" indexing.known_symmetry.unit_cell={self.knownUnitCell.get()}"
@@ -521,7 +526,8 @@ class DialsProtIndexSpots(EdProtIndexSpots, DialsProtBase):
             params += f" indexing.max_cell={self.indexMaxCell.get()}"
 
         if self.misindexCheckGridScope.get() not in (None, 0):
-            params += f" check_misindexing.grid_search_scope={self.misindexCheckGridScope.get()}"
+            params += (f" check_misindexing.grid_search_scope="
+                       f"{self.misindexCheckGridScope.get()}")
 
         if self.doFilter_ice.get():
             params += f" indexing.max_cell_estimation.filter_ice={self.doFilter_ice.get()}"
@@ -552,7 +558,8 @@ class DialsProtIndexSpots(EdProtIndexSpots, DialsProtBase):
         "Create the command line input to run dials programs"
         # Input basic parameters
         logPath = self.getLogFilePath(program)
-        params = f"{self.getIndexedModelFile()} {self.getIndexedReflFile()} output.log={logPath} output.directory={self.getBravaisPath()}"
+        params = (f"{self.getIndexedModelFile()} {self.getIndexedReflFile()}"
+                  f"output.log={logPath} output.directory={self.getBravaisPath()}")
 
         # Update the command line with additional parameters
 
@@ -579,7 +586,7 @@ class DialsProtIndexSpots(EdProtIndexSpots, DialsProtBase):
 
         return params
 
-    def _prepReindexCommandline(self, program):
+    def _prepReindexCommandline(self):
         "Create the command line input to run dials programs"
         # Input basic parameters
         params = f"change_of_basis_op={self.getChangeOfBasisOp(self.getBravaisId())}"
