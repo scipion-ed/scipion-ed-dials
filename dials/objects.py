@@ -27,3 +27,9 @@
 # *
 # **************************************************************************
 
+class MissingPathException(Exception):
+    pass
+
+
+class IsNoneError(Exception):
+    pass
