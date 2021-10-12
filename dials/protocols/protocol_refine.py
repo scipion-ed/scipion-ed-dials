@@ -158,8 +158,8 @@ class DialsProtRefineSpots(EdProtRefineSpots, DialsProtBase):
 
     def createOutputStep(self):
         # Check that the indexing created proper output
-        assert(os.path.exists(self.getOutputReflFile()))
-        assert(os.path.exists(self.getOutputModelFile()))
+        dutils.verifyPathExistence(self.getOutputModelFile(),
+                                   self.getOutputReflFile())
 
         outputSet = self._createSetOfIndexedSpots()
         outputSet.setDialsModel(self.getOutputModelFile())
