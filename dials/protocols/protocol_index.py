@@ -446,8 +446,7 @@ class DialsProtIndexSpots(EdProtIndexSpots, DialsProtBase):
             cbop = summary[self.getBravaisId()]["cb_op"]
             change_of_basis_op = cbop
         else:
-            # TODO: Optionally output table from find_bravais_settings
-            # and let the user choose which to use
+            # TODO: #20 Allow manual selection of Bravais Setting.
             cbop = summary[fileId]["cb_op"]
             change_of_basis_op = cbop
         return change_of_basis_op
