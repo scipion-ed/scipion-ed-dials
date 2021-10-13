@@ -287,7 +287,7 @@ class DialsProtIndexSpots(EdProtIndexSpots, DialsProtBase):
 
     def reindexStep(self):
         program = 'dials.reindex'
-        arguments = self._prepReindexCommandline(program)
+        arguments = self._prepReindexCommandline()
         try:
             self.runJob(program, arguments)
         except:
@@ -313,7 +313,6 @@ class DialsProtIndexSpots(EdProtIndexSpots, DialsProtBase):
                           self.getOutputReflFile())
 
         # Check that the indexing created proper output
-        # FIXME Replace asserts with exceptions. Issue #19
         dutils.verifyPathExistence(self.getOutputReflFile(),
                                    self.getOutputModelFile())
 
@@ -560,7 +559,7 @@ class DialsProtIndexSpots(EdProtIndexSpots, DialsProtBase):
         "Create the command line input to run dials programs"
         # Input basic parameters
         logPath = self.getLogFilePath(program)
-        params = (f"{self.getIndexedModelFile()} {self.getIndexedReflFile()}"
+        params = (f"{self.getIndexedModelFile()} {self.getIndexedReflFile()} "
                   f"output.log={logPath} output.directory={self.getBravaisPath()}")
 
         # Update the command line with additional parameters

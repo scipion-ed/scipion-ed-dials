@@ -389,8 +389,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 'dials.index'), indexCL)
             self.assertEqual(protIndex._prepBravaisCommandline(
                 'dials.refine_bravais_settings'), refBravCL)
-            self.assertEqual(protIndex._prepReindexCommandline(
-                'dials.reindex'), reindexCL)
+            self.assertEqual(protIndex._prepReindexCommandline(), reindexCL)
             indexedset = getattr(protIndex, 'outputIndexedSpots', None)
             self.assertIsNotNone(protIndex.outputIndexedSpots)
             self.assertFileExists(indexedset.getDialsModel())
@@ -821,6 +820,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             f"{indexTmp}/indexed.expt {indexTmp}/indexed.refl "
             f"output.log={indexLogs}/dials.refine_bravais_settings.log "
             f"output.directory={indexTmp}")
+        # Possibly related to issue #10
         reindexCL = (
             f"change_of_basis_op=a,b,c {indexTmp}/indexed.refl "
             f"output.reflections={indexTmp}/reindexed.refl")
@@ -828,8 +828,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             'dials.index'), indexCL)
         self.assertEqual(protIndex._prepBravaisCommandline(
             'dials.refine_bravais_settings'), refBravCL)
-        self.assertEqual(protIndex._prepReindexCommandline(
-            'dials.reindex'), reindexCL)
+        self.assertEqual(protIndex._prepReindexCommandline(), reindexCL)
         indexedset = getattr(protIndex, 'outputIndexedSpots', None)
         self.assertIsNotNone(protIndex.outputIndexedSpots)
         self.assertFileExists(indexedset.getDialsModel())
