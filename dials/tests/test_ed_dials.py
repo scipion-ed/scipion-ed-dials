@@ -41,6 +41,8 @@ from dials.constants import *
 
 
 pw.Config.setDomain(pwed)
+if not pw.Config.debugOn():
+    pw.Config.toggleDebug()
 
 # Create toggles for skipping some tests
 SKIP_PIPELINES = False
@@ -156,32 +158,34 @@ class TestEdDialsProtocols(pwtests.BaseTest):
     def getLysoTestExperiments(self):
         experiments = []
         lyso_experiment_14 = {
-            'location': 'lysozyme/experiment_14',
-            'files_pattern': 'SMV/data/00{TI}.img',
-            'd_min': 2.5,
-            'found_spots': 1322,
-            'distance': 1480.56,
-            'rotation_axis': '-0.6204,-0.7843,0.0',
-            'lyso': True,
-            'sample': 'lyso',
-            'scan_range': '1,49',
-            'space_group': 'P 4 2 2',
-            'unit_cell': '77.76,77.76,40.5,90,90,90',
-            'unit_cell_sigmas': '0.05,0.05,0.05,0.05,0.05,0.05'
+            "location": "lysozyme/experiment_14",
+            "files_pattern": "SMV/data/00{TI}.img",
+            "d_min": 2.5,
+            "found_spots": 1322,
+            "distance": 1480.56,
+            "rotation_axis": "-0.6204,-0.7843,0.0",
+            "lyso": True,
+            "sample": "lyso",
+            "scan_range": "1,49",
+            "space_group": "P 4 2 2",
+            "unit_cell": "77.76,77.76,40.5,90,90,90",
+            "unit_cell_sigmas": "0.05,0.05,0.05,0.05,0.05,0.05",
+            "cb_op": "b,c,a",
         }
         lyso_experiment_24 = {
-            'location': 'lysozyme/experiment_24',
-            'files_pattern': 'SMV/data/00{TI}.img',
-            'd_min': 3.5,
-            'found_spots': 847,
-            'distance': None,
-            'rotation_axis': '-0.6204,-0.7843,0.0',
-            'lyso': True,
-            'sample': 'lysozyme',
-            'scan_range': '1,46',
-            'space_group': 'P 4 2 2',
-            'unit_cell': '78.24,78.24,39.75,90,90,90',
-            'unit_cell_sigmas': '0.05,0.05,0.05,0.05,0.05,0.05'
+            "location": "lysozyme/experiment_24",
+            "files_pattern": "SMV/data/00{TI}.img",
+            "d_min": 3.5,
+            "found_spots": 847,
+            "distance": None,
+            "rotation_axis": "-0.6204,-0.7843,0.0",
+            "lyso": True,
+            "sample": "lysozyme",
+            "scan_range": "1,46",
+            "space_group": "P 4 2 2",
+            "unit_cell": "78.24,78.24,39.75,90,90,90",
+            "unit_cell_sigmas": "0.05,0.05,0.05,0.05,0.05,0.05",
+            "cb_op": "b,c,a",
         }
         experiments.append(lyso_experiment_14)
         experiments.append(lyso_experiment_24)
@@ -189,22 +193,23 @@ class TestEdDialsProtocols(pwtests.BaseTest):
 
     def getGarnetExperiment(self):
         experiment = {
-            'location': 'garnet/experiment_1',
-            'files_pattern': 'Garnet_Cont_{TI}.img',
-            'sample': 'garnet',
-            'replace_rotation_axis': True,
-            'rotation_axis': '-0.755,-0.656,0.0',
-            'useTemplate': True,
-            'tsReplacement': '0###',
-            'min_spot_size': 10,
-            'max_spot_size': 1500000,
-            'max_separation': 7.5,
-            'd_min': 0.5,
-            'd_max': 3.0,
-            'sigma_background': 1.0,
-            'found_spots': 6223,
-            'nproc': 8,
-            'bravais_setting_reference': 'bravais_setting_22.expt'
+            "location": "garnet/experiment_1",
+            "files_pattern": "Garnet_Cont_{TI}.img",
+            "sample": "garnet",
+            "replace_rotation_axis": True,
+            "rotation_axis": "-0.755,-0.656,0.0",
+            "useTemplate": True,
+            "tsReplacement": "0###",
+            "min_spot_size": 10,
+            "max_spot_size": 1500000,
+            "max_separation": 7.5,
+            "d_min": 0.5,
+            "d_max": 3.0,
+            "sigma_background": 1.0,
+            "found_spots": 6223,
+            "nproc": 8,
+            "bravais_setting_reference": "bravais_setting_22.expt",
+            "cb_op": "b+c,a+c,a+b",
         }
         return experiment
 
@@ -383,7 +388,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 f"output.log={indexLogs}/dials.refine_bravais_settings.log "
                 f"output.directory={indexTmp}")
             reindexCL = (
-                f"change_of_basis_op=a,b,c {indexTmp}/indexed.refl "
+                f"change_of_basis_op={experiment['cb_op']} {indexTmp}/indexed.refl "
                 f"output.reflections={indexTmp}/reindexed.refl")
             self.assertEqual(protIndex._prepIndexCommandline(
                 'dials.index'), indexCL)
@@ -822,7 +827,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             f"output.directory={indexTmp}")
         # Possibly related to issue #10
         reindexCL = (
-            f"change_of_basis_op=a,b,c {indexTmp}/indexed.refl "
+            f"change_of_basis_op={experiment['cb_op']} {indexTmp}/indexed.refl "
             f"output.reflections={indexTmp}/reindexed.refl")
         self.assertEqual(protIndex._prepIndexCommandline(
             'dials.index'), indexCL)
