@@ -361,8 +361,8 @@ class DialsProtIndexSpots(EdProtIndexSpots, DialsProtBase):
 
     def _summary(self):
         summary = []
-        if dutils.getDatasets(self) not in (None, ''):
-            summary.append(dutils.getDatasets(self))
+        if self.getDatasets() not in (None, ''):
+            summary.append(self.getDatasets())
 
         return summary
 

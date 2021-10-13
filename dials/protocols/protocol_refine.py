@@ -201,8 +201,8 @@ class DialsProtRefineSpots(EdProtRefineSpots, DialsProtBase):
 
     def _summary(self):
         summary = []
-        if dutils.getDatasets() not in (None, ''):
-            summary.append(dutils.getDatasets())
+        if self.getDatasets() not in (None, ''):
+            summary.append(self.getDatasets())
 
         return summary
 
