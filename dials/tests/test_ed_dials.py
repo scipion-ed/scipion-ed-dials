@@ -47,7 +47,7 @@ if not pw.Config.debugOn():
 # Create toggles for skipping some tests
 SKIP_PIPELINES = False
 SKIP_LYSO = False
-SKIP_GARNET = False
+SKIP_GARNET = True
 if SKIP_LYSO and SKIP_GARNET:
     SKIP_PIPELINES = True
 SKIP_UTILS = False
@@ -647,6 +647,10 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 objLabel="dials - scaling multiple",
                 inputSets=scaledSets,
                 checkConsistentIndexing=True,
+                exportMergedMtz=True,
+                mergedMtzName="merged.mtz",
+                exportUnmergedMtz=True,
+                unmergedMtzName="unmerged.mtz",
             )
             scaledExtra0 = scaleProt[0]._getExtraPath()
             scaledExtra1 = scaleProt[1]._getExtraPath()
@@ -659,6 +663,8 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 f"output.experiments={protMultiScaling._getExtraPath()}/scaled.expt "
                 f"output.reflections={protMultiScaling._getExtraPath()}/scaled.refl "
                 f"output.html={protMultiScaling._getExtraPath()}/dials.scale.html "
+                f"output.merged_mtz={protMultiScaling._getExtraPath()}/merged.mtz "
+                f"output.unmerged_mtz={protMultiScaling._getExtraPath()}/unmerged.mtz "
                 f"filtering.output.scale_and_filter_results="
                 f"{protMultiScaling._getExtraPath()}/scale_and_filter_results.json "
                 f"cut_data.partiality_cutoff=0.4 cut_data.min_isigi=-5.0 "
@@ -673,6 +679,10 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             multiscaledset = getattr(
                 protMultiScaling, 'outputScaledSpots', None)
             self.assertIsNotNone(protMultiScaling.outputScaledSpots)
+            self.assertFileExists(
+                f"{protMultiScaling._getExtraPath()}/merged.mtz")
+            self.assertFileExists(
+                f"{protMultiScaling._getExtraPath()}/unmerged.mtz")
             self.assertFileExists(multiscaledset.getDialsModel())
             self.assertFileExists(multiscaledset.getDialsRefl())
             compareDatasets = 'Source of data:'
