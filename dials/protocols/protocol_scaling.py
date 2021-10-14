@@ -65,6 +65,35 @@ class DialsProtScaling(EdProtScaling, DialsProtBase):
                       default=False,
                       )
 
+        group = form.addGroup('Export')
+        group.addParam("exportMergedMtz", pwprot.BooleanParam,
+                       default=False,
+                       label="Export a merged mtz file?",)
+
+        group.addParam("mergedMtzName", pwprot.StringParam,
+                       label="Name of merged mtz:",
+                       default="merged.mtz",
+                       condition="exportMergedMtz")
+
+        group.addParam("exportUnmergedMtz", pwprot.BooleanParam,
+                       default=False,
+                       label="Export an unmerged mtz file?",)
+
+        group.addParam("unmergedMtzName", pwprot.StringParam,
+                       label="Name of unmerged mtz:",
+                       default="unmerged.mtz",
+                       condition="exportUnmergedMtz")
+
+        group.addParam("specifyExportPath", pwprot.BooleanParam,
+                       label="Do you want to specify a directory for the exported file(s)?",
+                       default=False,
+                       condition="exportMergedMtz or exportUnmergedMtz")
+
+        group.addParam("exportPath", pwprot.PathParam,
+                       label="Target directory for export",
+                       default="",
+                       condition="specifyExportPath")
+
         group = form.addGroup('Cut data')
 
         group.addParam('dMin', pwprot.FloatParam,
@@ -553,8 +582,8 @@ class DialsProtScaling(EdProtScaling, DialsProtBase):
 
     def createOutputStep(self):
         # Check that the indexing created proper output
-        dutils.verifyPathExistence(
-            self.getOutputReflFile(), self.getOutputModelFile())
+        dutils.verifyPathExistence(self.getOutputReflFile(),
+                                   self.getOutputModelFile())
 
         outputSet = self._createSetOfIndexedSpots()
         outputSet.setDialsModel(self.getOutputModelFile())
@@ -648,6 +677,8 @@ class DialsProtScaling(EdProtScaling, DialsProtBase):
                   f"output.experiments={self.getOutputModelFile()} "
                   f"output.reflections={self.getOutputReflFile()} "
                   f"output.html={self.getOutputHtmlFile()} "
+                  f"{self.getMergedMtzLine()}"
+                  f"{self.getUnmergedMtzLine()}"
                   f"filtering.output.scale_and_filter_results="
                   f"{self.getOutputScaleJson()}")
 
@@ -793,6 +824,47 @@ class DialsProtScaling(EdProtScaling, DialsProtBase):
             imageGroups.append(self.imageGroup20)
 
         return imageGroups
+
+    def getMtzDir(self):
+        # Sanitize directory
+        if self.specifyExportPath.get():
+            exportPath = self.exportPath.get()
+            if exportPath in (None, ""):
+                return self._getExtraPath()
+            elif dutils.existsPath(exportPath):
+                return exportPath
+        return self._getExtraPath()
+
+    def getMtzPath(self, fn=None):
+        if fn:
+            return dutils.joinPath(self.getMtzDir(), fn)
+        return self.getMtzDir()
+
+    def getMergedMtz(self):
+        # Useful for getMergedMtzLine()
+        # Separate function to allow use in testing and createOutputStep
+        return self.getMtzPath(self.mergedMtzName.get())
+
+    def getUnmergedMtz(self):
+        # Useful for getUnmergedMtzLine()
+        # Separate function to allow use in testing and createOutputStep
+        return self.getMtzPath(self.unmergedMtzName.get())
+
+    def getMergedMtzLine(self):
+        # Should have been part of _extraParams(), but want all output options
+        # to be part of _initialParams()
+        if self.exportMergedMtz.get():
+            return f"output.merged_mtz={self.getMergedMtz()} "
+        else:
+            return ""
+
+    def getUnmergedMtzLine(self):
+        # Should have been part of _extraParams(), but want all output options
+        # to be part of _initialParams()
+        if self.exportUnmergedMtz.get():
+            return f"output.unmerged_mtz={self.getUnmergedMtz()} "
+        else:
+            return ""
 
     def getDMax(self):
         return self.dMax.get()

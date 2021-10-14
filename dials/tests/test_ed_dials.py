@@ -47,11 +47,12 @@ if not pw.Config.debugOn():
 # Create toggles for skipping some tests
 SKIP_PIPELINES = False
 SKIP_LYSO = False
-SKIP_GARNET = True
+SKIP_GARNET = False
 if SKIP_LYSO and SKIP_GARNET:
     SKIP_PIPELINES = True
 SKIP_UTILS = False
-KEEP_ALL_TEST_OUTPUT = False
+KEEP_PROTOCOL_TEST_OUTPUT = True
+KEEP_UTILS_TEST_OUTPUT = False
 
 
 class TestEdDialsProtocols(pwtests.BaseTest):
@@ -60,11 +61,18 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         if SKIP_PIPELINES:
             cls.skipTest(cls, "Skipping pipelines")
         pwtests.setupTestProject(cls, writeLocalConfig=True)
+        pwtests.setupTestOutput(cls)
         cls.dataPath = os.environ.get("SCIPION_ED_TESTDATA")
 
         if not os.path.exists(cls.dataPath):
             raise Exception(
                 f"Can not run DIALS tests, missing file:\n  {cls.dataPath}")
+
+    @ classmethod
+    def tearDownClass(cls):
+        if not KEEP_PROTOCOL_TEST_OUTPUT:
+            # Clean up all output files from the test
+            pw.utils.cleanPath(cls.getOutputPath())
 
     # Functions for running protocols
 
@@ -643,17 +651,22 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         with self.subTest(msg='Scaling multiple datasets'):
             while len(scaledSets) < 2:
                 self.skipTest('Not enough datasets to test scaling multiple')
+            mergedFn = "merged_test.mtz"
+            unmergedFn = "unmerged.mtz"
             protMultiScaling = self._runScaling(
                 objLabel="dials - scaling multiple",
                 inputSets=scaledSets,
                 checkConsistentIndexing=True,
                 exportMergedMtz=True,
-                mergedMtzName="merged.mtz",
+                mergedMtzName=mergedFn,
                 exportUnmergedMtz=True,
-                unmergedMtzName="unmerged.mtz",
+                specifyExportPath=True,
+                exportPath=self.getOutputPath(),
             )
             scaledExtra0 = scaleProt[0]._getExtraPath()
             scaledExtra1 = scaleProt[1]._getExtraPath()
+            mergedMtzFile = f"{self.getOutputPath()}/{mergedFn}"
+            unmergedMtzFile = f"{self.getOutputPath()}/{unmergedFn}"
             multiScaleCL = (
                 f"{scaledExtra0}/scaled.expt "
                 f"{scaledExtra0}/scaled.refl "
@@ -663,8 +676,8 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 f"output.experiments={protMultiScaling._getExtraPath()}/scaled.expt "
                 f"output.reflections={protMultiScaling._getExtraPath()}/scaled.refl "
                 f"output.html={protMultiScaling._getExtraPath()}/dials.scale.html "
-                f"output.merged_mtz={protMultiScaling._getExtraPath()}/merged.mtz "
-                f"output.unmerged_mtz={protMultiScaling._getExtraPath()}/unmerged.mtz "
+                f"output.merged_mtz={mergedMtzFile} "
+                f"output.unmerged_mtz={unmergedMtzFile} "
                 f"filtering.output.scale_and_filter_results="
                 f"{protMultiScaling._getExtraPath()}/scale_and_filter_results.json "
                 f"cut_data.partiality_cutoff=0.4 cut_data.min_isigi=-5.0 "
@@ -679,10 +692,8 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             multiscaledset = getattr(
                 protMultiScaling, 'outputScaledSpots', None)
             self.assertIsNotNone(protMultiScaling.outputScaledSpots)
-            self.assertFileExists(
-                f"{protMultiScaling._getExtraPath()}/merged.mtz")
-            self.assertFileExists(
-                f"{protMultiScaling._getExtraPath()}/unmerged.mtz")
+            self.assertFileExists(mergedMtzFile)
+            self.assertFileExists(unmergedMtzFile)
             self.assertFileExists(multiscaledset.getDialsModel())
             self.assertFileExists(multiscaledset.getDialsRefl())
             compareDatasets = 'Source of data:'
@@ -1029,7 +1040,7 @@ class TestEdDialsUtils(pwtests.BaseTest):
 
     @ classmethod
     def tearDownClass(cls):
-        if not KEEP_ALL_TEST_OUTPUT:
+        if not KEEP_UTILS_TEST_OUTPUT:
             # Clean up all output files from the test
             pw.utils.cleanPath(cls.getOutputPath())
 
