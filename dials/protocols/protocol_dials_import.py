@@ -107,6 +107,6 @@ class DialsProtImportDiffractionImages(ProtImportDiffractionImages, DialsProtBas
         if self.getRotationAxis():
             params += f" goniometer.axes={','.join(map(str, self.getRotationAxis()))}"
 
-        if self.overwriteDetectorDistance.get() is not None:
-            params += f" distance={self.overwriteDetectorDistance.get()}"
+        if self.getNewDetectorDistance() is not None:
+            params += f" distance={self.getNewDetectorDistance()}"
         return params
