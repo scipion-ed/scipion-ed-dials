@@ -646,6 +646,14 @@ class DialsProtScaling(EdProtScaling, DialsProtBase):
         if self.getSpaceGroupLogOutput() not in (None, ''):
             summary.append(self.getSpaceGroupLogOutput())
 
+        if self.mtzExport("merged_mtz"):
+            summary.append(
+                f"Exported merged mtz file {self.getMergedMtzPath()}")
+
+        if self.mtzExport("unmerged_mtz"):
+            summary.append(
+                f"Exported unmerged mtz file {self.getUnmergedMtzPath()}")
+
         return summary
     # -------------------------- BASE methods to be overridden -----------------
 
@@ -840,12 +848,12 @@ class DialsProtScaling(EdProtScaling, DialsProtBase):
             return dutils.joinPath(self.getMtzDir(), fn)
         return self.getMtzDir()
 
-    def getMergedMtz(self):
+    def getMergedMtzPath(self):
         # Useful for getMergedMtzLine()
         # Separate function to allow use in testing and createOutputStep
         return self.getMtzPath(self.mergedMtzName.get())
 
-    def getUnmergedMtz(self):
+    def getUnmergedMtzPath(self):
         # Useful for getUnmergedMtzLine()
         # Separate function to allow use in testing and createOutputStep
         return self.getMtzPath(self.unmergedMtzName.get())
@@ -853,18 +861,26 @@ class DialsProtScaling(EdProtScaling, DialsProtBase):
     def getMergedMtzLine(self):
         # Should have been part of _extraParams(), but want all output options
         # to be part of _initialParams()
-        if self.exportMergedMtz.get():
-            return f"output.merged_mtz={self.getMergedMtz()} "
+        if self.mtzExport("merged_mtz"):
+            return f"output.merged_mtz={self.getMergedMtzPath()} "
         else:
             return ""
 
     def getUnmergedMtzLine(self):
         # Should have been part of _extraParams(), but want all output options
         # to be part of _initialParams()
-        if self.exportUnmergedMtz.get():
-            return f"output.unmerged_mtz={self.getUnmergedMtz()} "
+        if self.mtzExport("unmerged_mtz"):
+            return f"output.unmerged_mtz={self.getUnmergedMtzPath()} "
         else:
             return ""
+
+    def mtzExport(self, key=None):
+        exportStatus = {"merged_mtz": self.exportMergedMtz.get(),
+                        "unmerged_mtz": self.exportUnmergedMtz.get()}
+        if key in exportStatus:
+            return exportStatus[key]
+        else:
+            return exportStatus
 
     def getDMax(self):
         return self.dMax.get()
