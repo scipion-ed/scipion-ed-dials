@@ -300,7 +300,9 @@ class DialsProtExport(EdProtExport, DialsProtBase):
             if self.mtzDMin.get() is not None:
                 params += f" mtz.d_min={self.mtzDMin.get()}"
 
-            params += f" mtz.crystal_name={self.mtzCrystalName.get()}"
+            params += (f" mtz.crystal_name="
+                       f"{self.getCrystalName(self.mtzCrystalName.get())}")
+            params += f" mtz.project_name={self.getProjectName()}"
 
         elif self.exportFormat.get() is SADABS:
             if self.sadabsRun.get() != 1:

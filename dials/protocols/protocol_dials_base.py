@@ -72,6 +72,25 @@ class DialsProtBase(EdBaseProtocol):
     def getOutputReflFile(self):
         return self._getExtraPath(self.OUTPUT_REFL_FILENAME)
 
+    def getProjectName(self, newProjectName=None):
+        # Function to get the name of the overall project.
+        # Useful for the metadata of exported files. Could also be used
+        # in summaries.
+        if newProjectName:
+            return newProjectName
+        else:
+            return self.getProject().getShortName()
+
+    def getCrystalName(self, newCrystalName=None):
+        # Function to return crystal name. Can be connected to pwed.objects
+        # properties at a later point to define a name during import and use
+        # it throughout the processing. Until then it provides "XTAL" as
+        # default and can be overwritten in protocols.
+        if newCrystalName:
+            return newCrystalName
+        else:
+            return "XTAL"
+
     def _getModelSources(self, inputSource=None):
         sources = []
         if inputSource is not None:

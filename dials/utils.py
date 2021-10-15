@@ -59,6 +59,10 @@ def existsPath(path):
     return p.exists(path)
 
 
+def joinPath(*args):
+    return p.join(*args)
+
+
 def readLog(logfile, start, stop, flush=None):
     # based on https://stackoverflow.com/a/18865133
     contentList = []
