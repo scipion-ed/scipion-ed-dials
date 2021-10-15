@@ -653,6 +653,8 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 self.skipTest('Not enough datasets to test scaling multiple')
             mergedFn = "merged_test.mtz"
             unmergedFn = "unmerged.mtz"
+            crystalName = "XTAL"
+            projectName = "DIALS"
             protMultiScaling = self._runScaling(
                 objLabel="dials - scaling multiple",
                 inputSets=scaledSets,
@@ -662,6 +664,8 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 exportUnmergedMtz=True,
                 specifyExportPath=True,
                 exportPath=self.getOutputPath(),
+                crystalName=crystalName,
+                projectName=projectName,
             )
             scaledExtra0 = scaleProt[0]._getExtraPath()
             scaledExtra1 = scaleProt[1]._getExtraPath()
@@ -678,6 +682,8 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 f"output.html={protMultiScaling._getExtraPath()}/dials.scale.html "
                 f"output.merged_mtz={mergedMtzFile} "
                 f"output.unmerged_mtz={unmergedMtzFile} "
+                f"output.crystal_name={crystalName} "
+                f"output.project_name={projectName} "
                 f"filtering.output.scale_and_filter_results="
                 f"{protMultiScaling._getExtraPath()}/scale_and_filter_results.json "
                 f"cut_data.partiality_cutoff=0.4 cut_data.min_isigi=-5.0 "
