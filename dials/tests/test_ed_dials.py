@@ -63,12 +63,13 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         pwtests.setupTestProject(cls, writeLocalConfig=True)
         pwtests.setupTestOutput(cls)
         cls.dataPath = os.environ.get("SCIPION_ED_TESTDATA")
+        cls.PROJECT_NAME = cls.__name__
 
         if not os.path.exists(cls.dataPath):
             raise Exception(
                 f"Can not run DIALS tests, missing file:\n  {cls.dataPath}")
 
-    @ classmethod
+    @classmethod
     def tearDownClass(cls):
         if not KEEP_PROTOCOL_TEST_OUTPUT:
             # Clean up all output files from the test
@@ -653,8 +654,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 self.skipTest('Not enough datasets to test scaling multiple')
             mergedFn = "merged_test.mtz"
             unmergedFn = "unmerged.mtz"
-            crystalName = "XTAL"
-            projectName = "DIALS"
+            crystalName = "Lysozyme"
             protMultiScaling = self._runScaling(
                 objLabel="dials - scaling multiple",
                 inputSets=scaledSets,
@@ -665,7 +665,6 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 specifyExportPath=True,
                 exportPath=self.getOutputPath(),
                 crystalName=crystalName,
-                projectName=projectName,
             )
             scaledExtra0 = scaleProt[0]._getExtraPath()
             scaledExtra1 = scaleProt[1]._getExtraPath()
@@ -683,7 +682,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 f"output.merged_mtz={mergedMtzFile} "
                 f"output.unmerged_mtz={unmergedMtzFile} "
                 f"output.crystal_name={crystalName} "
-                f"output.project_name={projectName} "
+                f"output.project_name={self.PROJECT_NAME} "
                 f"filtering.output.scale_and_filter_results="
                 f"{protMultiScaling._getExtraPath()}/scale_and_filter_results.json "
                 f"cut_data.partiality_cutoff=0.4 cut_data.min_isigi=-5.0 "
@@ -719,7 +718,8 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 f"integrated_{protExportMtz.getObjId()}.mtz "
                 f"output.log={protExportMtz._getLogsPath()}/dials.export.log "
                 f"mtz.combine_partials=True mtz.partiality_threshold=0.99 "
-                f"mtz.min_isigi=-5.0 mtz.crystal_name=XTAL")
+                f"mtz.min_isigi=-5.0 mtz.crystal_name=XTAL "
+                f"mtz.project_name={self.PROJECT_NAME}")
             self.assertCommand(protExportMtz, exportMtzCL, "dials.export")
             exportedmtzset = getattr(protExportMtz, 'exportedFileSet', None)
             self.assertIsNotNone(protExportMtz.exportedFileSet)
@@ -1014,6 +1014,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         protExportMtz = self._runExport(
             inputSet=protScaling.outputScaledSpots,
             exportFormat=MTZ,
+            mtzCrystalName="Garnet"
         )
 
         exportMtzCL = (
@@ -1023,7 +1024,8 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             f"integrated_{protExportMtz.getObjId()}.mtz "
             f"output.log={protExportMtz._getLogsPath()}/dials.export.log "
             f"mtz.combine_partials=True mtz.partiality_threshold=0.99 "
-            f"mtz.min_isigi=-5.0 mtz.crystal_name=XTAL")
+            f"mtz.min_isigi=-5.0 mtz.crystal_name=Garnet "
+            f"mtz.project_name={self.PROJECT_NAME}")
         self.assertCommand(protExportMtz, exportMtzCL, "dials.export")
         exportedmtzset = getattr(protExportMtz, 'exportedFileSet', None)
         self.assertIsNotNone(protExportMtz.exportedFileSet)
@@ -1094,4 +1096,5 @@ class TestEdDialsUtils(pwtests.BaseTest):
 
         values = "10,20,30,90,90,90"
         writeRestraintsPhil(fn=setFn, values=values)
-        self.comparePhils(goodPhil='restraints_no_sigmas.phil', testPhil=setFn)
+        self.comparePhils(goodPhil='restraints_no_sigmas.phil',
+                          testPhil=setFn)

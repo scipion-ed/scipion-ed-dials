@@ -94,6 +94,11 @@ class DialsProtScaling(EdProtScaling, DialsProtBase):
                        default="",
                        condition="specifyExportPath")
 
+        group.addParam("crystalName", pwprot.StringParam,
+                       label="Crystal name for metadata",
+                       default="XTAL",
+                       condition="exportMergedMtz or exportUnmergedMtz")
+
         group = form.addGroup('Cut data')
 
         group.addParam('dMin', pwprot.FloatParam,
@@ -368,6 +373,9 @@ class DialsProtScaling(EdProtScaling, DialsProtBase):
 
     def getDatasets(self):
         return dutils.getDatasets(self.getOutputModelFile())
+
+    def getCrystalName(self):
+        return self.crystalName.get()
 
     def getLogOutput(self):
         logOutput = ''
