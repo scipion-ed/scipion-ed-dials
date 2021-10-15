@@ -156,7 +156,7 @@ class DialsProtScaling(EdProtScaling, DialsProtBase):
         group = form.addGroup('Filtering')
 
         group.addParam("filteringMethod", pwprot.EnumParam,
-                       label="Filtring method",
+                       label="Filtering method",
                        choices=['None', 'delta CC(1/2)'],
                        default=NONE,
                        display=pwprot.EnumParam.DISPLAY_HLIST,
@@ -165,10 +165,10 @@ class DialsProtScaling(EdProtScaling, DialsProtBase):
                        " to CC(1/2). CC(1/2) will be calculated for all "
                        "datasets or groups of images combined. Each dataset "
                        "or group will then be removed and a new CC(1/2) "
-                       "calculated and compared to the orginial, giving a "
+                       "calculated and compared to the original, giving a "
                        "ranking of all individual contributions to the overall"
                        " CC(1/2). The mean and the standard deviation of these"
-                       " indiviual contributions are calculated. All datasets "
+                       " individual contributions are calculated. All datasets "
                        "or image groups that reduce CC(1/2) with more than a "
                        "number of standard deviations (default 4.0) from the "
                        "mean will be removed. The cycle is then repeated by "
