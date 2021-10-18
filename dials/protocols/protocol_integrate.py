@@ -35,11 +35,12 @@ from pwed.objects import IndexedSpot
 from pwed.protocols import EdProtIntegrateSpots
 from dials.protocols import DialsProtBase, PhilBase, CliBase, HtmlBase
 from pwed.convert import find_subranges
+from pwed.utils import CutRes
 from dials.convert import readRefl
 from dials.constants import *
 
 
-class DialsProtIntegrateSpots(EdProtIntegrateSpots, DialsProtBase):
+class DialsProtIntegrateSpots(EdProtIntegrateSpots, DialsProtBase, CutRes):
     """ Protocol for integrating spots using Dials
     """
     _label = 'integrate'
@@ -73,17 +74,8 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots, DialsProtBase):
                       help="Explicitly specify the images to be processed. Only applicable when experiment list contains a single imageset.", expertLevel=pwprot.LEVEL_ADVANCED,
                       )
 
-        form.addParam('dMin', pwprot.FloatParam,
-                      default=None,
-                      allowsNull=True,
-                      label="High resolution limit",
-                      help="The maximum resolution limit")
-
-        form.addParam('dMax', pwprot.FloatParam,
-                      default=None,
-                      allowsNull=True,
-                      label="Low resolution limit",
-                      help="The minimum resolution limit")
+        # Define d_min and d_max
+        self._defineResolutionParams(form)
 
         # Allow an easy way to import a phil file with parameters
         PhilBase._definePhilParams(self, form)
@@ -165,8 +157,9 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots, DialsProtBase):
     def _validate(self):
         errors = []
         if self.swappedResolution():
-            errors.append(
-                f"High ({self.getDMin()} Å) and low ({self.getDMax()} Å) resolution limits appear swapped.")
+            errors.append(f"High ({self.getDMin()} Å) and low "
+                          f"({self.getDMax()} Å) resolution limits "
+                          f"appear swapped.")
         return errors
 
     def _summary(self):
@@ -193,7 +186,11 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots, DialsProtBase):
 
     def _initialParams(self, program):
         # Add output.phil parameter
-        params = f"{self.getInputModelFile()} {self.getInputReflFile()} output.log={self.getLogFilePath(program)} output.experiments={self.getOutputModelFile()} output.reflections={self.getOutputReflFile()} output.phil={self.getOutputPhilFile()}"
+        params = (f"{self.getInputModelFile()} {self.getInputReflFile()} "
+                  f"output.log={self.getLogFilePath(program)} "
+                  f"output.experiments={self.getOutputModelFile()} "
+                  f"output.reflections={self.getOutputReflFile()} "
+                  f"output.phil={self.getOutputPhilFile()}")
 
         return params
 
@@ -223,21 +220,6 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots, DialsProtBase):
 
     def getOutputPhilFile(self):
         return self._getExtraPath('dials.integrate.phil')
-
-    def getDMax(self):
-        return self.dMax.get()
-
-    def getDMin(self):
-        return self.dMin.get()
-
-    def swappedResolution(self):
-        # d_min (high resolution) should always be smaller than d_max (low resolution).
-        if self.getDMin() is not None and self.getDMax() is not None:
-            # Check for the case where both d_min and d_max are set and have wrong relative values
-            return self.getDMin() > self.getDMax()
-        else:
-            # If at least one value is None, then no swap is possible
-            return False
 
     def _createScanRanges(self):
         # Go through the

@@ -34,11 +34,12 @@ import dials.utils as dutils
 import dials.convert as dconv
 
 from pwed.protocols import EdProtScaling
+from pwed.utils import CutRes
 from dials.protocols import DialsProtBase, PhilBase, CliBase
 from dials.constants import *
 
 
-class DialsProtScaling(EdProtScaling, DialsProtBase):
+class DialsProtScaling(EdProtScaling, DialsProtBase, CutRes):
     """ Protocol for scaling spots using Dials
     """
     _label = 'scale'
@@ -101,17 +102,7 @@ class DialsProtScaling(EdProtScaling, DialsProtBase):
 
         group = form.addGroup('Cut data')
 
-        group.addParam('dMin', pwprot.FloatParam,
-                       default=None,
-                       allowsNull=True,
-                       label="High resolution limit",
-                       help="The maximum resolution limit")
-
-        group.addParam('dMax', pwprot.FloatParam,
-                       default=None,
-                       allowsNull=True,
-                       label="Low resolution limit",
-                       help="The minimum resolution limit")
+        self._defineResolutionParams(form)
 
         group.addParam('partialityCutoff', pwprot.FloatParam,
                        label='Partiality cutoff',
