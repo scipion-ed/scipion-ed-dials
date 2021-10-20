@@ -46,7 +46,7 @@ class DialsProtMerge(EdProtMerge, DialsProtBase, CutRes):
     """
     _label = 'merge'
 
-    # -------------------------- DEFINE param functions -----------------------
+    # -------------------------- DEFINE param functions ----------------------
 
     def _defineParams(self, form):
         # EdProtIndexSpots._defineParams(self, form)
@@ -54,15 +54,31 @@ class DialsProtMerge(EdProtMerge, DialsProtBase, CutRes):
         # The start of the actually relevant part.
         form.addSection(label='Input')
 
-        inputsetsLabel = 'Sets to merge'
         form.addParam('inputSets', pwprot.MultiPointerParam,
                       pointerClass='SetOfIndexedSpots',
-                      label=inputsetsLabel,
+                      label='Sets to merge',
                       minNumObjects=1,
                       maxNumObjects=0,
                       )
 
         self._defineResolutionParams(form)
+
+        group = form.addGroup("MTZ parameters")
+        group.addParam("mtzName", pwprot.StringParam,
+                       label="Name of output file",
+                       default="merged.mtz",
+                       )
+        group.addParam("xtalName", pwprot.StringParam,
+                       label="Crystal name",
+                       default="XTAL",
+                       )
+        group.addParam("datasetNames", pwprot.StringParam,
+                       label="Dataset name(s)",
+                       allowsNull=True,
+                       default=None,
+                       help="Dataset name to be used in MTZ file output "
+                       "(multiple names allowed for MAD datasets)",
+                       )
 
         form.addParam("assessSpaceGroup", pwprot.BooleanParam,
                       label="Asses space group?",
@@ -190,10 +206,7 @@ class DialsProtMerge(EdProtMerge, DialsProtBase, CutRes):
     # -------------------------- INFO functions -------------------------------
     def _validate(self):
         errors = []
-        if self.swappedResolution():
-            errors.append(
-                f"High ({self.getDMin()} Å) and low ({self.getDMax()} Å) "
-                f"resolution limits appear swapped.")
+        errors.append(self.resolutionValidation())
         return errors
 
     def _summary(self):
@@ -239,79 +252,62 @@ class DialsProtMerge(EdProtMerge, DialsProtBase, CutRes):
         # Base method that can more easily be overridden when needed
         params = (f"{self.getAllInputFiles()} "
                   f"output.log={self.getLogFilePath(program)} "
-                  f"output.experiments={self.getOutputModelFile()} "
-                  f"output.reflections={self.getOutputReflFile()} "
                   f"output.html={self.getOutputHtmlFile()} "
-                  f"filtering.output.scale_and_filter_results="
-                  f"{self.getOutputScaleJson()}")
+                  f"output.mtz={self.getMtzName()} "
+                  f"output.crystal_names={self.crystalName()} "
+                  f"output.project_name={self.getProjectName()}"
+                  f"assess_space_group={self.assesSpaceGroup.get()} "
+                  f"anomalous={self.anomalous.get()} "
+                  f"truncate={self.truncate.get()} "
+                  f"wavelength_tolerance={self.wavelengthTolerance.get()} "
+                  f"combine_partials={self.combinePartials.get()} "
+                  f"partiality_threshold={self.partialityThreshold.get()} "
+                  )
 
         return params
 
     def _extraParams(self):
-        params = ""
+        params = f"{self.getDatasetNameLine()}"
         if self.getDMin():
-            params += f" cut_data.d_min={self.getDMin()}"
+            params += f" d_min={self.getDMin()}"
 
         if self.getDMax():
-            params += f" cut_data.d_max={self.getDMax()}"
+            params += f" d_max={self.getDMax()}"
 
-        if self.partialityCutoff.get():
-            params += f" cut_data.partiality_cutoff={self.partialityCutoff.get()}"
+        if self.bestUnitCell.get():
+            params += f" best_unit_cell={self.bestUnitCell.get()}"
 
-        if self.minIsigi.get():
-            params += f" cut_data.min_isigi={self.minIsigi.get()}"
-        # Scaling options
+        if self.nResidues.get():
+            params += f" n_residues={self.nResidues.get()}"
 
-        if self.checkConsistentIndexing.get():
-            params += (f" scaling_options.check_consistent_indexing="
-                       f"{self.checkConsistentIndexing.get()}")
+        params += (f" merging.use_internal_variance="
+                   f"{self.useInternalVariance.get()}")
 
-        if self.outlierRejection.get() is STANDARD:
-            params += " outlier_rejection=standard"
-        elif self.outlierRejection.get() is SIMPLE:
-            params += " outlier_rejection=simple"
+        if self.nBins.get() and self.nBins.get() >= 5:
+            params += f" merging.n_bins={self.nBins.get()}"
 
-        if self.outlierZmax.get():
-            params += f" outlier_zmax={self.outlierZmax.get()}"
+        params += f" merging.anomalous={self.mergingAnomalous.get()}"
 
-        # Filtering
-
-        if self.filteringMethod.get() is DELTA_CC_HALF:
-            params += " filtering.method=deltacchalf"
-        elif self.filteringMethod.get() is NONE:
-            params += " filtering.method=None"
-
-        if self.ccHalfMaxCycles.get():
-            params += (f" filtering.deltacchalf.max_cycles="
-                       f"{self.ccHalfMaxCycles.get()}")
-
-        if self.ccHalfMaxPercentRemoved.get():
-            params += (f" filtering.deltacchalf.max_percent_removed="
-                       f"{self.ccHalfMaxPercentRemoved.get()}")
-
-        if self.ccHalfMinCompleteness.get():
-            params += (f" filtering.deltacchalf.min_completeness="
-                       f"{self.ccHalfMinCompleteness.get()}")
-
-        if self.ccHalfMode.get() is DATASET:
-            params += " filtering.deltacchalf.mode=dataset"
-        elif self.ccHalfMode.get() is IMAGE_GROUP:
-            params += " filtering.deltacchalf.mode=image_group"
-
-        if self.ccHalfGroupSize.get():
-            params += (
-                f" filtering.deltacchalf.group_size={self.ccHalfGroupSize.get()}")
-
-        if self.ccHalfStdcutoff.get():
-            params += (
-                f" filtering.deltacchalf.stdcutoff={self.ccHalfStdcutoff.get()}")
-
-        if self.excludeImages:
-            for iG in self.getImageExclusions():
-                params += f" exclude_images={iG.get()}"
         return params
 
     # -------------------------- UTILS functions ------------------------------
+    def crystalName(self):
+        return self.getCrystalName(self.xtalName.get())
+
+    def getMtzName(self):
+        return self.mtzName.get()
+
+    def getDatasetNameLine(self):
+        if self.datasetNames.get():
+            return f" output.dataset_names={self.datasetNames.get()}"
+        else:
+            return ""
+
+    def getAllInputFiles(self):
+        files = ""
+        for iS in self.inputSets:
+            files += f"{self.getInputModelFile(iS.get())} {self.getInputReflFile(iS.get())} "
+        return files.strip()
 
     def getMergingStatisticsLogOutput(self):
         mergingStats = dutils.readLog(
