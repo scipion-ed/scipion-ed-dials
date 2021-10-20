@@ -27,6 +27,7 @@
 # **************************************************************************
 
 import os
+from dials.protocols.protocol_merge import DialsProtMerge
 
 import pyworkflow as pw
 import pyworkflow.tests as pwtests
@@ -143,6 +144,13 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                                        **kwargs)
         self.launchProtocol(protScaling)
         return protScaling
+
+    def _runMerging(self, inputSets, **kwargs):
+        protMerging = self.newProtocol(DialsProtMerge,
+                                       inputSets=inputSets,
+                                       **kwargs)
+        self.launchProtocol(protMerging)
+        return protMerging
 
     def _runExport(self, inputSet, **kwargs):
         protExport = self.newProtocol(DialsProtExport,
