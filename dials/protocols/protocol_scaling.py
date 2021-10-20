@@ -297,9 +297,7 @@ class DialsProtScaling(EdProtScaling, DialsProtBase, CutRes):
     def _validate(self):
         errors = []
         if self.swappedResolution():
-            errors.append(
-                f"High ({self.getDMin()} Å) and low ({self.getDMax()} Å) "
-                f"resolution limits appear swapped.")
+            errors.append(self.resSwapMsg())
         return errors
 
     def _summary(self):
@@ -867,47 +865,50 @@ class ImageExclusions(DialsProtBase):
                        f"listed, the syntax is 1:22:24.",
                        )
 
+    def getExclusions(self):
+        return self.numberOfExclusions.get()
+
     def getImageExclusions(self):
         imageGroups = []
-        if self.imageGroup1.get() is not None and self.numberOfExclusions.get() >= 1:
+        if self.imageGroup1.get() is not None and self.getExclusions() >= 1:
             imageGroups.append(self.imageGroup1)
-        if self.imageGroup2.get() is not None and self.numberOfExclusions.get() >= 2:
+        if self.imageGroup2.get() is not None and self.getExclusions() >= 2:
             imageGroups.append(self.imageGroup2)
-        if self.imageGroup3.get() is not None and self.numberOfExclusions.get() >= 3:
+        if self.imageGroup3.get() is not None and self.getExclusions() >= 3:
             imageGroups.append(self.imageGroup3)
-        if self.imageGroup4.get() is not None and self.numberOfExclusions.get() >= 4:
+        if self.imageGroup4.get() is not None and self.getExclusions() >= 4:
             imageGroups.append(self.imageGroup4)
-        if self.imageGroup5.get() is not None and self.numberOfExclusions.get() >= 5:
+        if self.imageGroup5.get() is not None and self.getExclusions() >= 5:
             imageGroups.append(self.imageGroup5)
-        if self.imageGroup6.get() is not None and self.numberOfExclusions.get() >= 6:
+        if self.imageGroup6.get() is not None and self.getExclusions() >= 6:
             imageGroups.append(self.imageGroup6)
-        if self.imageGroup7.get() is not None and self.numberOfExclusions.get() >= 7:
+        if self.imageGroup7.get() is not None and self.getExclusions() >= 7:
             imageGroups.append(self.imageGroup7)
-        if self.imageGroup8.get() is not None and self.numberOfExclusions.get() >= 8:
+        if self.imageGroup8.get() is not None and self.getExclusions() >= 8:
             imageGroups.append(self.imageGroup8)
-        if self.imageGroup9.get() is not None and self.numberOfExclusions.get() >= 9:
+        if self.imageGroup9.get() is not None and self.getExclusions() >= 9:
             imageGroups.append(self.imageGroup9)
-        if self.imageGroup10.get() is not None and self.numberOfExclusions.get() >= 10:
+        if self.imageGroup10.get() is not None and self.getExclusions() >= 10:
             imageGroups.append(self.imageGroup10)
-        if self.imageGroup11.get() is not None and self.numberOfExclusions.get() >= 11:
+        if self.imageGroup11.get() is not None and self.getExclusions() >= 11:
             imageGroups.append(self.imageGroup11)
-        if self.imageGroup12.get() is not None and self.numberOfExclusions.get() >= 12:
+        if self.imageGroup12.get() is not None and self.getExclusions() >= 12:
             imageGroups.append(self.imageGroup12)
-        if self.imageGroup13.get() is not None and self.numberOfExclusions.get() >= 13:
+        if self.imageGroup13.get() is not None and self.getExclusions() >= 13:
             imageGroups.append(self.imageGroup13)
-        if self.imageGroup14.get() is not None and self.numberOfExclusions.get() >= 14:
+        if self.imageGroup14.get() is not None and self.getExclusions() >= 14:
             imageGroups.append(self.imageGroup14)
-        if self.imageGroup15.get() is not None and self.numberOfExclusions.get() >= 15:
+        if self.imageGroup15.get() is not None and self.getExclusions() >= 15:
             imageGroups.append(self.imageGroup15)
-        if self.imageGroup16.get() is not None and self.numberOfExclusions.get() >= 16:
+        if self.imageGroup16.get() is not None and self.getExclusions() >= 16:
             imageGroups.append(self.imageGroup16)
-        if self.imageGroup17.get() is not None and self.numberOfExclusions.get() >= 17:
+        if self.imageGroup17.get() is not None and self.getExclusions() >= 17:
             imageGroups.append(self.imageGroup17)
-        if self.imageGroup18.get() is not None and self.numberOfExclusions.get() >= 18:
+        if self.imageGroup18.get() is not None and self.getExclusions() >= 18:
             imageGroups.append(self.imageGroup18)
-        if self.imageGroup19.get() is not None and self.numberOfExclusions.get() >= 19:
+        if self.imageGroup19.get() is not None and self.getExclusions() >= 19:
             imageGroups.append(self.imageGroup19)
-        if self.imageGroup20.get() is not None and self.numberOfExclusions.get() >= 20:
+        if self.imageGroup20.get() is not None and self.getExclusions() >= 20:
             imageGroups.append(self.imageGroup20)
 
         return imageGroups
