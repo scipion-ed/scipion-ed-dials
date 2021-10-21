@@ -30,7 +30,6 @@ import textwrap
 from pwed.protocols.protocol_base import EdProtMerge
 
 import pyworkflow.protocol as pwprot
-import pyworkflow.utils as pwutils
 import dials.utils as dutils
 import dials.convert as dconv
 
@@ -54,12 +53,10 @@ class DialsProtMerge(EdProtMerge, DialsProtBase, CutRes):
         # The start of the actually relevant part.
         form.addSection(label='Input')
 
-        form.addParam('inputSets', pwprot.MultiPointerParam,
+        form.addParam('inputSet', pwprot.PointerParam,
                       pointerClass='SetOfIndexedSpots',
-                      label='Sets to merge',
-                      minNumObjects=1,
-                      maxNumObjects=0,
-                      )
+                      label="Spots to merge",
+                      help="")
 
         self._defineResolutionParams(form)
 
@@ -168,23 +165,19 @@ class DialsProtMerge(EdProtMerge, DialsProtBase, CutRes):
 
     def _insertAllSteps(self):
         self._insertFunctionStep(
-            'convertInputStep',
-            [inputSet.get().getObjId() for inputSet in self.inputSets])
+            'convertInputStep', self.inputSet.getObjId())
         self._insertFunctionStep('mergeStep')
         self._insertFunctionStep('createOutputStep')
 
     # -------------------------- STEPS functions -------------------------------
     def convertInputStep(self, inputSpotId):
-        for iS in self.inputSets:
-            inputSet = iS.get()
-            self.info(f"ObjId: {inputSet.getObjId()}")
-            self.info(f"Number of images: {inputSet.getSize()}")
-            self.info(f"Number of spots: {inputSet.getSpots()}")
-            # Write new model and/or reflection file if no was supplied from set
-            if self._checkWriteModel(inputSet):
-                dconv.writeJson(inputSet, self.getInputModelFile(inputSet))
-            if self._checkWriteRefl(inputSet):
-                dconv.writeRefl(inputSet, self.getInputReflFile(inputSet))
+        inputSet = self.inputSet.get()
+        self.info(f"Number of spots: {inputSet.getSize()}")
+        # Write new model and/or reflection file if no was supplied from set
+        if self._checkWriteModel():
+            dconv.writeJson(inputSet, self.getInputModelFile())
+        if self._checkWriteRefl():
+            dconv.writeRefl(inputSet, self.getInputReflFile())
 
     def mergeStep(self):
         program = 'dials.merge'
@@ -197,8 +190,8 @@ class DialsProtMerge(EdProtMerge, DialsProtBase, CutRes):
     def createOutputStep(self):
         outputSet = self._createSetOfExportFiles()
         eFile = ExportFile()
-        eFile.setFilePath(self.getExport())
-        eFile.setFileType(self.getFileType())
+        eFile.setFilePath(self.getMtzName())
+        eFile.setFileType("mtz")
         outputSet.append(eFile)
         outputSet.write()
         self._defineOutputs(exportedFileSet=outputSet)
@@ -206,7 +199,8 @@ class DialsProtMerge(EdProtMerge, DialsProtBase, CutRes):
     # -------------------------- INFO functions -------------------------------
     def _validate(self):
         errors = []
-        errors.append(self.resolutionValidation())
+        if self.swappedResolution():
+            errors.append(self.resSwapMsg())
         return errors
 
     def _summary(self):
@@ -214,12 +208,6 @@ class DialsProtMerge(EdProtMerge, DialsProtBase, CutRes):
 
         if self.getDatasets() not in (None, ''):
             summary.append(self.getDatasets())
-
-        nSets = len(self.inputSets)
-        if nSets > 1:
-            summary.append(f'\nMerged {nSets} different datasets together')
-        elif nSets == 1:
-            summary.append('\nMerged a single dataset')
 
         if self.getDMin() is not None:
             summary.append(f'High resolution cutoff at {self.getDMin()} Å')
@@ -234,8 +222,6 @@ class DialsProtMerge(EdProtMerge, DialsProtBase, CutRes):
         return summary
     # -------------------------- BASE methods to be overridden -----------------
 
-    INPUT_EXPT_FILENAME = 'scaled.expt'
-    INPUT_REFL_FILENAME = 'scaled.refl'
     OUTPUT_HTML_FILENAME = 'dials.merge.html'
 
     def getOutputHtmlFile(self):
@@ -250,18 +236,19 @@ class DialsProtMerge(EdProtMerge, DialsProtBase, CutRes):
 
     def _initialParams(self, program):
         # Base method that can more easily be overridden when needed
-        params = (f"{self.getAllInputFiles()} "
+        params = (f"{self.getInputModelFile(self.inputSet.get())} "
+                  f"{self.getInputReflFile(self.inputSet.get())} "
                   f"output.log={self.getLogFilePath(program)} "
                   f"output.html={self.getOutputHtmlFile()} "
                   f"output.mtz={self.getMtzName()} "
                   f"output.crystal_names={self.crystalName()} "
                   f"output.project_name={self.getProjectName()}"
-                  f"assess_space_group={self.assesSpaceGroup.get()} "
+                  f"assess_space_group={self.assessSpaceGroup.get()} "
                   f"anomalous={self.anomalous.get()} "
                   f"truncate={self.truncate.get()} "
                   f"wavelength_tolerance={self.wavelengthTolerance.get()} "
                   f"combine_partials={self.combinePartials.get()} "
-                  f"partiality_threshold={self.partialityThreshold.get()} "
+                  f"partiality_threshold={self.partialityThreshold.get()}"
                   )
 
         return params
@@ -295,19 +282,13 @@ class DialsProtMerge(EdProtMerge, DialsProtBase, CutRes):
         return self.getCrystalName(self.xtalName.get())
 
     def getMtzName(self):
-        return self.mtzName.get()
+        return self._getExtraPath(self.mtzName.get())
 
     def getDatasetNameLine(self):
         if self.datasetNames.get():
             return f" output.dataset_names={self.datasetNames.get()}"
         else:
             return ""
-
-    def getAllInputFiles(self):
-        files = ""
-        for iS in self.inputSets:
-            files += f"{self.getInputModelFile(iS.get())} {self.getInputReflFile(iS.get())} "
-        return files.strip()
 
     def getMergingStatisticsLogOutput(self):
         mergingStats = dutils.readLog(

@@ -35,3 +35,4 @@ from .protocol_integrate import DialsProtIntegrateSpots
 from .protocol_export import DialsProtExport
 from .protocol_symmetry import DialsProtSymmetry
 from .protocol_scaling import DialsProtScaling
+from .protocol_merge import DialsProtMerge
