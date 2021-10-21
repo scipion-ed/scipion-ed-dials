@@ -72,7 +72,7 @@ setup(
     #
     # Epoch indicates compatible main Scipion version
     # major.minor.micro versioning starting with 1.0.0 in the new epoch
-    version='3!1.0.0b1',  # Required
+    version='3!1.0.0b2',  # Required
 
     # This is a one-line description or tagline of what your project does. This
     # corresponds to the "Summary" metadata field:
