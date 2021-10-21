@@ -34,12 +34,13 @@ import dials.utils as dutils
 
 from pwed.objects import DiffractionSpot
 from pwed.protocols import EdProtFindSpots
+from pwed.utils import CutRes
 from pwed.convert import find_subranges
 from dials.convert import writeJson, readRefl, copyDialsFile
 from dials.constants import *
 
 
-class DialsProtFindSpots(EdProtFindSpots, DialsProtBase):
+class DialsProtFindSpots(EdProtFindSpots, DialsProtBase, CutRes):
     """ Protocol for performing spot finding using dials.find_spots
     """
 
@@ -58,19 +59,11 @@ class DialsProtFindSpots(EdProtFindSpots, DialsProtBase):
 
         # Help messages are copied from the DIALS documentation at
         # https://dials.github.io/documentation/programs/dials_find_spots.html
-        form.addParam('dMin', pwprot.FloatParam,
-                      default=None,
-                      allowsNull=True,
-                      label="High resolution limit",
-                      help="The high resolution limit in Angstrom for a pixel "
-                      "to be accepted by the filtering algorithm.")
-
-        form.addParam('dMax', pwprot.FloatParam,
-                      default=None,
-                      allowsNull=True,
-                      label="Low resolution limit",
-                      help="The low resolution limit in Angstrom for a pixel to"
-                      " be accepted by the filtering algorithm.")
+        dminHelp = ("The high resolution limit in Angstrom for a pixel "
+                    "to be accepted by the filtering algorithm.")
+        dmaxHelp = ("The low resolution limit in Angstrom for a pixel to"
+                    " be accepted by the filtering algorithm.")
+        self._defineResolutionParams(form, dminHelp, dmaxHelp)
 
         form.addParam('minImage', pwprot.IntParam,
                       label='First image to use',
@@ -366,18 +359,3 @@ class DialsProtFindSpots(EdProtFindSpots, DialsProtBase):
         scanrange = ' '.join(f'spotfinder.scan_range={i},{j}'
                              for i, j in scanranges)
         return scanrange
-
-    def getDMax(self):
-        return self.dMax.get()
-
-    def getDMin(self):
-        return self.dMin.get()
-
-    def swappedResolution(self):
-        # d_min (high resolution) should always be smaller than d_max (low resolution).
-        if self.getDMin() is not None and self.getDMax() is not None:
-            # Check for the case where both d_min and d_max are set and have wrong relative values
-            return self.getDMin() > self.getDMax()
-        else:
-            # If at least one value is None, then no swap is possible
-            return False

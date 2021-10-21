@@ -27,6 +27,7 @@
 # **************************************************************************
 
 import os
+from dials.protocols.protocol_merge import DialsProtMerge
 
 import pyworkflow as pw
 import pyworkflow.tests as pwtests
@@ -143,6 +144,13 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                                        **kwargs)
         self.launchProtocol(protScaling)
         return protScaling
+
+    def _runMerging(self, inputSet, **kwargs):
+        protMerging = self.newProtocol(DialsProtMerge,
+                                       inputSet=inputSet,
+                                       **kwargs)
+        self.launchProtocol(protMerging)
+        return protMerging
 
     def _runExport(self, inputSet, **kwargs):
         protExport = self.newProtocol(DialsProtExport,
@@ -706,6 +714,42 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 compareDatasets += f"\n{os.path.join(self.dataPath, ds, 'SMV/data')}"
             self.assertEqual(protMultiScaling.getDatasets(), compareDatasets)
 
+            # Test merging protocol
+            mergeBins = 5
+            protMerge = self._runMerging(
+                inputSet=protMultiScaling.outputScaledSpots,
+                xtalName=crystalName,
+                nBins=mergeBins,
+            )
+
+            mergeCL = (
+                f"{protMultiScaling._getExtraPath()}/scaled.expt "
+                f"{protMultiScaling._getExtraPath()}/scaled.refl "
+                f"output.log={protMerge._getLogsPath()}/dials.merge.log "
+                f"output.html={protMerge._getExtraPath()}/dials.merge.html "
+                f"output.mtz={protMerge._getExtraPath()}/merged.mtz "
+                f"output.crystal_names={crystalName} "
+                f"output.project_name={self.PROJECT_NAME}"
+                f"assess_space_group=True "
+                f"anomalous=True "
+                f"truncate=True "
+                f"wavelength_tolerance={1e-4} "
+                f"combine_partials=True "
+                f"partiality_threshold=0.4 "
+                f"n_residues=200 "
+                f"merging.use_internal_variance=False "
+                f"merging.n_bins={mergeBins} "
+                f"merging.anomalous=False"
+            )
+
+            self.assertCommand(protMerge, mergeCL, "dials.merge")
+            mergedset = getattr(protMerge, "exportedFileSet", None)
+            self.assertIsNotNone(protMerge.exportedFileSet)
+            for exportFile in mergedset:
+                self.assertFileExists(exportFile.getFilePath())
+            self.assertEqual(protMerge.getDatasets(), compareDatasets)
+
+            # Test export of output scaled together
             protExportMtz = self._runExport(
                 inputSet=protMultiScaling.outputScaledSpots,
                 exportFormat=MTZ,
