@@ -616,7 +616,10 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 f"{protIntegrate._getExtraPath()}/integrated_reflections.refl "
                 f"output.log={protSymmetry._getLogsPath()}/dials.symmetry.log "
                 f"output.experiments={protSymmetry._getExtraPath()}/symmetrized.expt "
-                f"output.reflections={protSymmetry._getExtraPath()}/symmetrized.refl")
+                f"output.reflections={protSymmetry._getExtraPath()}/symmetrized.refl "
+                f"output.html={protSymmetry._getExtraPath()}/dials.symmetry.html "
+                f"output.json={protSymmetry._getExtraPath()}/dials.symmetry.json"
+            )
 
             self.assertCommand(protSymmetry, symmCL, 'dials.symmetry')
             symmetrizedset = getattr(
@@ -1007,7 +1010,10 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             f"{protIntegrate._getExtraPath()}/integrated_reflections.refl "
             f"output.log={protSymmetry._getLogsPath()}/dials.symmetry.log "
             f"output.experiments={protSymmetry._getExtraPath()}/symmetrized.expt "
-            f"output.reflections={protSymmetry._getExtraPath()}/symmetrized.refl")
+            f"output.reflections={protSymmetry._getExtraPath()}/symmetrized.refl "
+            f"output.html={protSymmetry._getExtraPath()}/dials.symmetry.html "
+            f"output.json={protSymmetry._getExtraPath()}/dials.symmetry.json"
+        )
         self.assertCommand(protSymmetry, symmCL, 'dials.symmetry')
         symmetrizedset = getattr(
             protSymmetry, 'outputSymmetrizedSpots', None)
