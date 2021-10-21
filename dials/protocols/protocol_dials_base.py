@@ -43,6 +43,7 @@ class DialsProtBase(EdBaseProtocol):
     INPUT_REFL_FILENAME = 'input.refl'
     OUTPUT_REFL_FILENAME = 'output.refl'
     OUTPUT_HTML_FILENAME = 'dials.report.html'
+    OUTPUT_JSON_FILENAME = "dials.program.json"
 
     # -------------------------- STEPS functions -----------------------------
 
@@ -71,6 +72,9 @@ class DialsProtBase(EdBaseProtocol):
 
     def getOutputReflFile(self):
         return self._getExtraPath(self.OUTPUT_REFL_FILENAME)
+
+    def getOutputJsonFile(self):
+        return self._getExtraPath(self.OUTPUT_JSON_FILENAME)
 
     def getProjectName(self, newProjectName=None):
         # Function to get the name of the overall project.

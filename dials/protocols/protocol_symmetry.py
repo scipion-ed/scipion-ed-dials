@@ -27,7 +27,6 @@
 # **************************************************************************
 
 import pyworkflow.protocol as pwprot
-import pyworkflow.utils as pwutils
 import dials.utils as dutils
 
 from dials.protocols import DialsProtBase, PhilBase, CliBase, HtmlBase
@@ -35,7 +34,7 @@ from dials.constants import *
 import dials.convert as dconv
 
 
-class DialsProtSymmetry(DialsProtBase):
+class DialsProtSymmetry(DialsProtBase, HtmlBase):
     """ Protocol for checking symmetry of integrated spots using the
     POINTLESS algorithm as implemented in DIALS
     """
@@ -61,7 +60,7 @@ class DialsProtSymmetry(DialsProtBase):
         CliBase._defineCliParams(self, form)
 
         # Add a section for creating an html report
-        HtmlBase._defineHtmlParams(self, form)
+        self._defineHtmlParams(form)
 
    # -------------------------- INSERT functions ------------------------------
 
@@ -127,6 +126,8 @@ class DialsProtSymmetry(DialsProtBase):
     OUTPUT_EXPT_FILENAME = 'symmetrized.expt'
     INPUT_REFL_FILENAME = 'integrated.refl'
     OUTPUT_REFL_FILENAME = 'symmetrized.refl'
+    OUTPUT_HTML_FILENAME = "dials.symmetry.html"
+    OUTPUT_JSON_FILENAME = "dials.symmetry.json"
 
     def getLogOutput(self):
         logOutput = dutils.readLog(
@@ -134,6 +135,12 @@ class DialsProtSymmetry(DialsProtBase):
             'Recommended',
             'Saving')
         return logOutput.strip()
+
+    def _extraParams(self):
+        params = ""
+        params += f" output.html={self.getOutputHtmlFile()}"
+        params += f" output.json={self.getOutputJsonFile()}"
+        return params
 
     # -------------------------- UTILS functions ------------------------------
 
