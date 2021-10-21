@@ -67,15 +67,12 @@ class DialsProtIndexSpots(EdProtIndexSpots, DialsProtBase):
                       label='Do you want to reindex after refining Bravais settings?',
                       condition='doRefineBravaisSettings')
 
-        # Allow some options that are only relevant for reindexing
-        group = form.addGroup('Reindex',
-                              condition='doReindex')
-
-        group.addParam('doReindexModel', pwprot.BooleanParam,
+        # Keep options to maintain compatibility with workflows etc
+        form.addHidden('doReindexModel', pwprot.BooleanParam,
                        default=False, label="Do you want to reindex the experimental model?")
 
-        group.addParam('doReindexReflections', pwprot.BooleanParam,
-                       default=False, label="Do you want to reindex the experimental reflections?")
+        form.addHidden('doReindexReflections', pwprot.BooleanParam,
+                       default=True, label="Do you want to reindex the experimental reflections?")
 
         # The start of typical inputs.
 
@@ -181,22 +178,22 @@ class DialsProtIndexSpots(EdProtIndexSpots, DialsProtBase):
                        help="The number of processes to use.")
 
         group.addParam('copyBeamFix', pwprot.BooleanParam,
-                       default=False,
+                       default=True,
                        label="Copy beam parametrisation from indexing?",
                        help="Do you want to use the indexing parametrisation of the beam instead of the default parametrisation for Bravais setting refinement?",)
 
         group.addParam('copyCrystalFix', pwprot.BooleanParam,
-                       default=False,
+                       default=True,
                        label="Copy crystal parametrisation from indexing?",
                        help="Do you want to use the indexing parametrisation of the crystal instead of the default parametrisation for Bravais setting refinement?",)
 
         group.addParam('copyDetectorFix', pwprot.BooleanParam,
-                       default=False,
+                       default=True,
                        label="Copy detector parametrisation from indexing?",
                        help="Do you want to use the indexing parametrisation of the detector instead of the default parametrisation for Bravais setting refinement?",)
 
         group.addParam('copyGonioFix', pwprot.BooleanParam,
-                       default=False,
+                       default=True,
                        label="Copy goniometer parametrisation from indexing?",
                        help="Do you want to use the indexing parametrisation of the goniometer instead of the default parametrisation for Bravais setting refinement?",)
 

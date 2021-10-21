@@ -379,13 +379,16 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 inputSpots=protFindSpots.outputDiffractionSpots,
                 doRefineBravaisSettings=True,
                 doReindex=True,
-                doReindexReflections=True,
                 detectorFixPosition=True,
                 detectorFixOrientation=True,
                 detectorFixDistance=True,
                 beamFixInSpindlePlane=True,
                 beamFixOutSpindlePlane=True,
                 beamFixWavelength=True,
+                copyBeamFix=False,
+                copyCrystalFix=False,
+                copyDetectorFix=False,
+                copyGonioFix=False,
             )
             indexTmp = protIndex._getTmpPath()
             indexLogs = protIndex._getLogsPath()
@@ -878,7 +881,10 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             inputSpots=protFindSpots.outputDiffractionSpots,
             doRefineBravaisSettings=True,
             doReindex=True,
-            doReindexReflections=True,
+            copyBeamFix=False,
+            copyCrystalFix=False,
+            copyDetectorFix=False,
+            copyGonioFix=False,
         )
         indexTmp = protIndex._getTmpPath()
         indexLogs = protIndex._getLogsPath()
@@ -896,7 +902,6 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             f"{indexTmp}/indexed.expt {indexTmp}/indexed.refl "
             f"output.log={indexLogs}/dials.refine_bravais_settings.log "
             f"output.directory={indexTmp}")
-        # Possibly related to issue #10
         reindexCL = (
             f"change_of_basis_op={experiment['cb_op']} {indexTmp}/indexed.refl "
             f"output.reflections={indexTmp}/reindexed.refl")
@@ -920,10 +925,6 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 inputImages=protImport.outputDiffractionImages,
                 inputSpots=protFindSpots.outputDiffractionSpots,
                 doRefineBravaisSettings=True,
-                copyBeamFix=True,
-                copyCrystalFix=True,
-                copyDetectorFix=True,
-                copyGonioFix=True,
                 doReindex=False,
             )
             indexTmpCopy = protIndexCopy._getTmpPath()
