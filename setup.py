@@ -72,7 +72,7 @@ setup(
     #
     # Epoch indicates compatible main Scipion version
     # major.minor.micro versioning starting with 1.0.0 in the new epoch
-    version='3!1.0.0a0',  # Required
+    version='3!1.0.0b0',  # Required
 
     # This is a one-line description or tagline of what your project does. This
     # corresponds to the "Summary" metadata field:
@@ -115,7 +115,7 @@ setup(
         #   3 - Alpha
         #   4 - Beta
         #   5 - Production/Stable
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         # Indicate who your project is intended for
         'Intended Audience :: Science/Research',
         # Pick your license as you wish
