@@ -4,7 +4,8 @@
 # *              V. E.G: Bengtsson (viktor.bengtsson@mmk.su.se) [2]
 # *
 # * [1] SciLifeLab, Stockholm University
-# * [2] Department of Materials and Environmental Chemistry, Stockholm University
+# * [2] Department of Materials and Environmental Chemistry,
+# *     Stockholm University
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
@@ -262,7 +263,8 @@ class DialsProtMerge(EdProtMerge, DialsProtBase, CutRes):
             params += f" d_max={self.getDMax()}"
 
         if self.bestUnitCell.get():
-            params += f" best_unit_cell={self.bestUnitCell.get()}"
+            params += (f" best_unit_cell="
+                       f"{self.fixString(self.bestUnitCell.get())}")
 
         if self.nResidues.get():
             params += f" n_residues={self.nResidues.get()}"

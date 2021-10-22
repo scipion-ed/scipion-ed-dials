@@ -4,7 +4,8 @@
 # *              V. E.G: Bengtsson (viktor.bengtsson@mmk.su.se) [2]
 # *
 # * [1] SciLifeLab, Stockholm University
-# * [2] Department of Materials and Environmental Chemistry, Stockholm University
+# * [2] Department of Materials and Environmental Chemistry,
+# *     Stockholm University
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
@@ -76,7 +77,8 @@ class DialsProtFindSpots(EdProtFindSpots, DialsProtBase, CutRes):
                       label='Last image to use',
                       default=None,
                       allowsNull=True,
-                      help="Cut images after this index. Useful for removing frames with too much beam damage.",
+                      help="Cut images after this index. Useful for "
+                      "removing frames with too much beam damage.",
                       )
 
         group = form.addGroup('Filtering')
@@ -89,22 +91,26 @@ class DialsProtFindSpots(EdProtFindSpots, DialsProtBase, CutRes):
         group.addParam('kernelSize', pwprot.IntParam,
                        default=3,
                        label="Kernel size",
-                       help="The size of the local area around the spot in which to"
-                       "calculate the mean and variance. The kernel is given as a box"
-                       "of size (2 * nx + 1, 2 * ny + 1) centred at the pixel.")
+                       help="The size of the local area around the spot in "
+                       "which to calculate the mean and variance. The kernel "
+                       "is given as a box of size (2 * nx + 1, 2 * ny + 1) "
+                       "centred at the pixel."
+                       )
 
         group.addParam('sigmaBackground', pwprot.FloatParam,
                        default=6,
                        label='sigma background',
-                       help="The number of standard deviations of the index of dispersion"
-                       "(variance / mean) in the local area below which the pixel"
-                       "will be classified as background.")
+                       help="The number of standard deviations of the index "
+                       "of dispersion (variance / mean) in the local area "
+                       "below which the pixelwill be classified as background."
+                       )
 
         group.addParam('sigmaStrong', pwprot.FloatParam,
                        default=3,
                        label="sigma strong",
-                       help="The number of standard deviations above the mean in the local"
-                       "area above which the pixel will be classified as strong.")
+                       help="The number of standard deviations above the mean"
+                       " in the localarea above which the pixel will be "
+                       "classified as strong.")
 
         group.addParam('iceRings', pwprot.BooleanParam,
                        default=False, label='Filter out ice rings? ')
@@ -137,39 +143,47 @@ class DialsProtFindSpots(EdProtFindSpots, DialsProtBase, CutRes):
         group.addParam('minSpotSize', pwprot.IntParam,
                        default=None,
                        allowsNull=True,
-                       label="Minimum spot size (pixels)", help="The minimum "
-                       "number of contiguous pixels for a spot to be accepted by the filtering algorithm.",
+                       label="Minimum spot size (pixels)",
+                       help="The minimum number of contiguous pixels for a "
+                       "spot to be accepted by the filtering algorithm.",
                        expertLevel=pwprot.LEVEL_ADVANCED)
 
         group.addParam('maxSpotSize', pwprot.IntParam,
                        default=1000,
-                       label="Maximum spot size (pixels)", help="The maximum "
-                       "number of contiguous pixels for a spot to be accepted by the filtering algorithm.",
+                       label="Maximum spot size (pixels)",
+                       help="The maximum "
+                       "number of contiguous pixels for a spot to be accepted"
+                       " by the filtering algorithm.",
                        expertLevel=pwprot.LEVEL_ADVANCED)
 
         group.addParam('maxStrongPixelFraction', pwprot.FloatParam,
                        default=0.25,
                        label='Max fraction strong pixels',
-                       help="If the fraction of pixels in an image marked as strong is"
-                       "greater than this value, throw an exception",
+                       help="If the fraction of pixels in an image marked as"
+                       " strong is greater than this value, throw an "
+                       "exception",
                        expertLevel=pwprot.LEVEL_ADVANCED)
 
         group.addParam('thresholdIntensity', pwprot.FloatParam,
                        default=0,
                        label='Minimum pixel intensity',
-                       help='All pixels with a lower value will be considered part of the background',
+                       help="All pixels with a lower value will be considered"
+                       " part of the background",
                        expertLevel=pwprot.LEVEL_ADVANCED)
 
         group.addParam('maxSeparation', pwprot.FloatParam,
                        label='Max separation',
                        default=2,
-                       help="The maximum peak-to-centroid separation (in pixels) for a spot to be accepted by the filtering algorithm.",
+                       help="The maximum peak-to-centroid separation (in "
+                       "pixels) for a spot to be accepted by the filtering "
+                       "algorithm.",
                        expertLevel=pwprot.LEVEL_ADVANCED,
                        )
 
         group.addParam('thresholdAlgorithm', pwprot.EnumParam,
                        label='threshold algorithm',
-                       choices=['dispersion', 'dispersion extended'], default=DISPERSION_EXTENDED,
+                       choices=['dispersion', 'dispersion extended'],
+                       default=DISPERSION_EXTENDED,
                        help="",
                        )
 
@@ -248,8 +262,7 @@ class DialsProtFindSpots(EdProtFindSpots, DialsProtBase, CutRes):
     def _validate(self):
         errors = []
         if self.swappedResolution():
-            errors.append(
-                f"High ({self.getDMin()} Å) and low ({self.getDMax()} Å) resolution limits appear swapped.")
+            errors.append(self.resSwapMsg())
         return errors
 
     def _summary(self):
@@ -277,7 +290,9 @@ class DialsProtFindSpots(EdProtFindSpots, DialsProtBase, CutRes):
 
     def _initialParams(self, program):
         # Input basic parameters
-        params = f"{self.getInputModelFile()} output.log={self.getLogFilePath(program)} output.reflections={self.getOutputReflFile()}"
+        params = (f"{self.getInputModelFile()} "
+                  f"output.log={self.getLogFilePath(program)} "
+                  f"output.reflections={self.getOutputReflFile()}")
 
         return params
 
@@ -291,27 +306,38 @@ class DialsProtFindSpots(EdProtFindSpots, DialsProtBase, CutRes):
             params += f" spotfinder.filter.d_max={self.getDMax()}"
 
         if self.iceRings.get():
-            params += f" spotfinder.filter.ice_rings.filter={self.iceRings.get()}"
+            params += (f" spotfinder.filter.ice_rings.filter="
+                       f"{self.iceRings.get()}")
 
         if self.minSpotSize.get():
-            params += f" spotfinder.filter.min_spot_size={self.minSpotSize.get()}"
+            params += (f" spotfinder.filter.min_spot_size="
+                       f"{self.minSpotSize.get()}")
 
         if self.maxSpotSize.get():
-            params += f" spotfinder.filter.max_spot_size={self.maxSpotSize.get()}"
+            params += (f" spotfinder.filter.max_spot_size="
+                       f"{self.maxSpotSize.get()}")
 
         if self.maxStrongPixelFraction.get():
-            params += f" spotfinder.filter.max_strong_pixel_fraction={self.maxStrongPixelFraction.get()}"
+            params += (f" spotfinder.filter.max_strong_pixel_fraction="
+                       f"{self.maxStrongPixelFraction.get()}")
 
         if self.maxSeparation.get():
-            params += f" spotfinder.filter.max_separation={self.maxSeparation.get()}"
+            params += (f" spotfinder.filter.max_separation="
+                       f"{self.maxSeparation.get()}")
 
         if self.untrustedAreas.get():
             if self.untrustedCircle.get() != '':
-                params += f" spotfinder.filter.untrusted.circle={self.untrustedCircle.get()}"
+                circle = self.fixString(self.untrustedCircle.get())
+                params += (f" spotfinder.filter.untrusted.circle="
+                           f"{circle}")
             if self.untrustedRectangle_1.get() != '':
-                params += f" spotfinder.filter.untrusted.rectangle={self.untrustedRectangle_1.get()}"
+                rectangle1 = self.fixString(self.untrustedRectangle_1.get())
+                params += (f" spotfinder.filter.untrusted.rectangle="
+                           f"{rectangle1}")
             if self.untrustedRectangle_2.get() != '':
-                params += f" spotfinder.filter.untrusted.rectangle={self.untrustedRectangle_2.get()}"
+                rectangle2 = self.fixString(self.untrustedRectangle_2.get())
+                params += (f" spotfinder.filter.untrusted.rectangle="
+                           f"{rectangle2}")
 
         if self.thresholdAlgorithm.get() is DISPERSION:
             params += f" spotfinder.threshold.algorithm=dispersion"
@@ -319,19 +345,24 @@ class DialsProtFindSpots(EdProtFindSpots, DialsProtBase, CutRes):
             params += f" spotfinder.threshold.algorithm=dispersion_extended"
 
         if self.thresholdIntensity.get():
-            params += f" spotfinder.threshold.dispersion.global_threshold={self.thresholdIntensity.get()}"
+            params += (f" spotfinder.threshold.dispersion.global_threshold="
+                       f"{self.thresholdIntensity.get()}")
 
         if self.gain.get():
-            params += f" spotfinder.threshold.dispersion.gain={self.gain.get()}"
+            params += (f" spotfinder.threshold.dispersion.gain="
+                       f"{self.gain.get()}")
 
         if self.sigmaBackground.get():
-            params += f" spotfinder.threshold.dispersion.sigma_background={self.sigmaBackground.get()}"
+            params += (f" spotfinder.threshold.dispersion.sigma_background="
+                       f"{self.sigmaBackground.get()}")
 
         if self.sigmaStrong.get():
-            params += f" spotfinder.threshold.dispersion.sigma_strong={self.sigmaStrong.get()}"
+            params += (f" spotfinder.threshold.dispersion.sigma_strong="
+                       f"{self.sigmaStrong.get()}")
 
         if self.kernelSize.get():
-            params += f" spotfinder.threshold.dispersion.kernel_size={self.kernelSize.get()},{self.kernelSize.get()}"
+            params += (f" spotfinder.threshold.dispersion.kernel_size="
+                       f"{self.kernelSize.get()},{self.kernelSize.get()}")
         return params
     # -------------------------- UTILS functions ------------------------------
 

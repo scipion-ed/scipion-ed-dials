@@ -4,7 +4,8 @@
 # *              V. E.G: Bengtsson (viktor.bengtsson@mmk.su.se) [2]
 # *
 # * [1] SciLifeLab, Stockholm University
-# * [2] Department of Materials and Environmental Chemistry, Stockholm University
+# * [2] Department of Materials and Environmental Chemistry,
+# *     Stockholm University
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
@@ -25,8 +26,6 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-
-import os
 
 import pyworkflow.protocol as pwprot
 import dials.utils as dutils
@@ -66,12 +65,18 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots, DialsProtBase, CutRes):
                       help="The number of processes to use.")
 
         form.addParam('doFilter_ice', pwprot.BooleanParam, default=False,
-                      label='Filter ice?', expertLevel=pwprot.LEVEL_ADVANCED,
-                      help="Filter out reflections at typical ice ring resolutions before max_cell estimation.")
+                      label='Filter ice?',
+                      expertLevel=pwprot.LEVEL_ADVANCED,
+                      help="Filter out reflections at typical ice ring "
+                      "resolutions before max_cell estimation.")
 
         form.addParam('useScanRanges', pwprot.BooleanParam,
-                      label='Cut out some images with scan_ranges?', default=False,
-                      help="Explicitly specify the images to be processed. Only applicable when experiment list contains a single imageset.", expertLevel=pwprot.LEVEL_ADVANCED,
+                      label='Cut out some images with scan_ranges?',
+                      default=False,
+                      help="Explicitly specify the images to be processed. "
+                      "Only applicable when experiment list contains a single"
+                      " imageset.",
+                      expertLevel=pwprot.LEVEL_ADVANCED,
                       )
 
         # Define d_min and d_max
@@ -114,7 +119,8 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots, DialsProtBase, CutRes):
             self.runJob(program, arguments)
         except:
             self.info(self.getError())
-    # TODO: Create a temporary "SetOfIndexedSpotsFile" that only saves the file location
+    # TODO: Create a temporary "SetOfIndexedSpotsFile" that
+    # only saves the file location
 
     def createOutputStep(self):
         # Check that the indexing created proper output
@@ -157,9 +163,7 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots, DialsProtBase, CutRes):
     def _validate(self):
         errors = []
         if self.swappedResolution():
-            errors.append(f"High ({self.getDMin()} Å) and low "
-                          f"({self.getDMax()} Å) resolution limits "
-                          f"appear swapped.")
+            errors.append(self.resSwapMsg())
         return errors
 
     def _summary(self):
