@@ -547,23 +547,6 @@ class DialsProtScaling(EdProtScaling, DialsProtBase, CutRes):
         else:
             return exportStatus
 
-    def getDMax(self):
-        return self.dMax.get()
-
-    def getDMin(self):
-        return self.dMin.get()
-
-    def swappedResolution(self):
-        # d_min (high resolution) should always be smaller than d_max
-        # (low resolution).
-        if self.getDMin() is not None and self.getDMax() is not None:
-            # Check for the case where both d_min and d_max are set
-            # and have wrong relative values
-            return self.getDMin() > self.getDMax()
-        else:
-            # If at least one value is None, then no swap is possible
-            return False
-
 
 class ImageExclusions(DialsProtBase):
     def _defineExcludeParams(self, form, inputsetsLabel="the input set"):

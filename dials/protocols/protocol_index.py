@@ -4,7 +4,8 @@
 # *              V. E.G: Bengtsson (viktor.bengtsson@mmk.su.se) [2]
 # *
 # * [1] SciLifeLab, Stockholm University
-# * [2] Department of Materials and Environmental Chemistry, Stockholm University
+# * [2] Department of Materials and Environmental Chemistry,
+# *     Stockholm University
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
@@ -64,15 +65,19 @@ class DialsProtIndexSpots(EdProtIndexSpots, DialsProtBase):
 
         form.addParam('doReindex', pwprot.BooleanParam,
                       default=False,
-                      label='Do you want to reindex after refining Bravais settings?',
+                      label="Do you want to reindex after refining "
+                      "Bravais settings?",
                       condition='doRefineBravaisSettings')
 
         # Keep options to maintain compatibility with workflows etc
         form.addHidden('doReindexModel', pwprot.BooleanParam,
-                       default=False, label="Do you want to reindex the experimental model?")
+                       default=False,
+                       label="Do you want to reindex the experimental model?")
 
         form.addHidden('doReindexReflections', pwprot.BooleanParam,
-                       default=True, label="Do you want to reindex the experimental reflections?")
+                       default=True,
+                       label="Do you want to reindex the experimental "
+                       "reflections?")
 
         # The start of typical inputs.
 
@@ -94,62 +99,87 @@ class DialsProtIndexSpots(EdProtIndexSpots, DialsProtBase):
                       help="The number of processes to use.")
 
         form.addParam('enterSpaceGroup', pwprot.BooleanParam,
-                      default=False, label='Use a known space group?')
+                      default=False,
+                      label='Use a known space group?')
 
         form.addParam('knownSpaceGroup', pwprot.StringParam,
-                      condition='enterSpaceGroup', default='', label='Space group:')
+                      condition='enterSpaceGroup',
+                      default='',
+                      label='Space group:')
 
         form.addParam('enterUnitCell', pwprot.BooleanParam,
-                      default=False, label='Use a known unit cell?')
+                      default=False,
+                      label='Use a known unit cell?')
 
         form.addParam('knownUnitCell', pwprot.StringParam,
-                      condition='enterUnitCell', default='', label='Unit cell:')
+                      condition='enterUnitCell',
+                      default='',
+                      label='Unit cell:')
 
         group = form.addGroup('Other indexing parameters',
-                              condition='doIndex', expertLevel=pwprot.LEVEL_ADVANCED,)
+                              condition='doIndex',
+                              expertLevel=pwprot.LEVEL_ADVANCED,)
 
-        group.addParam('indexMmSearchScope', pwprot.FloatParam, default=4.0,
+        group.addParam('indexMmSearchScope', pwprot.FloatParam,
+                       default=4.0,
                        help="Global radius of origin offset search.",
                        label='mm search scope',
                        expertLevel=pwprot.LEVEL_ADVANCED)
 
-        group.addParam('indexWideSearchBinning', pwprot.FloatParam, default=2,
-                       help="Modify the coarseness of the wide grid search for the beam centre.",
+        group.addParam('indexWideSearchBinning', pwprot.FloatParam,
+                       default=2,
+                       help="Modify the coarseness of the wide grid search "
+                       "for the beam centre.",
                        label='Wide search binning',
                        expertLevel=pwprot.LEVEL_ADVANCED)
 
-        group.addParam('indexMinCellVolume', pwprot.FloatParam, default=25,
+        group.addParam('indexMinCellVolume', pwprot.FloatParam,
+                       default=25,
                        help="Minimum unit cell volume (in Angstrom^3).",
                        label='Min cell volume',
                        expertLevel=pwprot.LEVEL_ADVANCED)
 
-        group.addParam('indexMinCell', pwprot.FloatParam, default=3,
-                       help="Minimum length of candidate unit cell basis vectors (in Angstrom).",
+        group.addParam('indexMinCell', pwprot.FloatParam,
+                       default=3,
+                       help="Minimum length of candidate unit cell basis "
+                       "vectors (in Angstrom).",
                        label='Min_cell',
                        expertLevel=pwprot.LEVEL_ADVANCED)
 
-        group.addParam('indexMaxCell', pwprot.FloatParam, default=None,
-                       label='Max_cell', allowsNull=True,
-                       help="Maximum length of candidate unit cell basis vectors (in Angstrom).",
+        group.addParam('indexMaxCell', pwprot.FloatParam,
+                       default=None,
+                       label='Max_cell',
+                       allowsNull=True,
+                       help="Maximum length of candidate unit cell basis "
+                       "vectors (in Angstrom).",
                        expertLevel=pwprot.LEVEL_ADVANCED)
 
-        group.addParam('misindexCheckGridScope', pwprot.IntParam, default=0,
-                       help="Search scope for testing misindexing on h, k, l.",
+        group.addParam('misindexCheckGridScope', pwprot.IntParam,
+                       default=0,
+                       help="Search scope for testing misindexing "
+                       "on h, k, l.",
                        label='Misindexing check grid scope',
                        expertLevel=pwprot.LEVEL_ADVANCED)
 
-        group.addParam('doFilter_ice', pwprot.BooleanParam, default=False,
-                       label='Filter ice?', expertLevel=pwprot.LEVEL_ADVANCED,
-                       help="Filter out reflections at typical ice ring resolutions before max_cell estimation.")
+        group.addParam('doFilter_ice', pwprot.BooleanParam,
+                       default=False,
+                       label='Filter ice?',
+                       expertLevel=pwprot.LEVEL_ADVANCED,
+                       help="Filter out reflections at typical ice ring "
+                       "resolutions before max_cell estimation.")
 
         group = form.addGroup('Refinement parameter configuration',
-                              condition='doIndex', expertLevel=pwprot.LEVEL_ADVANCED)
+                              condition='doIndex',
+                              expertLevel=pwprot.LEVEL_ADVANCED)
 
         group.addParam('refineNproc', pwprot.IntParam,
-                       default=1, label='nproc',
-                       help='The number of processes to use. Not all choices of refinement engine support nproc > 1.'
-                       'Where multiprocessing is possible, it is helpful only in certain circumstances,'
-                       'so this is not recommended for typical use.'
+                       default=1,
+                       label='nproc',
+                       help="The number of processes to use. Not all choices "
+                       "of refinement engine support nproc > 1. Where "
+                       "multiprocessing is possible, it is helpful only in "
+                       "certain circumstances, so this is not recommended for"
+                       " typical use."
                        )
 
         RefineParamsBase._defineParametrisations(self, form)
@@ -158,15 +188,21 @@ class DialsProtIndexSpots(EdProtIndexSpots, DialsProtBase):
                               expertLevel=pwprot.LEVEL_ADVANCED)
 
         group.addParam('doSetMaxIterations', pwprot.BooleanParam,
-                       label='Do you want to set the maximum number of iterations?', default=False,
-                       help="Maximum number of iterations in refinement before termination.",
+                       label="Do you want to set the maximum number of "
+                       "iterations?",
+                       default=False,
+                       help="Maximum number of iterations in refinement "
+                       "before termination.",
                        )
 
         group.addParam('refineryMaxIterations', pwprot.IntParam,
                        default=None,
-                       allowsNull=True, help="Maximum number of iterations in refinement before termination."
+                       allowsNull=True,
+                       help="Maximum number of iterations in refinement "
+                       "before termination."
                        "None implies the engine supplies its own default.",
-                       label='Max iterations', condition="doSetMaxIterations",
+                       label='Max iterations',
+                       condition="doSetMaxIterations",
                        )
 
         # Allow some options if the Bravais settings are to be refined
@@ -174,64 +210,86 @@ class DialsProtIndexSpots(EdProtIndexSpots, DialsProtBase):
                               condition='doRefineBravaisSettings')
 
         group.addParam('refineBravNproc', pwprot.IntParam,
-                       default=4, label="How many processors do you want to use?",
+                       default=4,
+                       label="How many processors do you want to use?",
                        help="The number of processes to use.")
 
         group.addParam('copyBeamFix', pwprot.BooleanParam,
                        default=True,
                        label="Copy beam parametrisation from indexing?",
-                       help="Do you want to use the indexing parametrisation of the beam instead of the default parametrisation for Bravais setting refinement?",)
+                       help="Do you want to use the indexing parametrisation "
+                       "of the beam instead of the default parametrisation "
+                       "for Bravais setting refinement?",)
 
         group.addParam('copyCrystalFix', pwprot.BooleanParam,
                        default=True,
                        label="Copy crystal parametrisation from indexing?",
-                       help="Do you want to use the indexing parametrisation of the crystal instead of the default parametrisation for Bravais setting refinement?",)
+                       help="Do you want to use the indexing parametrisation "
+                       "of the crystal instead of the default parametrisation"
+                       " for Bravais setting refinement?",)
 
         group.addParam('copyDetectorFix', pwprot.BooleanParam,
                        default=True,
                        label="Copy detector parametrisation from indexing?",
-                       help="Do you want to use the indexing parametrisation of the detector instead of the default parametrisation for Bravais setting refinement?",)
+                       help="Do you want to use the indexing parametrisation "
+                       "of the detector instead of the default parametrisation"
+                       " for Bravais setting refinement?",)
 
         group.addParam('copyGonioFix', pwprot.BooleanParam,
                        default=True,
                        label="Copy goniometer parametrisation from indexing?",
-                       help="Do you want to use the indexing parametrisation of the goniometer instead of the default parametrisation for Bravais setting refinement?",)
+                       help="Do you want to use the indexing parametrisation "
+                       "of the goniometer instead of the default "
+                       "parametrisation for Bravais setting refinement?",)
 
         # Allow an easy way to import a phil file with parameters
-        # Not reusing from base protocols to allow different ones for each function
+        # Not reusing from base protocols to allow different ones for
+        # each function
         group = form.addGroup('Add parameters with phil files',
                               expertLevel=pwprot.LEVEL_ADVANCED,)
         group.addParam('extraPhilPathIndexing', pwprot.PathParam,
                        allowsNull=True,
-                       default=None, condition="doIndex==True",
+                       default=None,
+                       condition="doIndex==True",
                        label="Additional indexing phil file",
-                       help="Enter the path to a phil file that you want to add to include.")
+                       help="Enter the path to a phil file that you want to "
+                       "add to include.")
         group.addParam('extraPhilPathBravais', pwprot.PathParam,
                        allowsNull=True,
-                       default=None, condition="doRefineBravaisSettings",
+                       default=None,
+                       condition="doRefineBravaisSettings",
                        label="Additional bravais settings phil file",
-                       help="Enter the path to a phil file that you want to add to include.")
+                       help="Enter the path to a phil file that you want to "
+                       "add to include.")
         group.addParam('extraPhilPathReindexing', pwprot.PathParam,
                        allowsNull=True,
-                       default=None, condition="doReindex",
+                       default=None,
+                       condition="doReindex",
                        label="Additional reindexing phil file",
-                       help="Enter the path to a phil file that you want to add to include.")
+                       help="Enter the path to a phil file that you want to "
+                       "add to include.")
 
         # Allow adding anything else with command line syntax
         group = form.addGroup('Raw command line input parameters',
                               expertLevel=pwprot.LEVEL_ADVANCED)
         group.addParam('commandLineInputIndexing', pwprot.StringParam,
-                       default='', condition="doIndex==True",
+                       default='',
+                       condition="doIndex==True",
                        label='Indexing command line',
-                       help="Anything added here will be added at the end of the command line for indexing")
+                       help="Anything added here will be added at the end of"
+                       " the command line for indexing")
         group.addParam('commandLineInputBravais', pwprot.StringParam,
-                       default='', condition="doRefineBravaisSettings",
+                       default='',
+                       condition="doRefineBravaisSettings",
                        label='Bravais setting command line',
-                       help="Anything added here will be added at the end of the command line for Bravais settings refinement")
+                       help="Anything added here will be added at the end of"
+                       " the command line for Bravais settings refinement")
         group.addParam('commandLineInputReindexing', pwprot.StringParam,
-                       default='', condition="doReindex",
+                       default='',
+                       condition="doReindex",
                        label='Reindexing command line',
-                       help="Anything added here will be added at the end of the command line for reindexing")
+                       help="Anything added here will be added at the end of "
+                       "the command line for reindexing")
 
         # Add a section for creating an html report
         HtmlBase._defineHtmlParams(self, form)
@@ -291,7 +349,8 @@ class DialsProtIndexSpots(EdProtIndexSpots, DialsProtBase):
             self.info(self.getError())
 
     def createOutputStep(self):
-        # Find the most processed model file and reflection file and copy to output
+        # Find the most processed model file and reflection file and copy
+        # to output
         if dutils.existsPath(self.getReindexedModelFile()):
             copyDialsFile(self.getReindexedModelFile(),
                           self.getOutputModelFile())
@@ -318,7 +377,8 @@ class DialsProtIndexSpots(EdProtIndexSpots, DialsProtBase):
         outputSet.setDialsModel(self.getOutputModelFile())
         outputSet.setDialsRefl(self.getOutputReflFile())
         try:
-            # FIXME: readRefl does not work when reading reindexed.refl. Complains about "Extra data"
+            # FIXME: readRefl does not work when reading
+            # reindexed.refl. Complains about "Extra data"
             reflectionData = readRefl(self.getOutputReflFile())
             iSpot = IndexedSpot()
             numberOfSpots = reflectionData[2]
@@ -465,6 +525,9 @@ class DialsProtIndexSpots(EdProtIndexSpots, DialsProtBase):
     def getReindexedReflFile(self):
         return self._getTmpPath('reindexed.refl')
 
+    def getKnownUnitCell(self):
+        return self.fixString(self.knownUnitCell.get())
+
     # Placeholder for using phils as default
 
     def getPhilPath(self):
@@ -502,20 +565,24 @@ class DialsProtIndexSpots(EdProtIndexSpots, DialsProtBase):
             params += f" indexing.nproc={self.indexNproc.get()}"
 
         if self.enterSpaceGroup.get():
-            params += (
-                f" indexing.known_symmetry.space_group={self.knownSpaceGroup.get()}")
+            params += (f" indexing.known_symmetry.space_group="
+                       f"{self.knownSpaceGroup.get()}")
 
         if self.enterUnitCell.get():
-            params += f" indexing.known_symmetry.unit_cell={self.knownUnitCell.get()}"
+            params += (f" indexing.known_symmetry.unit_cell="
+                       f"{self.getKnownUnitCell()}")
 
         if self.indexMmSearchScope.get() not in (None, 4.0):
-            params += f" indexing.mm_search_scope={self.indexMmSearchScope.get()}"
+            params += (f" indexing.mm_search_scope="
+                       f"{self.indexMmSearchScope.get()}")
 
         if self.indexWideSearchBinning.get() not in (None, 2):
-            params += f" indexing.wide_search_binning={self.indexWideSearchBinning.get()}"
+            params += (f" indexing.wide_search_binning="
+                       f"{self.indexWideSearchBinning.get()}")
 
         if self.indexMinCellVolume.get() not in (None, 25):
-            params += f" indexing.min_cell_volume={self.indexMinCellVolume.get()}"
+            params += (f" indexing.min_cell_volume="
+                       f"{self.indexMinCellVolume.get()}")
 
         if self.indexMinCell.get() not in (None, 3.0):
             params += f" indexing.min_cell={self.indexMinCell.get()}"
@@ -528,7 +595,8 @@ class DialsProtIndexSpots(EdProtIndexSpots, DialsProtBase):
                        f"{self.misindexCheckGridScope.get()}")
 
         if self.doFilter_ice.get():
-            params += f" indexing.max_cell_estimation.filter_ice={self.doFilter_ice.get()}"
+            params += (f" indexing.max_cell_estimation.filter_ice="
+                       f"{self.doFilter_ice.get()}")
 
         if self.refineNproc.get() not in (None, 1):
             params += f" refinement.nproc={self.refineNproc.get()}"
@@ -542,7 +610,8 @@ class DialsProtIndexSpots(EdProtIndexSpots, DialsProtBase):
         params += RefineParamsBase.getGonioFixParams(self)
 
         if self.refineryMaxIterations.get() is not None:
-            params += f" refinery.max_iterations={self.refineryMaxIterations.get()}"
+            params += (f" refinery.max_iterations="
+                       f"{self.refineryMaxIterations.get()}")
 
         if self.extraPhilPathIndexing.get():
             params += f" {self.getExtraPhilsPathIndexing()}"
@@ -557,7 +626,8 @@ class DialsProtIndexSpots(EdProtIndexSpots, DialsProtBase):
         # Input basic parameters
         logPath = self.getLogFilePath(program)
         params = (f"{self.getIndexedModelFile()} {self.getIndexedReflFile()} "
-                  f"output.log={logPath} output.directory={self.getBravaisPath()}")
+                  f"output.log={logPath} "
+                  f"output.directory={self.getBravaisPath()}")
 
         # Update the command line with additional parameters
 
@@ -588,13 +658,16 @@ class DialsProtIndexSpots(EdProtIndexSpots, DialsProtBase):
         "Create the command line input to run dials programs"
         # Input basic parameters
         # FIXME: Fix issue #10
-        params = f"change_of_basis_op={self.getChangeOfBasisOp(self.getBravaisId())}"
+        params = (f"change_of_basis_op="
+                  f"{self.getChangeOfBasisOp(self.getBravaisId())}")
 
         if self.doReindexModel.get():
-            params += f" {self.getIndexedModelFile()} output.experiments={self.getReindexedModelFile()}"
+            params += (f" {self.getIndexedModelFile()} "
+                       f"output.experiments={self.getReindexedModelFile()}")
 
         if self.doReindexReflections.get():
-            params += f" {self.getIndexedReflFile()} output.reflections={self.getReindexedReflFile()}"
+            params += (f" {self.getIndexedReflFile()} "
+                       f"output.reflections={self.getReindexedReflFile()}")
 
         if self.extraPhilPathReindexing.get():
             params += f" {self.getExtraPhilsPathReindexing()}"

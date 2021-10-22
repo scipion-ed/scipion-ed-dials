@@ -4,7 +4,8 @@
 # *              V. E.G: Bengtsson (viktor.bengtsson@mmk.su.se) [2]
 # *
 # * [1] SciLifeLab, Stockholm University
-# * [2] Department of Materials and Environmental Chemistry, Stockholm University
+# * [2] Department of Materials and Environmental Chemistry,
+# *     Stockholm University
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
@@ -33,7 +34,8 @@ import dials.utils as dutils
 
 from pwed.objects import IndexedSpot
 from pwed.protocols import EdProtRefineSpots
-from dials.protocols import DialsProtBase, PhilBase, CliBase, HtmlBase, RefineParamsBase
+from dials.protocols import (
+    DialsProtBase, PhilBase, CliBase, HtmlBase, RefineParamsBase)
 from dials.convert import readRefl, writeRestraintsPhil
 from dials.constants import *
 
@@ -65,15 +67,23 @@ class DialsProtRefineSpots(EdProtRefineSpots, DialsProtBase):
                       label='Use scan varying option from imported workflow?',
                       default=True,
                       condition='scanVarying==True',
-                      help='It appears that a workflow from an older version used scan-varying refinement. Do you want to keep using that option?')
+                      help="It appears that a workflow from an older version"
+                      " used scan-varying refinement. Do you want to keep "
+                      "using that option?")
 
         form.addParam('scanVaryingNew', pwprot.EnumParam,
                       label='Scan varying or static?',
                       choices=['Auto', 'Static',
                                'Scan-varying', 'Dials default'],
                       default=UNSET,
-                      condition='scanVarying!=True or useScanVaryingFromWorkflow==False',
-                      help="Allow models that are not forced to be static to vary during the scan, Auto will run one macrocycle with static then scan varying refinement for the crystal. The option \"Dials default\" will use the default as indicated in https://dials.github.io/documentation/programs/dials_refine.html.",
+                      condition="scanVarying!=True or "
+                      "useScanVaryingFromWorkflow==False",
+                      help="Allow models that are not forced to be static to "
+                      "vary during the scan, Auto will run one macrocycle with"
+                      " static then scan varying refinement for the crystal. "
+                      "The option \"Dials default\" will use the default as "
+                      "indicated in https://dials.github.io/documentation/"
+                      "programs/dials_refine.html.",
                       )
 
         form.addParam('useRestraint', pwprot.BooleanParam,
@@ -84,21 +94,30 @@ class DialsProtRefineSpots(EdProtRefineSpots, DialsProtBase):
                       label="Unit cell values",
                       allowsNull=True, default=None,
                       condition='useRestraint==True',
-                      help="Target unit cell parameters for the restraint for this parameterisation")
+                      help="Target unit cell parameters for the restraint for"
+                      " this parameterisation")
 
         form.addParam('targetSigmas', pwprot.StringParam,
                       label="Sigmas for determining restraint weight",
                       allowsNull=True, default=None,
                       condition='useRestraint==True',
-                      help="The unit cell target values are associated with sigmas which are used to determine the weight of each restraint. A sigma of zero will remove the restraint at that position. If symmetry constrains two cell dimensions to be equal then only the smaller of the two sigmas will be kept")
+                      help="The unit cell target values are associated with "
+                      "sigmas which are used to determine the weight of each "
+                      "restraint. A sigma of zero will remove the restraint at"
+                      " that position. If symmetry constrains two cell "
+                      "dimensions to be equal then only the smaller of the two"
+                      " sigmas will be kept")
 
         # Help messages are copied from the DIALS documentation at
         # https://dials.github.io/documentation/programs/dials_index.html
         form.addParam('Nproc', pwprot.IntParam,
                       label="How many processors do you want to use?",
-                      default=1, help='The number of processes to use. Not all choices of refinement engine support nproc > 1.'
-                      'Where multiprocessing is possible, it is helpful only in certain circumstances,'
-                      'so this is not recommended for typical use.',
+                      default=1,
+                      help="The number of processes to use. Not all choices of"
+                      " refinement engine support nproc > 1. Where "
+                      "multiprocessing is possible, it is helpful only in "
+                      "certain circumstances, so this is not recommended for "
+                      "typical use.",
                       expertLevel=pwprot.LEVEL_ADVANCED)
 
         RefineParamsBase._defineParametrisations(self, form)
@@ -106,14 +125,19 @@ class DialsProtRefineSpots(EdProtRefineSpots, DialsProtBase):
         group = form.addGroup('Refinery')
 
         group.addParam('doSetMaxIterations', pwprot.BooleanParam,
-                       label='Do you want to set the maximum number of iterations?', default=False,
+                       label="Do you want to set the maximum number of "
+                       "iterations?",
+                       default=False,
                        expertLevel=pwprot.LEVEL_ADVANCED,
-                       help="Maximum number of iterations in refinement before termination.",
+                       help="Maximum number of iterations in refinement before"
+                       " termination.",
                        )
 
         group.addParam('refineryMaxIterations', pwprot.IntParam,
                        default=None,
-                       allowsNull=True, help="Maximum number of iterations in refinement before termination."
+                       allowsNull=True,
+                       help="Maximum number of iterations in refinement before"
+                       " termination."
                        "None implies the engine supplies its own default.",
                        label='Max iterations', condition="doSetMaxIterations",
                        )
@@ -233,7 +257,8 @@ class DialsProtRefineSpots(EdProtRefineSpots, DialsProtBase):
         params += RefineParamsBase.getGonioFixParams(self)
 
         if self.refineryMaxIterations.get() is not None:
-            params += f" refinery.max_iterations={self.refineryMaxIterations.get()}"
+            params += (f" refinery.max_iterations="
+                       f"{self.refineryMaxIterations.get()}")
 
         if self.useRestraint:
             # Make the phil when it is known that it will be used
@@ -284,7 +309,10 @@ class DialsProtRefineSpots(EdProtRefineSpots, DialsProtBase):
 
         # Input basic parameters
         logPath = f"{self._getLogsPath()}/{program}.log"
-        params = f"{self.getInputModelFile()} {self.getInputReflFile()} output.log={logPath} output.experiments={self.getOutputModelFile()} output.reflections={self.getOutputReflFile()}"
+        params = (f"{self.getInputModelFile()} {self.getInputReflFile()} "
+                  f"output.log={logPath} "
+                  f"output.experiments={self.getOutputModelFile()}"
+                  f" output.reflections={self.getOutputReflFile()}")
 
         # Update the command line with additional parameters
 
@@ -294,7 +322,8 @@ class DialsProtRefineSpots(EdProtRefineSpots, DialsProtBase):
         params += self.getScanVaryingCommand()
 
         if self.beamFixAll:
-            params += " beam.fix='*all in_spindle_plane out_spindle_plane wavelength'"
+            params += (" beam.fix='*all in_spindle_plane"
+                       " out_spindle_plane wavelength'")
         else:
             beamfix = []
             beamfix += "'all "
@@ -343,7 +372,8 @@ class DialsProtRefineSpots(EdProtRefineSpots, DialsProtBase):
         params += f" detector.fix={''.join(detectorfix)}"
 
         if self.refineryMaxIterations.get() is not None:
-            params += f" refinery.max_iterations={self.refineryMaxIterations.get()}"
+            params += (f" refinery.max_iterations="
+                       f"{self.refineryMaxIterations.get()}")
 
         if self.useRestraint:
             # Make the phil when it is known that it will be used
