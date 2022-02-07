@@ -50,6 +50,12 @@ class DialsProtBase(EdBaseProtocol):
     def makeHtmlReportStep(self):
         HtmlBase.makeHtmlReportStep(self)
 
+    # --------------------------- INFO functions -----------------------------
+    def _citations(self):
+        cites = []
+        cites.append("Winter2018")
+        return cites
+
     # -------------------------- UTILS functions -----------------------------
 
     def getInputModelFile(self, inputSource=None):
