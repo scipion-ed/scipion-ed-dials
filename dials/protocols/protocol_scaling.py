@@ -55,7 +55,7 @@ class DialsProtScaling(EdProtScaling, ImageExclusions, CutRes):
         # The start of the actually relevant part.
         form.addSection(label="Input")
 
-        inputsetsLabel = "Spots to scale"
+        inputsetsLabel = "Groups of reflections to scale"
         form.addParam("inputSets", pwprot.MultiPointerParam,
                       pointerClass="SetOfIndexedSpots",
                       label=inputsetsLabel,
