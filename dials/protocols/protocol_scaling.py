@@ -36,14 +36,16 @@ import dials.convert as dconv
 
 from pwed.protocols import EdProtScaling
 from pwed.utils import CutRes
-from dials.protocols import DialsProtBase, PhilBase, CliBase
+from dials.protocols import PhilBase, CliBase, ImageExclusions
 from dials.constants import *
 
 
-class DialsProtScaling(EdProtScaling, DialsProtBase, CutRes):
+class DialsProtScaling(EdProtScaling, ImageExclusions, CutRes):
     """ Protocol for scaling spots using Dials
     """
     _label = "scale"
+
+    # NOTE: ImageExclusions also provides DialsProtBase.
 
     # -------------------------- DEFINE param functions -----------------------
 
@@ -231,7 +233,7 @@ class DialsProtScaling(EdProtScaling, DialsProtBase, CutRes):
                        )
 
         # Select which images to exclude
-        ImageExclusions._defineExcludeParams(self, form, inputsetsLabel)
+        self._defineExcludeParams(form, inputsetsLabel)
 
         # Allow an easy way to import a phil file with parameters
         PhilBase._definePhilParams(self, form)
@@ -332,7 +334,7 @@ class DialsProtScaling(EdProtScaling, DialsProtBase, CutRes):
             summary.append(f"Filtered {mode} based on ΔCC½ with std "
                            f"cutoff {self.ccHalfStdcutoff.get()}")
         if self.excludeImages:
-            for iG in ImageExclusions.getImageExclusions():
+            for iG in self.getImageExclusions():
                 summary.append(f"Excluded images {iG.get()}")
         if self._getCLI() != "":
             summary.append(f"Additional command line input:\n"
@@ -450,7 +452,7 @@ class DialsProtScaling(EdProtScaling, DialsProtBase, CutRes):
                        f"{self.ccHalfStdcutoff.get()}")
 
         if self.excludeImages:
-            for iG in ImageExclusions.getImageExclusions():
+            for iG in self.getImageExclusions():
                 params += f" exclude_images={iG.get()}"
         return params
 
@@ -546,396 +548,3 @@ class DialsProtScaling(EdProtScaling, DialsProtBase, CutRes):
             return exportStatus[key]
         else:
             return exportStatus
-
-
-class ImageExclusions(DialsProtBase):
-    def _defineExcludeParams(self, form, inputsetsLabel="the input set"):
-        group = form.addGroup("Selections")
-
-        group.addParam("excludeImages", pwprot.BooleanParam,
-                       label="Do you want to exclude images from a dataset?",
-                       default=False,
-                       help="",
-                       )
-
-        group.addParam("numberOfExclusions", pwprot.IntParam,
-                       label=("How many groups of images do you want to "
-                              "exclude?"),
-                       default=0,
-                       condition="excludeImages",
-                       help="If you want to use more than 20 groups, you will "
-                       "need to add it as command line parameters under "
-                       "advanced options",
-                       )
-
-        group.addParam("imageGroup1", pwprot.StringParam,
-                       label="Image group 1",
-                       default=None,
-                       allowsNull=True,
-                       condition="excludeImages and numberOfExclusions "
-                       "in range(1,21)",
-                       help=f"Input in the format exp:start:end\nExclude a "
-                       f"range of images (start,stop) from the dataset with "
-                       f"experiment identifier exp  (inclusive of frames "
-                       f"start, stop). For the first dataset listed in "
-                       f"{inputsetsLabel}, the identifier exp is typically"
-                       f" 0. For the next it is 1, and so on.\nTo exclude "
-                       f"images 22, 23 and 24 from the second dataset "
-                       f"listed, the syntax is 1:22:24.",
-                       )
-
-        group.addParam("imageGroup2", pwprot.StringParam,
-                       label="Image group 2",
-                       default=None,
-                       allowsNull=True,
-                       condition="excludeImages and numberOfExclusions in "
-                       "range(2,21)",
-                       help=f"Input in the format exp:start:end\nExclude a "
-                       f"range of images (start,stop) from the dataset with "
-                       f"experiment identifier exp  (inclusive of frames "
-                       f"start, stop). For the first dataset listed in "
-                       f"{inputsetsLabel}, the identifier exp is typically"
-                       f" 0. For the next it is 1, and so on.\nTo exclude "
-                       f"images 22, 23 and 24 from the second dataset "
-                       f"listed, the syntax is 1:22:24.",
-                       )
-
-        group.addParam("imageGroup3", pwprot.StringParam,
-                       label="Image group 3",
-                       default=None,
-                       allowsNull=True,
-                       condition="excludeImages and numberOfExclusions in "
-                       "range(3,21)",
-                       help=f"Input in the format exp:start:end\nExclude "
-                       f"a range of images (start,stop) from the dataset "
-                       f"with experiment identifier exp  (inclusive of "
-                       f"frames start, stop). For the first dataset listed "
-                       f"in {inputsetsLabel}, the identifier exp is typically"
-                       f" 0. For the next it is 1, and so on.\nTo exclude "
-                       f"images 22, 23 and 24 from the second dataset listed, "
-                       f"the syntax is 1:22:24.",
-                       )
-
-        group.addParam("imageGroup4", pwprot.StringParam,
-                       label="Image group 4",
-                       default=None,
-                       allowsNull=True,
-                       condition="excludeImages and numberOfExclusions in "
-                       "range(4,21)",
-                       help=f"Input in the format exp:start:end\nExclude a "
-                       f"range of images (start,stop) from the dataset with "
-                       f"experiment identifier exp  (inclusive of frames "
-                       f"start, stop). For the first dataset listed in "
-                       f"{inputsetsLabel}, the identifier exp is typically "
-                       f"0. For the next it is 1, and so on.\nTo exclude images"
-                       f" 22, 23 and 24 from the second dataset listed, the "
-                       f"syntax is 1:22:24.",
-                       )
-
-        group.addParam("imageGroup5", pwprot.StringParam,
-                       label="Image group 5",
-                       default=None,
-                       allowsNull=True,
-                       condition="excludeImages and numberOfExclusions in "
-                       "range"
-                       "(5,21)",
-                       help=f"Input in the format exp:start:end\nExclude a "
-                       f"range of images (start,stop) from the dataset with "
-                       f"experiment identifier exp  (inclusive of frames "
-                       f"start, stop). For the first dataset listed in "
-                       f"{inputsetsLabel}, the identifier exp is typically"
-                       f" 0. For the next it is 1, and so on.\nTo exclude "
-                       f"images 22, 23 and 24 from the second dataset "
-                       f"listed, the syntax is 1:22:24.",
-                       )
-
-        group.addParam("imageGroup6", pwprot.StringParam,
-                       label="Image group 6",
-                       default=None,
-                       allowsNull=True,
-                       condition="excludeImages and numberOfExclusions in "
-                       "range"
-                       "(6,21)",
-                       help=f"Input in the format exp:start:end\nExclude a "
-                       f"range of images (start,stop) from the dataset with "
-                       f"experiment identifier exp  (inclusive of frames "
-                       f"start, stop). For the first dataset listed in "
-                       f"{inputsetsLabel}, the identifier exp is typically"
-                       f" 0. For the next it is 1, and so on.\nTo exclude "
-                       f"images 22, 23 and 24 from the second dataset "
-                       f"listed, the syntax is 1:22:24.",
-                       )
-
-        group.addParam("imageGroup7", pwprot.StringParam,
-                       label="Image group 7",
-                       default=None,
-                       allowsNull=True,
-                       condition="excludeImages and numberOfExclusions in "
-                       "range"
-                       "(7, 21)",
-                       help=f"Input in the format exp:start:end\nExclude a "
-                       f"range of images (start,stop) from the dataset with "
-                       f"experiment identifier exp  (inclusive of frames "
-                       f"start, stop). For the first dataset listed in "
-                       f"{inputsetsLabel}, the identifier exp is typically"
-                       f" 0. For the next it is 1, and so on.\nTo exclude "
-                       f"images 22, 23 and 24 from the second dataset "
-                       f"listed, the syntax is 1:22:24.",
-                       )
-
-        group.addParam("imageGroup8", pwprot.StringParam,
-                       label="Image group 8",
-                       default=None,
-                       allowsNull=True,
-                       condition="excludeImages and numberOfExclusions in "
-                       "range(8, 21)",
-                       help=f"Input in the format exp:start:end\nExclude a "
-                       f"range of images (start,stop) from the dataset with "
-                       f"experiment identifier exp  (inclusive of frames "
-                       f"start, stop). For the first dataset listed in "
-                       f"{inputsetsLabel}, the identifier exp is typically"
-                       f" 0. For the next it is 1, and so on.\nTo exclude "
-                       f"images 22, 23 and 24 from the second dataset "
-                       f"listed, the syntax is 1:22:24.",
-                       )
-
-        group.addParam("imageGroup9", pwprot.StringParam,
-                       label="Image group 9",
-                       default=None,
-                       allowsNull=True,
-                       condition="excludeImages and numberOfExclusions in "
-                       "range"
-                       "(9,21)",
-                       help=f"Input in the format exp:start:end\nExclude a "
-                       f"range of images (start,stop) from the dataset with "
-                       f"experiment identifier exp  (inclusive of frames "
-                       f"start, stop). For the first dataset listed in "
-                       f"{inputsetsLabel}, the identifier exp is typically"
-                       f" 0. For the next it is 1, and so on.\nTo exclude "
-                       f"images 22, 23 and 24 from the second dataset "
-                       f"listed, the syntax is 1:22:24.",
-                       )
-
-        group.addParam("imageGroup10", pwprot.StringParam,
-                       label="Image group 10",
-                       default=None,
-                       allowsNull=True,
-                       condition="excludeImages and numberOfExclusions in "
-                       "range(10,21)",
-                       help=f"Input in the format exp:start:end\nExclude a "
-                       f"range of images (start,stop) from the dataset with "
-                       f"experiment identifier exp  (inclusive of frames "
-                       f"start, stop). For the first dataset listed in "
-                       f"{inputsetsLabel}, the identifier exp is typically"
-                       f" 0. For the next it is 1, and so on.\nTo exclude "
-                       f"images 22, 23 and 24 from the second dataset "
-                       f"listed, the syntax is 1:22:24.",
-                       )
-
-        group.addParam("imageGroup11", pwprot.StringParam,
-                       label="Image group 11",
-                       default=None,
-                       allowsNull=True,
-                       condition="excludeImages and numberOfExclusions in "
-                       "range(11,21)",
-                       help=f"Input in the format exp:start:end\nExclude a "
-                       f"range of images (start,stop) from the dataset with "
-                       f"experiment identifier exp  (inclusive of frames "
-                       f"start, stop). For the first dataset listed in "
-                       f"{inputsetsLabel}, the identifier exp is typically"
-                       f" 0. For the next it is 1, and so on.\nTo exclude "
-                       f"images 22, 23 and 24 from the second dataset "
-                       f"listed, the syntax is 1:22:24.",
-                       )
-
-        group.addParam("imageGroup12", pwprot.StringParam,
-                       label="Image group 12",
-                       default=None,
-                       allowsNull=True,
-                       condition="excludeImages and numberOfExclusions in "
-                       "range(12,21)",
-                       help=f"Input in the format exp:start:end\nExclude a "
-                       f"range of images (start,stop) from the dataset with "
-                       f"experiment identifier exp  (inclusive of frames "
-                       f"start, stop). For the first dataset listed in "
-                       f"{inputsetsLabel}, the identifier exp is typically"
-                       f" 0. For the next it is 1, and so on.\nTo exclude "
-                       f"images 22, 23 and 24 from the second dataset "
-                       f"listed, the syntax is 1:22:24.",
-                       )
-
-        group.addParam("imageGroup13", pwprot.StringParam,
-                       label="Image group 13",
-                       default=None,
-                       allowsNull=True,
-                       condition="excludeImages and numberOfExclusions in "
-                       "range(13,21)",
-                       help=f"Input in the format exp:start:end\nExclude a "
-                       f"range of images (start,stop) from the dataset with "
-                       f"experiment identifier exp  (inclusive of frames "
-                       f"start, stop). For the first dataset listed in "
-                       f"{inputsetsLabel}, the identifier exp is typically"
-                       f" 0. For the next it is 1, and so on.\nTo exclude "
-                       f"images 22, 23 and 24 from the second dataset "
-                       f"listed, the syntax is 1:22:24.",
-                       )
-
-        group.addParam("imageGroup14", pwprot.StringParam,
-                       label="Image group 14",
-                       default=None,
-                       allowsNull=True,
-                       condition="excludeImages and numberOfExclusions in "
-                       "range(14,21)",
-                       help=f"Input in the format exp:start:end\nExclude a "
-                       f"range of images (start,stop) from the dataset with "
-                       f"experiment identifier exp  (inclusive of frames "
-                       f"start, stop). For the first dataset listed in "
-                       f"{inputsetsLabel}, the identifier exp is typically"
-                       f" 0. For the next it is 1, and so on.\nTo exclude "
-                       f"images 22, 23 and 24 from the second dataset "
-                       f"listed, the syntax is 1:22:24.",
-                       )
-
-        group.addParam("imageGroup15", pwprot.StringParam,
-                       label="Image group 15",
-                       default=None,
-                       allowsNull=True,
-                       condition="excludeImages and numberOfExclusions in "
-                       "range(15,21)",
-                       help=f"Input in the format exp:start:end\nExclude a "
-                       f"range of images (start,stop) from the dataset with "
-                       f"experiment identifier exp  (inclusive of frames "
-                       f"start, stop). For the first dataset listed in "
-                       f"{inputsetsLabel}, the identifier exp is typically"
-                       f" 0. For the next it is 1, and so on.\nTo exclude "
-                       f"images 22, 23 and 24 from the second dataset "
-                       f"listed, the syntax is 1:22:24.",
-                       )
-
-        group.addParam("imageGroup16", pwprot.StringParam,
-                       label="Image group 16",
-                       default=None,
-                       allowsNull=True,
-                       condition="excludeImages and numberOfExclusions in "
-                       "range(16,21)",
-                       help=f"Input in the format exp:start:end\nExclude a "
-                       f"range of images (start,stop) from the dataset with "
-                       f"experiment identifier exp  (inclusive of frames "
-                       f"start, stop). For the first dataset listed in "
-                       f"{inputsetsLabel}, the identifier exp is typically"
-                       f" 0. For the next it is 1, and so on.\nTo exclude "
-                       f"images 22, 23 and 24 from the second dataset "
-                       f"listed, the syntax is 1:22:24.",
-                       )
-
-        group.addParam("imageGroup17", pwprot.StringParam,
-                       label="Image group 17",
-                       default=None,
-                       allowsNull=True,
-                       condition="excludeImages and numberOfExclusions in "
-                       "range(17,21)",
-                       help=f"Input in the format exp:start:end\nExclude a "
-                       f"range of images (start,stop) from the dataset with "
-                       f"experiment identifier exp  (inclusive of frames "
-                       f"start, stop). For the first dataset listed in "
-                       f"{inputsetsLabel}, the identifier exp is typically"
-                       f" 0. For the next it is 1, and so on.\nTo exclude "
-                       f"images 22, 23 and 24 from the second dataset "
-                       f"listed, the syntax is 1:22:24.",
-                       )
-
-        group.addParam("imageGroup18", pwprot.StringParam,
-                       label="Image group 18",
-                       default=None,
-                       allowsNull=True,
-                       condition="excludeImages and numberOfExclusions in "
-                       "range(18,21)",
-                       help=f"Input in the format exp:start:end\nExclude a "
-                       f"range of images (start,stop) from the dataset with "
-                       f"experiment identifier exp  (inclusive of frames "
-                       f"start, stop). For the first dataset listed in "
-                       f"{inputsetsLabel}, the identifier exp is typically"
-                       f" 0. For the next it is 1, and so on.\nTo exclude "
-                       f"images 22, 23 and 24 from the second dataset "
-                       f"listed, the syntax is 1:22:24.",
-                       )
-
-        group.addParam("imageGroup19", pwprot.StringParam,
-                       label="Image group 19",
-                       default=None,
-                       allowsNull=True,
-                       condition="excludeImages and numberOfExclusions in "
-                       "range(19,21)",
-                       help=f"Input in the format exp:start:end\nExclude a "
-                       f"range of images (start,stop) from the dataset with "
-                       f"experiment identifier exp  (inclusive of frames "
-                       f"start, stop). For the first dataset listed in "
-                       f"{inputsetsLabel}, the identifier exp is typically"
-                       f" 0. For the next it is 1, and so on.\nTo exclude "
-                       f"images 22, 23 and 24 from the second dataset "
-                       f"listed, the syntax is 1:22:24.",
-                       )
-
-        group.addParam("imageGroup20", pwprot.StringParam,
-                       label="Image group 20",
-                       default=None,
-                       allowsNull=True,
-                       condition="excludeImages and numberOfExclusions in "
-                       "range(20,21)",
-                       help=f"Input in the format exp:start:end\nExclude a "
-                       f"range of images (start,stop) from the dataset with "
-                       f"experiment identifier exp  (inclusive of frames "
-                       f"start, stop). For the first dataset listed in "
-                       f"{inputsetsLabel}, the identifier exp is typically"
-                       f" 0. For the next it is 1, and so on.\nTo exclude "
-                       f"images 22, 23 and 24 from the second dataset "
-                       f"listed, the syntax is 1:22:24.",
-                       )
-
-    def getExclusions(self):
-        return self.numberOfExclusions.get()
-
-    def getImageExclusions(self):
-        imageGroups = []
-        if self.imageGroup1.get() is not None and self.getExclusions() >= 1:
-            imageGroups.append(self.imageGroup1)
-        if self.imageGroup2.get() is not None and self.getExclusions() >= 2:
-            imageGroups.append(self.imageGroup2)
-        if self.imageGroup3.get() is not None and self.getExclusions() >= 3:
-            imageGroups.append(self.imageGroup3)
-        if self.imageGroup4.get() is not None and self.getExclusions() >= 4:
-            imageGroups.append(self.imageGroup4)
-        if self.imageGroup5.get() is not None and self.getExclusions() >= 5:
-            imageGroups.append(self.imageGroup5)
-        if self.imageGroup6.get() is not None and self.getExclusions() >= 6:
-            imageGroups.append(self.imageGroup6)
-        if self.imageGroup7.get() is not None and self.getExclusions() >= 7:
-            imageGroups.append(self.imageGroup7)
-        if self.imageGroup8.get() is not None and self.getExclusions() >= 8:
-            imageGroups.append(self.imageGroup8)
-        if self.imageGroup9.get() is not None and self.getExclusions() >= 9:
-            imageGroups.append(self.imageGroup9)
-        if self.imageGroup10.get() is not None and self.getExclusions() >= 10:
-            imageGroups.append(self.imageGroup10)
-        if self.imageGroup11.get() is not None and self.getExclusions() >= 11:
-            imageGroups.append(self.imageGroup11)
-        if self.imageGroup12.get() is not None and self.getExclusions() >= 12:
-            imageGroups.append(self.imageGroup12)
-        if self.imageGroup13.get() is not None and self.getExclusions() >= 13:
-            imageGroups.append(self.imageGroup13)
-        if self.imageGroup14.get() is not None and self.getExclusions() >= 14:
-            imageGroups.append(self.imageGroup14)
-        if self.imageGroup15.get() is not None and self.getExclusions() >= 15:
-            imageGroups.append(self.imageGroup15)
-        if self.imageGroup16.get() is not None and self.getExclusions() >= 16:
-            imageGroups.append(self.imageGroup16)
-        if self.imageGroup17.get() is not None and self.getExclusions() >= 17:
-            imageGroups.append(self.imageGroup17)
-        if self.imageGroup18.get() is not None and self.getExclusions() >= 18:
-            imageGroups.append(self.imageGroup18)
-        if self.imageGroup19.get() is not None and self.getExclusions() >= 19:
-            imageGroups.append(self.imageGroup19)
-        if self.imageGroup20.get() is not None and self.getExclusions() >= 20:
-            imageGroups.append(self.imageGroup20)
-
-        return imageGroups

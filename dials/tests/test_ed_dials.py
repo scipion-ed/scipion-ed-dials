@@ -777,6 +777,45 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 self.assertFileExists(exportFile.getFilePath())
             self.assertEqual(protExportMtz.getDatasets(), compareDatasets)
 
+        with self.subTest(msg='Excluding images'):
+            exclusions = ["0:1:2", "0:10:12"]
+            protScalingExclude = self._runScaling(
+                objLabel="dials - scaling with exclusions",
+                inputSets=[protIntegrate.outputIntegratedSpots],
+                excludeImages=True,
+                numberOfExclusions=2,
+                imageGroup1=exclusions[0],
+                imageGroup2=exclusions[1],
+            )
+            scaleExclusionCL = (
+                f"{protIntegrate._getExtraPath()}/integrated_model.expt "
+                f"{protIntegrate._getExtraPath()}/integrated_reflections.refl "
+                f"output.log={protScalingExclude._getLogsPath()}/dials.scale.log "
+                f"output.experiments={protScalingExclude._getExtraPath()}/scaled.expt "
+                f"output.reflections={protScalingExclude._getExtraPath()}/scaled.refl "
+                f"output.html={protScalingExclude._getExtraPath()}/dials.scale.html "
+                f"filtering.output.scale_and_filter_results="
+                f"{protScalingExclude._getExtraPath()}/scale_and_filter_results.json "
+                f"cut_data.partiality_cutoff=0.4 cut_data.min_isigi=-5.0 "
+                f"outlier_rejection=standard outlier_zmax=6.0 filtering.method=None "
+                f"filtering.deltacchalf.max_cycles=6 "
+                f"filtering.deltacchalf.max_percent_removed=10.0 "
+                f"filtering.deltacchalf.mode=dataset "
+                f"filtering.deltacchalf.group_size=10 "
+                f"filtering.deltacchalf.stdcutoff=4.0 "
+                f"exclude_images={exclusions[0]} "
+                f"exclude_images={exclusions[1]}"
+            )
+            self.assertCommand(protScalingExclude,
+                               scaleExclusionCL, 'dials.scale')
+            scaledset = getattr(
+                protScalingExclude, 'outputScaledSpots', None)
+            self.assertIsNotNone(protScalingExclude.outputScaledSpots)
+            self.assertFileExists(scaledset.getDialsModel())
+            self.assertFileExists(scaledset.getDialsRefl())
+            self.checkLogDataset(
+                protScalingExclude, dataset, 'Space group being used during scaling is P 4')
+
     def test_garnet_pipeline(self):
         if SKIP_GARNET:
             self.skipTest("Skipping garnet pipeline test")
