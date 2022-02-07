@@ -36,14 +36,16 @@ import dials.convert as dconv
 
 from pwed.protocols import EdProtScaling
 from pwed.utils import CutRes
-from dials.protocols import DialsProtBase, PhilBase, CliBase
+from dials.protocols import PhilBase, CliBase, ImageExclusions
 from dials.constants import *
 
 
-class DialsProtScaling(EdProtScaling, DialsProtBase, CutRes):
+class DialsProtScaling(EdProtScaling, ImageExclusions, CutRes):
     """ Protocol for scaling spots using Dials
     """
     _label = "scale"
+
+    # NOTE: ImageExclusions also provides DialsProtBase.
 
     # -------------------------- DEFINE param functions -----------------------
 
@@ -231,7 +233,7 @@ class DialsProtScaling(EdProtScaling, DialsProtBase, CutRes):
                        )
 
         # Select which images to exclude
-        ImageExclusions._defineExcludeParams(self, form, inputsetsLabel)
+        self._defineExcludeParams(form, inputsetsLabel)
 
         # Allow an easy way to import a phil file with parameters
         PhilBase._definePhilParams(self, form)
@@ -332,7 +334,7 @@ class DialsProtScaling(EdProtScaling, DialsProtBase, CutRes):
             summary.append(f"Filtered {mode} based on ΔCC½ with std "
                            f"cutoff {self.ccHalfStdcutoff.get()}")
         if self.excludeImages:
-            for iG in ImageExclusions.getImageExclusions():
+            for iG in self.getImageExclusions():
                 summary.append(f"Excluded images {iG.get()}")
         if self._getCLI() != "":
             summary.append(f"Additional command line input:\n"
@@ -450,7 +452,7 @@ class DialsProtScaling(EdProtScaling, DialsProtBase, CutRes):
                        f"{self.ccHalfStdcutoff.get()}")
 
         if self.excludeImages:
-            for iG in ImageExclusions.getImageExclusions():
+            for iG in self.getImageExclusions():
                 params += f" exclude_images={iG.get()}"
         return params
 
