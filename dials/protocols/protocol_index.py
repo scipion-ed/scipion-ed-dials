@@ -94,7 +94,7 @@ class DialsProtIndexSpots(EdProtIndexSpots, DialsProtBase):
         # Help messages are copied from the DIALS documentation at
         # https://dials.github.io/documentation/programs/dials_index.html
         form.addParam('indexNproc', pwprot.IntParam,
-                      label="How many processors do you want to use?",
+                      label="How many processes do you want to use?",
                       default=1,
                       help="The number of processes to use.")
 
