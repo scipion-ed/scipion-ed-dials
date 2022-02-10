@@ -352,6 +352,12 @@ class DialsProtScaling(EdProtScaling, ImageExclusions, CutRes):
                 f"Exported unmerged mtz file {self.getUnmergedMtzPath()}")
 
         return summary
+
+    def _citations(self):
+        cites = super()._citations()
+        if self.checkConsistentIndexing:
+            cites.append("Gildea:rr5155")
+        return cites
     # -------------------------- BASE methods to be overridden -----------------
 
     INPUT_EXPT_FILENAME = "symmetrized.expt"
