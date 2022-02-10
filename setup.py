@@ -36,15 +36,30 @@ from setuptools import setup, find_packages
 from codecs import open
 from os import path
 
-here = path.abspath(path.dirname(__file__))
+# Use single-sourcing package version as described in
+# https://packaging.python.org/en/latest/guides/single-sourcing-package-version
+
+
+def read(rel_path, enc=None):
+    here = path.abspath(path.dirname(__file__))
+    with open(path.join(here, rel_path), 'r', encoding=enc) as fp:
+        return fp.read()
+
+
+def get_version(rel_path):
+    for line in read(rel_path).splitlines():
+        if line.startswith('__version__'):
+            delim = '"' if '"' in line else "'"
+            return line.split(delim)[1]
+    else:
+        raise RuntimeError("Unable to find version string.")
+
 
 # Get the long description from the README file
-with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
-    long_description = f.read()
+long_description = read("README.rst", enc="utf-8")
 
 # Read requirements.txt
-with open(path.join(here, 'requirements.txt')) as f:
-    requirements = f.read().splitlines()
+requirements = read("requirements.txt").splitlines()
 
 
 # Arguments marked as "Required" below must be included for upload to PyPI.
@@ -72,7 +87,7 @@ setup(
     #
     # Epoch indicates compatible main Scipion version
     # major.minor.micro versioning starting with 1.0.0 in the new epoch
-    version='3!1.0.0b2',  # Required
+    version=get_version("dials/__init__.py"),  # Required
 
     # This is a one-line description or tagline of what your project does. This
     # corresponds to the "Summary" metadata field:
