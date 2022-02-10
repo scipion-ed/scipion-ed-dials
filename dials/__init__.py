@@ -35,7 +35,7 @@ from .constants import *
 
 # Epoch indicates compatible main Scipion version
 # major.minor.micro versioning starting with 1.0.0 in the new epoch
-__version__ = '3!1.0.0b2'
+__version__ = '3!1.0.0b3'
 _logo = "logo.jpeg"
 
 
