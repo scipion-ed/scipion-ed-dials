@@ -1,0 +1,23 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: scipion-ed-dials
+message: >-
+  If you use this software, please cite it using
+  these metadata.
+type: software
+authors:
+  - given-names: Viktor E.G.
+    family-names: Bengtsson
+    email: viktor.e.g.bengtsson@gmail.com
+    orcid: "https://orcid.org/0000-0002-6020-9178"
+  - given-names: José Miguel
+    family-names: de la Rosa-Trevin
+    email: delarosatrevin@scilifelab.se
+    affiliation: >-
+      Department of Biochemistry and Biophysics,
+      Science for Life Laboratory, Stockholm
+      University, Stockholm
+    orcid: "https://orcid.org/0000-0002-3320-1269"
+license: GPL-3.0
