@@ -59,5 +59,15 @@ abstract = {Combining X-ray diffraction data from multiple samples requires dete
 keywords = {Patterson group symmetry, partial data sets, indexing ambiguity},
 }
 
+@software{Bengtsson_scipion-ed-dials_2022,
+author = {Bengtsson, Viktor E.G. and de la Rosa-Trevin, José Miguel},
+license = {GPL-3.0},
+month = {2},
+title = {{Scipion-ED DIALS plugin}},
+url = {https://github.com/scipion-ed/scipion-ed-dials},
+version = {v3!1.0.0b2},
+year = {2022},
+doi = {http://doi.org/10.5281/zenodo.6035832}
+}
 
 """
