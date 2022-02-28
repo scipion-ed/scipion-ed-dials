@@ -1,8 +1,10 @@
 # **************************************************************************
 # *
 # * Authors:     J.M. De la Rosa Trevin (delarosatrevin@scilifelab.se) [1]
+# *              Viktor E. G. Bengtsson (viktor.bengtsson@mmk.su.se)   [2]
 # *
 # * [1] SciLifeLab, Stockholm University
+# * [2] MMK, Stockholm University
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
@@ -36,6 +38,7 @@ import pyworkflow.protocol.params as params
 
 import dials.protocols as dialsProt
 import dials.utils as dutils
+from . import dials_viewer_utils as dvutils
 
 
 class DialsImageView(pwviewer.CommandView):
@@ -103,36 +106,13 @@ class DialsFoundSpotsViewer(pwviewer.ProtocolViewer):
 
     def _viewImages(self, reflFn=None, **kwargs):
         if self.viewSpotsOnImage:
-            reflFn = self._getRefls()
-        DialsImageView(self._getModel(), reflectionFile=reflFn).show()
+            reflFn = dvutils._getRefls(self.protocol)
+        DialsImageView(dvutils._getModel(self.protocol),
+                       reflectionFile=reflFn).show()
 
     def _viewReciprocal(self, **kwargs):
         DialsReciprocalLatticeView(
-            self._getModel(), reflectionFile=self._getRefls()).show()
-
-    def _getModel(self):
-        try:
-            return self.protocol.getModelFile()
-        except AttributeError:
-            try:
-                return self.protocol.getOutputModelFile()
-            except AttributeError:
-                return self.protocol.getInputModelFile()
-
-    def _getRefls(self):
-        try:
-            return self.protocol.getReflFile()
-        except AttributeError:
-            pass
-        try:
-            return self.protocol.getOutputReflFile()
-        except AttributeError:
-            pass
-        try:
-            return self.protocol.getInputReflFile()
-        except AttributeError:
-            pass
-        return None
+            dvutils._getModel(self.protocol), reflectionFile=dvutils._getRefls(self.protocol)).show()
 
 
 class DialsResultsViewer(pwviewer.Viewer):
@@ -221,84 +201,44 @@ class ResultsWindow(pwgui.Window):
         imgPlainBtn = Button(subframe, "View plain images",
                              command=self._viewPlainImages)
         imgPlainBtn.grid(row=0, column=0, sticky='nw', padx=(0, 5))
-        if self._getModel() is None:
+        if dvutils._getModel(self.protocol) is None:
             imgPlainBtn['state'] = 'disabled'
 
         imgOverlaidBtn = Button(subframe, "View images with spots",
                                 command=self._viewOverlaidImages)
         imgOverlaidBtn.grid(row=0, column=1, sticky='nw', padx=(0, 5))
-        if None in {self._getModel(), self._getRefls()}:
+        if None in {dvutils._getModel(self.protocol), dvutils._getRefls(self.protocol)}:
             imgOverlaidBtn['state'] = 'disabled'
 
         reciprocalBtn = Button(subframe, "View reciprocal lattice",
                                command=self._viewReciprocal)
         reciprocalBtn.grid(row=0, column=2, sticky='nw', padx=(0, 5))
-        if None in {self._getModel(), self._getRefls()}:
+        if None in {dvutils._getModel(self.protocol), dvutils._getRefls(self.protocol)}:
             reciprocalBtn['state'] = 'disabled'
 
         htmlBtn = HotButton(subframe, 'Open HTML Report',
                             command=self._openHTML)
         htmlBtn.grid(row=0, column=3, sticky='nw', padx=(0, 5))
-        if self._getHtml() is None:
+        if dvutils._getHtml(self.protocol) is None:
             htmlBtn['state'] = 'disabled'
 
         closeBtn = self.createCloseButton(frame)
         closeBtn.grid(row=0, column=1, sticky='ne')
 
-    def _getModel(self):
-        try:
-            return self.protocol.getModelFile()
-        except AttributeError:
-            pass
-        try:
-            return self.protocol.getOutputModelFile()
-        except AttributeError:
-            pass
-        try:
-            return self.protocol.getInputModelFile()
-        except AttributeError:
-            pass
-        return None
-
-    def _getRefls(self):
-        try:
-            return self.protocol.getReflFile()
-        except AttributeError:
-            pass
-        try:
-            return self.protocol.getOutputReflFile()
-        except AttributeError:
-            pass
-        try:
-            return self.protocol.getInputReflFile()
-        except AttributeError:
-            pass
-        return None
-
-    def _getHtml(self):
-        try:
-            reportPath = self.protocol.getOutputHtmlFile()
-        except AttributeError:
-            return None
-
-        if pwutils.exists(reportPath):
-            return reportPath
-        else:
-            return None
-
     def _viewPlainImages(self, e=None):
-        DialsImageView(self._getModel(), reflectionFile=None).show()
+        DialsImageView(dvutils._getModel(self.protocol),
+                       reflectionFile=None).show()
 
     def _viewOverlaidImages(self, e=None):
-        DialsImageView(self._getModel(),
-                       reflectionFile=self._getRefls()).show()
+        DialsImageView(dvutils._getModel(self.protocol),
+                       reflectionFile=dvutils._getRefls(self.protocol)).show()
 
     def _viewReciprocal(self, e=None):
         DialsReciprocalLatticeView(
-            self._getModel(), reflectionFile=self._getRefls()).show()
+            dvutils._getModel(self.protocol), reflectionFile=dvutils._getRefls(self.protocol)).show()
 
     def _openHTML(self, e=None):
-        if self._getHtml() is not None:
-            dutils._showHtmlReport(self._getHtml())
+        if dvutils._getHtml(self.protocol) is not None:
+            dutils._showHtmlReport(dvutils._getHtml(self.protocol))
         else:
             self.showInfo("Could not find an HTML file to open")
