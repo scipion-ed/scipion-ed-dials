@@ -27,3 +27,4 @@
 # **************************************************************************
 
 from .dials_viewers import DialsResultsViewer
+from .dials_viewer_utils import *
