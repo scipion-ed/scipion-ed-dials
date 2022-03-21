@@ -34,7 +34,9 @@ import dials.utils as dutils
 from pwed.protocols import ProtImportDiffractionImages
 
 
-class DialsProtImportDiffractionImages(ProtImportDiffractionImages, DialsProtBase):
+class DialsProtImportDiffractionImages(
+        ProtImportDiffractionImages,
+        DialsProtBase):
     """ Base class for other Import protocols.
     All imports protocols will have:
     1) Several options to import from (_getImportOptions function)
@@ -85,7 +87,10 @@ class DialsProtImportDiffractionImages(ProtImportDiffractionImages, DialsProtBas
         return dutils.getDatasets(self.getOutputModelFile())
 
     def _initialParams(self, program):
-        params = f"{self.getCmdparamStart()} output.log={self.getLogFilePath(program)} output.experiments={self.getOutputModelFile()}"
+        params = (f"{self.getCmdparamStart()} "
+                  f"output.log={self.getLogFilePath(program)} "
+                  f"output.experiments={self.getOutputModelFile()}"
+                  )
         return params
 
     def _extraParams(self):
@@ -105,7 +110,8 @@ class DialsProtImportDiffractionImages(ProtImportDiffractionImages, DialsProtBas
     def _getDialsOverwrites(self):
         params = ""
         if self.getRotationAxis():
-            params += f" goniometer.axes={self.list2str(self.getRotationAxis())}"
+            params += (
+                f" goniometer.axes={self.list2str(self.getRotationAxis())}")
 
         if self.getNewDetectorDistance() is not None:
             params += f" distance={self.getNewDetectorDistance()}"
