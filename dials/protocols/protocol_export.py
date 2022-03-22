@@ -282,17 +282,17 @@ class DialsProtExport(EdProtExport, DialsProtBase):
 
     def _extraParams(self):
         params = ""
-        if self.exportFormat.get() is MTZ:
-            if self.mtzCombinePartials:
-                params += " mtz.combine_partials=True"
+        if self.getFormat() is MTZ:
+            params += self.mtzExtraParams()
 
-            params += (f" mtz.partiality_threshold="
-                       f"{self.mtzPartialityThreshold.get()}")
+        elif self.getFormat() is SADABS:
+            params += self.sadabsExtraParams()
 
-            params += f" mtz.min_isigi={self.mtzMinIsigi.get()}"
+        elif self.getFormat() is NXS:
+            params += self.nxsExtraParams()
 
-            if self.mtzForceStaticModel:
-                params += " mtz.force_static_model=True"
+        elif self.getFormat() is JSON:
+            params += self.jsonExtraParams()
 
             if self.mtzFilter_ice:
                 params += " mtz.filter_ice_rings=True"
@@ -411,3 +411,93 @@ class DialsProtExport(EdProtExport, DialsProtBase):
                    xdsAsciiStr, jsonStr]
         outputString = f"format={formats[idx]} {nameStr[idx]}"
         return outputString
+
+    def mtzExtraParams(self):
+        params = ""
+        if self.mtzCombinePartials:
+            params += " mtz.combine_partials=True"
+
+            params += (f" mtz.partiality_threshold="
+                       f"{self.mtzPartialityThreshold.get()}")
+
+            params += f" mtz.min_isigi={self.mtzMinIsigi.get()}"
+
+        if self.mtzForceStaticModel:
+            params += " mtz.force_static_model=True"
+
+        if self.mtzFilter_ice:
+            params += " mtz.filter_ice_rings=True"
+
+        if self.mtzDMin.get() is not None:
+            params += f" mtz.d_min={self.mtzDMin.get()}"
+
+        params += (f" mtz.crystal_name="
+                   f"{self.getCrystalName(self.mtzCrystalName.get())}")
+        params += f" mtz.project_name={self.getProjectName()}"
+        return params
+
+    def sadabsExtraParams(self):
+        params = ""
+        if self.sadabsRun.get() != 1:
+            params += f" sadabs.run={self.sadabsRun.get()}"
+
+        if self.sadabsPredict:
+            params += " sadabs.predict=True"
+        return params
+
+    def nxsExtraParams(self):
+        params = ""
+        params += (f" nxs.instrument_name="
+                   f"{self.nxsInstrumentName.get()}")
+
+        params += (f" nxs.instrument_short_name="
+                   f"{self.nxsInstrumentShortName.get()}")
+
+        params += f" nxs.source_name={self.nxsSourceName.get()}"
+
+        params += (f" nxs.source_short_name="
+                   f"{self.nxsSourceShortName.get()}")
+        return params
+
+    def jsonExtraParams(self):
+        params = ""
+        if self.jsonCompact is False:
+            params += " json.compact=False"
+
+        if self.jsonNDigits.get() != 6:
+            params += f" json.n_digits={self.jsonNDigits.get()}"
+        return params
+
+    def shelxExtraParams(self):
+        params = ""
+        if self.shelxScale.get():
+            params += (f" scale=True scale_range="
+                       f"{self.shelxScaleMin.get()},"
+                       f"{self.shelxScaleMax.get()}")
+        else:
+            params += f" scale=False"
+
+        return params
+
+    def petsExtraParams(self):
+        params = ""
+        petsID = self.petsId.get()
+        eeCutoff = self.petsVFExcitationErrorCutoff.get()
+        nMerged = self.petsVFNMerged.get()
+        step = self.petsVFStep.get()
+
+        if petsID not in ("", "None", None):
+            params += f" id={petsID}"
+        params += f" partiality_cutoff={self.petsPartialityCutoff.get()}"
+        if self.petsFlagFiltering.get():
+            params += f" flag_filtering=True"
+        else:
+            params += f" flag_filtering=False"
+        if eeCutoff is not None:
+            params += f" excitation_error_cutoff={eeCutoff}"
+        if nMerged is not None:
+            params += f" n_merged={nMerged}"
+        if step is not None:
+            params += f" step={step}"
+
+        return params
