@@ -41,6 +41,8 @@ NXS = 2
 MMCIF = 3
 XDS_ASCII = 4
 JSON = 5
+SHELX = 6
+PETS = 7
 
 exportFormatChoices = ['mtz', 'sadabs', 'nxs', 'mmcif',
                        'xds_ascii', 'json']
@@ -48,5 +50,3 @@ exportFormatChoices = ['mtz', 'sadabs', 'nxs', 'mmcif',
 if dutils.isMinDialsVersion("3.9.0"):
     exportFormatChoices.append("shelx")
     exportFormatChoices.append("pets")
-    SHELX = 6
-    PETS = 7
