@@ -273,7 +273,7 @@ class DialsProtExport(EdProtExport, DialsProtBase):
                            )
             group.addParam("petsVFExcitationErrorCutoff", pwprot.FloatParam,
                            label="Excitation error cutoff",
-                           defualt=0.04,
+                           default=0.04,
                            allowsNull=True,
                            help=("Excitation error cutoff determining which "
                                  "reflections are included in virtual frames")
