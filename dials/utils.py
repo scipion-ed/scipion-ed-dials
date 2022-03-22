@@ -25,6 +25,8 @@
 # **************************************************************************
 import json
 import os.path as p
+import subprocess
+from packaging import version
 import pyworkflow.gui.text as text
 import pyworkflow.utils as pwutils
 
@@ -96,3 +98,18 @@ def verifyPathExistence(*requiredPaths):
             raise MissingPathException
         else:
             continue
+
+
+def getDialsVersion():
+    # Run subprocess.run and save output object
+    output = subprocess.run("dials.version", capture_output=True)
+    outputString = output.stdout.decode("utf-8").strip()
+    # Get the first line of the input with the full version name
+    dialsVersion = outputString.split("\n")[0].strip("DIALS")
+    # Get only the semantic versioning part of the version number
+    versionNumber = dialsVersion.split("-")[0]
+    return versionNumber
+
+
+def isMinDialsVersion(minversion):
+    return version.parse(getDialsVersion()) >= version.parse(minversion)
