@@ -28,6 +28,7 @@
 
 import pyworkflow.protocol as pwprot
 import dials.convert as dconv
+import dials.utils as dutils
 
 from pwed.objects import ExportFile
 from pwed.protocols import EdProtExport
@@ -215,6 +216,80 @@ class DialsProtExport(EdProtExport, DialsProtBase):
                        "representing the reciprocal lattice points.",
                        )
 
+        if dutils.isMinDialsVersion("3.9.0"):
+            group = form.addGroup(
+                "shelx", condition=f"exportFormat=={SHELX}")
+            group.addParam("shelxName", pwprot.StringParam,
+                           label="Shelx base name",
+                           default="dials",
+                           )
+            group.addParam("shelxScale", pwprot.BooleanParam,
+                           label="Scale reflections?",
+                           help=("Scale reflections to maximise output "
+                                 "precision in SHELX 8.2f format"),
+                           default=True,
+                           )
+            group.addParam("shelxScaleMin", pwprot.FloatParam,
+                           condition="shelxScale",
+                           label="Minimum intensity value after scaling",
+                           default=-9999.0
+                           )
+            group.addParam("shelxScaleMax", pwprot.FloatParam,
+                           condition="shelxScale",
+                           label="Maximum intensity value after scaling",
+                           default=9999.0
+                           )
+            group = form.addGroup(
+                "pets", condition=f"exportFormat=={PETS}")
+            group.addParam("petsPrefix", pwprot.StringParam,
+                           label="Filename prefix",
+                           default="dials_dyn",
+                           help=("The prefix for output files, where the "
+                                 "default will produce dials_dyn.cif_pets")
+                           )
+            group.addParam("petsId", pwprot.IntParam,
+                           label=("ID of experiment to export from"
+                                  " multi-experiment list:"),
+                           default=None,
+                           allowsNull=True,
+                           expertLevel=pwprot.LEVEL_ADVANCED
+                           )
+            group.addParam("petsPartialityCutoff", pwprot.FloatParam,
+                           label="Partiality cutoff",
+                           default=0.99,
+                           allowsNull=True,
+                           help=("Cutoff for determining which reflections are"
+                                 " deemed to be fully recorded")
+                           )
+            group.addParam("petsFlagFiltering", pwprot.BooleanParam,
+                           label="Flag filtering",
+                           default=False,
+                           expertLevel=pwprot.LEVEL_ADVANCED,
+                           help=("If true, keep only the reflections where the"
+                                 " relevant `integrated` flag is set (either "
+                                 "`integrated_sum` or `integrated_prf`). This"
+                                 " seems to be quite restrictive compared to"
+                                 " PETS, so is not set by default.")
+                           )
+            group.addParam("petsVFExcitationErrorCutoff", pwprot.FloatParam,
+                           label="Excitation error cutoff",
+                           defualt=0.04,
+                           allowsNull=True,
+                           help=("Excitation error cutoff determining which "
+                                 "reflections are included in virtual frames")
+                           )
+            group.addParam("petsVFNMerged", pwprot.IntParam,
+                           label=("Number of frames to merge in a virtual"
+                                  " frame"),
+                           default=1,
+                           allowsNull=True,
+                           )
+            group.addParam("petsVFStep", pwprot.IntParam,
+                           label=("Steps between frames"),
+                           default=1,
+                           allowsNull=True,
+                           )
+
         # Allow an easy way to import a phil file with parameters
         PhilBase._definePhilParams(self, form)
 
@@ -294,41 +369,12 @@ class DialsProtExport(EdProtExport, DialsProtBase):
         elif self.getFormat() is JSON:
             params += self.jsonExtraParams()
 
-            if self.mtzFilter_ice:
-                params += " mtz.filter_ice_rings=True"
+        elif self.getFormat() is SHELX:
+            params += self.shelxExtraParams()
 
-            if self.mtzDMin.get() is not None:
-                params += f" mtz.d_min={self.mtzDMin.get()}"
+        elif self.getFormat() is PETS:
+            params += self.petsExtraParams()
 
-            params += (f" mtz.crystal_name="
-                       f"{self.getCrystalName(self.mtzCrystalName.get())}")
-            params += f" mtz.project_name={self.getProjectName()}"
-
-        elif self.exportFormat.get() is SADABS:
-            if self.sadabsRun.get() != 1:
-                params += f" sadabs.run={self.sadabsRun.get()}"
-
-            if self.sadabsPredict:
-                params += " sadabs.predict=True"
-
-        elif self.exportFormat.get() is NXS:
-            params += (f" nxs.instrument_name="
-                       f"{self.nxsInstrumentName.get()}")
-
-            params += (f" nxs.instrument_short_name="
-                       f"{self.nxsInstrumentShortName.get()}")
-
-            params += f" nxs.source_name={self.nxsSourceName.get()}"
-
-            params += (f" nxs.source_short_name="
-                       f"{self.nxsSourceShortName.get()}")
-
-        elif self.exportFormat.get() is JSON:
-            if self.jsonCompact is False:
-                params += " json.compact=False"
-
-            if self.jsonNDigits.get() != 6:
-                params += f" json.n_digits={self.jsonNDigits.get()}"
         return params
 
     # -------------------------- UTILS functions ------------------------------
@@ -355,9 +401,16 @@ class DialsProtExport(EdProtExport, DialsProtBase):
         if self.getFormat() is JSON:
             filetype = "json"
 
+        if self.getFormat() is SHELX:
+            filetype = "shelx"
+
+        if self.getFormat() is PETS:
+            filetype = "cif_pets"
+
         return filetype
 
     def getExport(self):
+        name = None
         if self.getFormat() is MTZ:
             if self.mtzHklout.get() == "":
                 name = f"integrated_{self.getObjId()}.mtz"
@@ -382,6 +435,12 @@ class DialsProtExport(EdProtExport, DialsProtBase):
         if self.getFormat() is JSON:
             name = self.jsonFilename.get()
 
+        if self.getFormat() is SHELX:
+            name = self.shelxName.get()
+
+        if self.getFormat() is PETS:
+            name = self.petsPrefix.get()
+
         return self.outDir(name)
 
     def outDir(self, fn=None):
@@ -403,12 +462,18 @@ class DialsProtExport(EdProtExport, DialsProtBase):
 
         jsonStr = f"json.filename={self.getExport()}"
 
+        shelxStr = (f"shelx.hklout={self.getExport()}.hkl "
+                    f"shelx.ins={self.getExport()}.ins")
+
+        petsStr = f"pets.filename_prefix={self.getExport()}"
+
         idx = self.getFormat()
 
-        formats = ['mtz', 'sadabs', 'nxs', 'mmcif',
-                   'xds_ascii', 'json']
+        formats = exportFormatChoices
+
         nameStr = [mtzStr, sadabsStr, nxsStr, mmcifStr,
-                   xdsAsciiStr, jsonStr]
+                   xdsAsciiStr, jsonStr, shelxStr, petsStr]
+
         outputString = f"format={formats[idx]} {nameStr[idx]}"
         return outputString
 
