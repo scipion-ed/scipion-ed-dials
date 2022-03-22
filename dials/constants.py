@@ -1,5 +1,7 @@
 ''' Define constants for use in protocols and/or tests '''
 
+import dials.utils as dutils
+
 # spot-finding algorithm choice
 DISPERSION = 0
 DISPERSION_EXTENDED = 1
@@ -39,3 +41,12 @@ NXS = 2
 MMCIF = 3
 XDS_ASCII = 4
 JSON = 5
+
+exportFormatChoices = ['mtz', 'sadabs', 'nxs', 'mmcif',
+                       'xds_ascii', 'json']
+
+if dutils.isMinDialsVersion("3.9.0"):
+    exportFormatChoices.append("shelx")
+    exportFormatChoices.append("pets")
+    SHELX = 6
+    PETS = 7

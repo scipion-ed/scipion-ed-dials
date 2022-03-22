@@ -32,6 +32,7 @@ import dials.convert as dconv
 from pwed.objects import ExportFile
 from pwed.protocols import EdProtExport
 from dials.protocols import DialsProtBase, PhilBase, CliBase
+from dials.constants import exportFormatChoices
 from dials.constants import *
 
 
@@ -59,8 +60,7 @@ class DialsProtExport(EdProtExport, DialsProtBase):
 
         form.addParam('exportFormat', pwprot.EnumParam,
                       label='Which format do you want to export?',
-                      choices=['mtz', 'sadabs', 'nxs', 'mmcif',
-                               'xds_ascii', 'json'],
+                      choices=exportFormatChoices,
                       default=MTZ,
                       display=pwprot.EnumParam.DISPLAY_HLIST,
                       help="The output file format. Please note that "
