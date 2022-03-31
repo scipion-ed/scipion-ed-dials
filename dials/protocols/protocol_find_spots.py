@@ -83,37 +83,38 @@ class DialsProtFindSpots(EdProtFindSpots, DialsProtBase, CutRes):
 
         group = form.addGroup('Filtering')
 
-        group.addParam('gain', pwprot.FloatParam,
+        group.addParam('minSpotSize', pwprot.IntParam,
                        default=None,
                        allowsNull=True,
-                       label="Gain")
+                       label="Minimum spot size (pixels)",
+                       help="The minimum number of contiguous pixels for a "
+                       "spot to be accepted by the filtering algorithm.",
+                       expertLevel=pwprot.LEVEL_ADVANCED)
 
-        group.addParam('kernelSize', pwprot.IntParam,
-                       default=3,
-                       label="Kernel size",
-                       help="The size of the local area around the spot in "
-                       "which to calculate the mean and variance. The kernel "
-                       "is given as a box of size (2 * nx + 1, 2 * ny + 1) "
-                       "centred at the pixel."
+        group.addParam('maxSpotSize', pwprot.IntParam,
+                       default=1000,
+                       label="Maximum spot size (pixels)",
+                       help="The maximum "
+                       "number of contiguous pixels for a spot to be accepted"
+                       " by the filtering algorithm.",
+                       expertLevel=pwprot.LEVEL_ADVANCED)
+
+        group.addParam('maxSeparation', pwprot.FloatParam,
+                       label='Max separation',
+                       default=2,
+                       help="The maximum peak-to-centroid separation (in "
+                       "pixels) for a spot to be accepted by the filtering "
+                       "algorithm.",
+                       expertLevel=pwprot.LEVEL_ADVANCED,
                        )
 
-        group.addParam('sigmaBackground', pwprot.FloatParam,
-                       default=6,
-                       label='sigma background',
-                       help="The number of standard deviations of the index "
-                       "of dispersion (variance / mean) in the local area "
-                       "below which the pixelwill be classified as background."
-                       )
-
-        group.addParam('sigmaStrong', pwprot.FloatParam,
-                       default=3,
-                       label="sigma strong",
-                       help="The number of standard deviations above the mean"
-                       " in the localarea above which the pixel will be "
-                       "classified as strong.")
-
-        group.addParam('iceRings', pwprot.BooleanParam,
-                       default=False, label='Filter out ice rings? ')
+        group.addParam('maxStrongPixelFraction', pwprot.FloatParam,
+                       default=0.25,
+                       label='Max fraction strong pixels',
+                       help="If the fraction of pixels in an image marked as"
+                       " strong is greater than this value, throw an "
+                       "exception",
+                       expertLevel=pwprot.LEVEL_ADVANCED)
 
         group.addParam('untrustedAreas', pwprot.BooleanParam,
                        default=False, label='Are there untrusted areas? ',
@@ -140,51 +141,88 @@ class DialsProtFindSpots(EdProtFindSpots, DialsProtBase, CutRes):
                        help="An untrusted rectangle (x0, x1, y0, y1)",
                        )
 
-        group.addParam('minSpotSize', pwprot.IntParam,
+        group.addParam('iceRings', pwprot.BooleanParam,
+                       default=False, label='Filter out ice rings? ')
+
+        group.addParam('thresholdAlgorithm', pwprot.EnumParam,
+                       label='threshold algorithm',
+                       choices=thresholdAlgorithimChoices,
+                       default=thresholdDefault,
+                       help="",
+                       )
+
+        group.addParam('gain', pwprot.FloatParam,
                        default=None,
                        allowsNull=True,
-                       label="Minimum spot size (pixels)",
-                       help="The minimum number of contiguous pixels for a "
-                       "spot to be accepted by the filtering algorithm.",
-                       expertLevel=pwprot.LEVEL_ADVANCED)
+                       label="Gain",
+                       condition=f"thresholdAlgorithm!={RADIAL_PROFILE}",
+                       )
 
-        group.addParam('maxSpotSize', pwprot.IntParam,
-                       default=1000,
-                       label="Maximum spot size (pixels)",
-                       help="The maximum "
-                       "number of contiguous pixels for a spot to be accepted"
-                       " by the filtering algorithm.",
-                       expertLevel=pwprot.LEVEL_ADVANCED)
+        group.addParam('kernelSize', pwprot.IntParam,
+                       default=3,
+                       label="Kernel size",
+                       help="The size of the local area around the spot in "
+                       "which to calculate the mean and variance. The kernel "
+                       "is given as a box of size (2 * nx + 1, 2 * ny + 1) "
+                       "centred at the pixel.",
+                       condition=f"thresholdAlgorithm!={RADIAL_PROFILE}",
+                       )
 
-        group.addParam('maxStrongPixelFraction', pwprot.FloatParam,
-                       default=0.25,
-                       label='Max fraction strong pixels',
-                       help="If the fraction of pixels in an image marked as"
-                       " strong is greater than this value, throw an "
-                       "exception",
-                       expertLevel=pwprot.LEVEL_ADVANCED)
+        group.addParam('sigmaBackground', pwprot.FloatParam,
+                       default=6,
+                       label='sigma background',
+                       help="The number of standard deviations of the index "
+                       "of dispersion (variance / mean) in the local area "
+                       "below which the pixelwill be classified as background.",
+                       condition=f"thresholdAlgorithm!={RADIAL_PROFILE}",
+                       )
+
+        group.addParam('sigmaStrong', pwprot.FloatParam,
+                       default=3,
+                       label="sigma strong",
+                       help="The number of standard deviations above the mean"
+                       " in the localarea above which the pixel will be "
+                       "classified as strong.",
+                       condition=f"thresholdAlgorithm!={RADIAL_PROFILE}",
+                       )
 
         group.addParam('thresholdIntensity', pwprot.FloatParam,
                        default=0,
                        label='Minimum pixel intensity',
                        help="All pixels with a lower value will be considered"
                        " part of the background",
-                       expertLevel=pwprot.LEVEL_ADVANCED)
-
-        group.addParam('maxSeparation', pwprot.FloatParam,
-                       label='Max separation',
-                       default=2,
-                       help="The maximum peak-to-centroid separation (in "
-                       "pixels) for a spot to be accepted by the filtering "
-                       "algorithm.",
                        expertLevel=pwprot.LEVEL_ADVANCED,
+                       condition=f"thresholdAlgorithm!={RADIAL_PROFILE}",)
+
+        group.addParam("nIqr", pwprot.IntParam,
+                       label="IQR multiplier",
+                       default=6,
+                       allowsNull=True,
+                       help=("IQR multiplier for determining the "
+                             "threshold value"),
+                       condition=f"thresholdAlgorithm=={RADIAL_PROFILE}"
                        )
 
-        group.addParam('thresholdAlgorithm', pwprot.EnumParam,
-                       label='threshold algorithm',
-                       choices=['dispersion', 'dispersion extended'],
-                       default=DISPERSION_EXTENDED,
-                       help="",
+        group.addParam("blur", pwprot.EnumParam,
+                       label="Blur preprocessing",
+                       choices=blurChoices,
+                       default=NO_PREPROCESSING,
+                       display=pwprot.EnumParam.DISPLAY_HLIST,
+                       help=("Optional preprocessing of the image by a "
+                             "convolution with a simple Gaussian kernel of "
+                             "size either 3×3 (narrow) or 5×5 (wide). This "
+                             "may help to reduce noise peaks and to combine "
+                             "split spots."),
+                       condition=f"thresholdAlgorithm=={RADIAL_PROFILE}"
+                       )
+
+        group.addParam("nBins", pwprot.IntParam,
+                       label="Number of resolution bins",
+                       default=100,
+                       allowsNull=True,
+                       help=("Number of 2θ bins in which to calculate "
+                             "background"),
+                       condition=f"thresholdAlgorithm=={RADIAL_PROFILE}"
                        )
 
         PhilBase._definePhilParams(self, form)
@@ -338,10 +376,7 @@ class DialsProtFindSpots(EdProtFindSpots, DialsProtBase, CutRes):
                 params += (f" spotfinder.filter.untrusted.rectangle="
                            f"{rectangle2}")
 
-        if self.thresholdAlgorithm.get() is DISPERSION:
-            params += f" spotfinder.threshold.algorithm=dispersion"
-        elif self.thresholdAlgorithm.get() is DISPERSION_EXTENDED:
-            params += f" spotfinder.threshold.algorithm=dispersion_extended"
+        params += self.getThresholdAlgorithmParams()
 
         if self.thresholdIntensity.get():
             params += (f" spotfinder.threshold.dispersion.global_threshold="
@@ -389,3 +424,50 @@ class DialsProtFindSpots(EdProtFindSpots, DialsProtBase, CutRes):
         scanrange = ' '.join(f'spotfinder.scan_range={i},{j}'
                              for i, j in scanranges)
         return scanrange
+
+    def getThresholdAlgorithm(self):
+        return self.thresholdAlgorithm.get()
+
+    def getThresholdAlgorithmCommand(self):
+        algorithmOptions = {
+            DISPERSION: "dispersion",
+            DISPERSION_EXTENDED: "dispersion_extended",
+            RADIAL_PROFILE: "radial_profile",
+        }
+        selectedOption = algorithmOptions[self.getThresholdAlgorithm()]
+        return f" spotfinder.threshold.algorithm={selectedOption}"
+
+    def getBlur(self):
+        blurOptions = {
+            NO_PREPROCESSING: None,
+            NARROW: "narrow",
+            WIDE: "wide",
+        }
+        blurChoice = blurOptions[self.blur.get()]
+        if blurChoice is None:
+            return ""
+        choiceString = (f" spotfinder.threshold.radial_profile.blur="
+                        f"{blurChoice}")
+        return choiceString
+
+    def getRadialProfileParams(self):
+        if self.getThresholdAlgorithm() is not RADIAL_PROFILE:
+            return ""
+
+        profileParams = self.getBlur()
+
+        if self.nIqr.get() is not None:
+            profileParams += (
+                f" spotfinder.threshold.radial_profile.n_iqr="
+                f"{self.nIqr.get()}")
+
+        if self.nBins.get() is not None:
+            profileParams += (
+                f" spotfinder.threshold.radial_profile.n_bins="
+                f"{self.nBins.get()}")
+        return profileParams
+
+    def getThresholdAlgorithmParams(self):
+        algorithmParams = self.getThresholdAlgorithmCommand()
+        algorithmParams += self.getRadialProfileParams()
+        return algorithmParams

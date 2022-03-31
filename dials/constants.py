@@ -5,6 +5,20 @@ import dials.utils as dutils
 # spot-finding algorithm choice
 DISPERSION = 0
 DISPERSION_EXTENDED = 1
+RADIAL_PROFILE = 2
+
+thresholdAlgorithimChoices = ['dispersion', 'dispersion extended']
+thresholdDefault = DISPERSION_EXTENDED
+
+if dutils.isMinDialsVersion("3.9.0"):
+    thresholdAlgorithimChoices.append("radial profile")
+    thresholdDefault = RADIAL_PROFILE
+
+# radial profile options
+NO_PREPROCESSING = 0
+NARROW = 1
+WIDE = 2
+blurChoices = ["no preprocessing", "narrow (3×3)", "wide (5×5)"]
 
 # scan varying methods
 AUTO = 0
