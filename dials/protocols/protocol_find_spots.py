@@ -272,8 +272,7 @@ class DialsProtFindSpots(EdProtFindSpots, DialsProtBase, CutRes):
             summary.append("\n")
 
         if self.getLogOutput() not in (None, ''):
-            pass
-        #    summary.append(self.getLogOutput())
+            summary.append(self.getLogOutput())
 
         return summary
     # -------------------------- BASE methods to be overridden -----------------

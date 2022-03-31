@@ -59,7 +59,8 @@ class DialsReciprocalLatticeView(pwviewer.CommandView):
     def __init__(self, modelFile, reflectionFile=None, **kwargs):
         pwviewer.CommandView.__init__(
             self,
-            f"dials.reciprocal_lattice_viewer '{modelFile}' '{reflectionFile}' &",
+            f"dials.reciprocal_lattice_viewer "
+            f"'{modelFile}' '{reflectionFile}' &",
             **kwargs)
 
 
@@ -68,11 +69,15 @@ RECIPROCAL_VIEWER = 1
 
 
 class DialsFoundSpotsViewer(pwviewer.ProtocolViewer):
-    """ Vizualisation of Dials imported images and results from spotfinding and indexing """
+    """ Vizualisation of Dials imported images and results from spotfinding
+    and indexing """
 
     _environments = [pwviewer.DESKTOP_TKINTER]
-    _targets = [dialsProt.DialsProtImportDiffractionImages, dialsProt.DialsProtFindSpots, dialsProt.DialsProtIndexSpots,
-                dialsProt.DialsProtRefineSpots, dialsProt.DialsProtIntegrateSpots]
+    _targets = [dialsProt.DialsProtImportDiffractionImages,
+                dialsProt.DialsProtFindSpots,
+                dialsProt.DialsProtIndexSpots,
+                dialsProt.DialsProtRefineSpots,
+                dialsProt.DialsProtIntegrateSpots]
 
     def _defineParams(self, form):
         form.addSection(label='Pick viewer')
@@ -112,7 +117,9 @@ class DialsFoundSpotsViewer(pwviewer.ProtocolViewer):
 
     def _viewReciprocal(self, **kwargs):
         DialsReciprocalLatticeView(
-            dvutils._getModel(self.protocol), reflectionFile=dvutils._getRefls(self.protocol)).show()
+            dvutils._getModel(self.protocol),
+            reflectionFile=dvutils._getRefls(self.protocol)
+        ).show()
 
 
 class DialsResultsViewer(pwviewer.Viewer):
@@ -207,13 +214,15 @@ class ResultsWindow(pwgui.Window):
         imgOverlaidBtn = Button(subframe, "View images with spots",
                                 command=self._viewOverlaidImages)
         imgOverlaidBtn.grid(row=0, column=1, sticky='nw', padx=(0, 5))
-        if None in {dvutils._getModel(self.protocol), dvutils._getRefls(self.protocol)}:
+        if None in {dvutils._getModel(self.protocol),
+                    dvutils._getRefls(self.protocol)}:
             imgOverlaidBtn['state'] = 'disabled'
 
         reciprocalBtn = Button(subframe, "View reciprocal lattice",
                                command=self._viewReciprocal)
         reciprocalBtn.grid(row=0, column=2, sticky='nw', padx=(0, 5))
-        if None in {dvutils._getModel(self.protocol), dvutils._getRefls(self.protocol)}:
+        if None in {dvutils._getModel(self.protocol),
+                    dvutils._getRefls(self.protocol)}:
             reciprocalBtn['state'] = 'disabled'
 
         htmlBtn = HotButton(subframe, 'Open HTML Report',
@@ -235,7 +244,9 @@ class ResultsWindow(pwgui.Window):
 
     def _viewReciprocal(self, e=None):
         DialsReciprocalLatticeView(
-            dvutils._getModel(self.protocol), reflectionFile=dvutils._getRefls(self.protocol)).show()
+            dvutils._getModel(self.protocol),
+            reflectionFile=dvutils._getRefls(self.protocol)
+        ).show()
 
     def _openHTML(self, e=None):
         if dvutils._getHtml(self.protocol) is not None:
