@@ -116,6 +116,7 @@ class DialsProtFindSpots(EdProtFindSpots, DialsProtBase, CutRes):
                        "exception",
                        expertLevel=pwprot.LEVEL_ADVANCED)
 
+        # Options for defining untrusted areas of the detector
         group.addParam('untrustedAreas', pwprot.BooleanParam,
                        default=False, label='Are there untrusted areas? ',
                        expertLevel=pwprot.LEVEL_ADVANCED)
@@ -144,6 +145,7 @@ class DialsProtFindSpots(EdProtFindSpots, DialsProtBase, CutRes):
         group.addParam('iceRings', pwprot.BooleanParam,
                        default=False, label='Filter out ice rings? ')
 
+        # Select threshold algorithm
         group.addParam('thresholdAlgorithm', pwprot.EnumParam,
                        label='threshold algorithm',
                        choices=thresholdAlgorithimChoices,
@@ -151,6 +153,7 @@ class DialsProtFindSpots(EdProtFindSpots, DialsProtBase, CutRes):
                        help="",
                        )
 
+        # Options for the dispersion algorithms
         group.addParam('gain', pwprot.FloatParam,
                        default=None,
                        allowsNull=True,
@@ -194,6 +197,7 @@ class DialsProtFindSpots(EdProtFindSpots, DialsProtBase, CutRes):
                        expertLevel=pwprot.LEVEL_ADVANCED,
                        condition=f"thresholdAlgorithm!={RADIAL_PROFILE}",)
 
+        # Options for the radial profile algorithm
         group.addParam("nIqr", pwprot.IntParam,
                        label="IQR multiplier",
                        default=6,
@@ -225,6 +229,7 @@ class DialsProtFindSpots(EdProtFindSpots, DialsProtBase, CutRes):
                        condition=f"thresholdAlgorithm=={RADIAL_PROFILE}"
                        )
 
+        # Default end-of-form parameters
         PhilBase._definePhilParams(self, form)
 
         CliBase._defineCliParams(self, form)
