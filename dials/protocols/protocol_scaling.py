@@ -343,11 +343,11 @@ class DialsProtScaling(EdProtScaling, ImageExclusions, CutRes):
         if self.getSpaceGroupLogOutput() not in (None, ""):
             summary.append(self.getSpaceGroupLogOutput())
 
-        if self.mtzExport("merged_mtz"):
+        if self.mtzExportStatus("merged_mtz"):
             summary.append(
                 f"Exported merged mtz file {self.getMergedMtzPath()}")
 
-        if self.mtzExport("unmerged_mtz"):
+        if self.mtzExportStatus("unmerged_mtz"):
             summary.append(
                 f"Exported unmerged mtz file {self.getUnmergedMtzPath()}")
 
@@ -523,7 +523,7 @@ class DialsProtScaling(EdProtScaling, ImageExclusions, CutRes):
     def getMergedMtzLine(self):
         # Should have been part of _extraParams(), but want all output options
         # to be part of _initialParams()
-        if self.mtzExport("merged_mtz"):
+        if self.mtzExportStatus("merged_mtz"):
             return f"output.merged_mtz={self.getMergedMtzPath()} "
         else:
             return ""
@@ -531,14 +531,14 @@ class DialsProtScaling(EdProtScaling, ImageExclusions, CutRes):
     def getUnmergedMtzLine(self):
         # Should have been part of _extraParams(), but want all output options
         # to be part of _initialParams()
-        if self.mtzExport("unmerged_mtz"):
+        if self.mtzExportStatus("unmerged_mtz"):
             return f"output.unmerged_mtz={self.getUnmergedMtzPath()} "
         else:
             return ""
 
     def getMtzLine(self):
-        exportMtz = (self.mtzExport("merged_mtz")
-                     or self.mtzExport("unmerged_mtz"))
+        exportMtz = (self.mtzExportStatus("merged_mtz")
+                     or self.mtzExportStatus("unmerged_mtz"))
         mtzLine = (f"{self.getMergedMtzLine()}"
                    f"{self.getUnmergedMtzLine()}")
         if exportMtz:
@@ -547,7 +547,7 @@ class DialsProtScaling(EdProtScaling, ImageExclusions, CutRes):
 
         return mtzLine
 
-    def mtzExport(self, key=None):
+    def mtzExportStatus(self, key=None):
         exportStatus = {"merged_mtz": self.exportMergedMtz.get(),
                         "unmerged_mtz": self.exportUnmergedMtz.get()}
         if key in exportStatus:
