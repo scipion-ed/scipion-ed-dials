@@ -28,6 +28,6 @@ identifiers:
       for Electron Diffraction image processing.
 repository-code: "https://github.com/scipion-ed/scipion-ed-dials"
 license: GPL-3.0
-commit: 8e6c10d
-version: v3!1.0.0b2
-date-released: "2022-02-10"
+commit: f952f19
+version: v3!1.0.0
+date-released: "2022-04-07"
