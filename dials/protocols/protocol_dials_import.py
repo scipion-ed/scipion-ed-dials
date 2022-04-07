@@ -4,7 +4,8 @@
 # *              V. E.G. Bengtsson (viktor.bengtsson@mmk.su.se) [2]
 # *
 # * [1] SciLifeLab, Stockholm University
-# * [2] Department of Materials and Environmental Chemistry, Stockholm University
+# * [2] Department of Materials and Environmental Chemistry,
+# * Stockholm University
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
@@ -27,19 +28,16 @@
 # **************************************************************************
 
 import os
-import re
-import pathlib
-from glob import glob
 
-import pyworkflow as pw
-import pyworkflow.protocol as pwprot
+from dials.protocols import DialsProtBase, CliBase, PhilBase
 import dials.utils as dutils
 
-from pwed.objects import DiffractionImage, SetOfDiffractionImages
 from pwed.protocols import ProtImportDiffractionImages
 
 
-class DialsProtImportDiffractionImages(ProtImportDiffractionImages):
+class DialsProtImportDiffractionImages(
+        ProtImportDiffractionImages,
+        DialsProtBase):
     """ Base class for other Import protocols.
     All imports protocols will have:
     1) Several options to import from (_getImportOptions function)
@@ -56,12 +54,9 @@ class DialsProtImportDiffractionImages(ProtImportDiffractionImages):
     def _defineParams(self, form):
         ProtImportDiffractionImages._defineParams(self, form)
 
-        # Allow adding anything else with command line syntax
-        group = form.addGroup('Raw command line input parameters',
-                              expertLevel=pwprot.LEVEL_ADVANCED)
-        group.addParam('commandLineInput', pwprot.StringParam,
-                       default='',
-                       help="Anything added here will be added at the end of the command line")
+        PhilBase._definePhilParams(self, form)
+
+        CliBase._defineCliParams(self, form)
 
     # -------------------------- INSERT functions ------------------------------
     def _insertAllSteps(self):
@@ -74,11 +69,11 @@ class DialsProtImportDiffractionImages(ProtImportDiffractionImages):
     # -------------------------- STEPS functions -------------------------------
     def importStep(self):
         # Run dials import on the images
-        self.info("Rotation axis is {}".format(self.getRotationAxis()))
+        self.info(f"Rotation axis is {self.getRotationAxis()}")
         program = 'dials.import'
-        arguments = self._prepareCommandLineArguments(program)
+        arguments = self._prepareCommandline(program)
         self.runJob(program, arguments)
-        assert(os.path.exists(self.getOutputModelFile()))
+        dutils.verifyPathExistence(self.getOutputModelFile())
 
     def createOutputStep(self):
         super().createOutputStep(dialsModel=self.getOutputModelFile())
@@ -87,45 +82,38 @@ class DialsProtImportDiffractionImages(ProtImportDiffractionImages):
     # def _validate(self)
 
     # -------------------------- BASE methods to be overridden -----------------
-    # def here
+    OUTPUT_EXPT_FILENAME = 'imported.expt'
+
+    def getDatasets(self):
+        return dutils.getDatasets(self.getOutputModelFile())
+
+    def _initialParams(self, program):
+        params = (f"{self.getCmdparamStart()} "
+                  f"output.log={self.getLogFilePath(program)} "
+                  f"output.experiments={self.getOutputModelFile()}"
+                  )
+        return params
+
+    def _extraParams(self):
+        params = self._getDialsOverwrites()
+        return params
 
     # -------------------------- UTILS functions ------------------------------
 
     def getCmdparamStart(self):
         self.loadPatterns()
         if self.useTemplate:
-            return "template={}".format(self._templatePattern)
+            return f"template={self._templatePattern}"
         else:
             fileString = " ".join([i[0] for i in self.getMatchingFiles()])
             return fileString
 
-    def getOutputModelFile(self):
-        return self._getExtraPath('imported.expt')
-
-    def getDatasets(self):
-        return dutils.getDatasets(self.getOutputModelFile())
-
-    def getLogOutput(self):
-        return ''
-
-    def _prepareCommandLineArguments(self, program):
-        # Make a string to append to
-        cmdparams = "{}".format(self.getCmdparamStart())
-
-        # Add standard output paths
-        logPath = "{}/{}.log".format(self._getLogsPath(), program)
-        cmdparams += " output.log={} output.experiments={}".format(
-            logPath, self.getOutputModelFile())
-
+    def _getDialsOverwrites(self):
+        params = ""
         if self.getRotationAxis():
-            cmdparams += " goniometer.axes={}".format(
-                ",".join(map(str, self.getRotationAxis())))
+            params += (
+                f" goniometer.axes={self.list2str(self.getRotationAxis())}")
 
-        if self.overwriteDetectorDistance.get() is not None:
-            cmdparams += " distance={}".format(
-                self.overwriteDetectorDistance.get())
-
-        if self.commandLineInput.get():
-            cmdparams += " {}".format(self.commandLineInput.get())
-
-        return cmdparams
+        if self.getNewDetectorDistance() is not None:
+            params += f" distance={self.getNewDetectorDistance()}"
+        return params

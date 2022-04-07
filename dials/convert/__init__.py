@@ -1,8 +1,10 @@
 # **************************************************************************
 # *
 # * Authors:     J.M. De la Rosa Trevin (delarosatrevin@scilifelab.se) [1]
+# *              Viktor E. G. Bengtsson (viktor.bengtsson@mmk.su.se)   [2]
 # *
 # * [1] SciLifeLab, Stockholm University
+# * [2] MMK, Stockholm University
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
@@ -24,4 +26,5 @@
 # *
 # **************************************************************************
 
-from .input_output_utils import writeJson, readRefl, writeRefl, writeRefinementPhil, copyDialsFile
+from .input_output_utils import writeJson, readRefl, writeRefl, copyDialsFile
+from .phils_utils import writeRefinementPhil, writeRestraintsPhil

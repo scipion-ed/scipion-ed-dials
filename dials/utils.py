@@ -25,8 +25,12 @@
 # **************************************************************************
 import json
 import os.path as p
+import subprocess
+from packaging import version
 import pyworkflow.gui.text as text
 import pyworkflow.utils as pwutils
+
+from dials.objects import *
 
 
 def _showHtmlReport(reportPath):
@@ -47,10 +51,18 @@ def getModelDataPath(exptFile):
 def getDatasets(modelFile):
     datasets = getModelDataPath(modelFile)
     if len(datasets) >= 1:
-        newlineDatasets = '\n'.join('{}'.format(item) for item in datasets)
-        return "Source of data:\n{}".format(newlineDatasets)
+        newlineDatasets = '\n'.join(f'{item}' for item in datasets)
+        return f"Source of data:\n{newlineDatasets}"
     else:
         return ''
+
+
+def existsPath(path):
+    return p.exists(path)
+
+
+def joinPath(*args):
+    return p.join(*args)
 
 
 def readLog(logfile, start, stop, flush=None):
@@ -74,7 +86,30 @@ def readLog(logfile, start, stop, flush=None):
             elif append:
                 contentList.append(line)
 
-    newlineList = ''.join('{}'.format(item) for item in contentList)
-    content = "{}".format(newlineList)
+    newlineList = ''.join(f'{item}' for item in contentList)
+    content = f"{newlineList}"
 
     return content
+
+
+def verifyPathExistence(*requiredPaths):
+    for reqPath in requiredPaths:
+        if not existsPath(reqPath):
+            raise MissingPathException
+        else:
+            continue
+
+
+def getDialsVersion():
+    # Run subprocess.run and save output object
+    output = subprocess.run("dials.version", capture_output=True)
+    outputString = output.stdout.decode("utf-8").strip()
+    # Get the first line of the input with the full version name
+    dialsVersion = outputString.split("\n")[0].strip("DIALS")
+    # Get only the semantic versioning part of the version number
+    versionNumber = dialsVersion.split("-")[0]
+    return versionNumber
+
+
+def isMinDialsVersion(minversion):
+    return version.parse(getDialsVersion()) >= version.parse(minversion)

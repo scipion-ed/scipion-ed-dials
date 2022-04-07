@@ -4,7 +4,8 @@
 # *              V. E.G: Bengtsson (viktor.bengtsson@mmk.su.se) [2]
 # *
 # * [1] SciLifeLab, Stockholm University
-# * [2] Department of Materials and Environmental Chemistry, Stockholm University
+# * [2] Department of Materials and Environmental Chemistry,
+# *     Stockholm University
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
@@ -26,22 +27,19 @@
 # *
 # **************************************************************************
 
-import os
-import re
-from glob import glob
-from pathlib import Path
-
 import pyworkflow.protocol as pwprot
 import dials.utils as dutils
 
-from pwed.objects import IndexedSpot, SetOfIndexedSpots, IndexedSpot, SetOfIndexedSpots
+from pwed.objects import IndexedSpot
 from pwed.protocols import EdProtIntegrateSpots
+from dials.protocols import DialsProtBase, PhilBase, CliBase, HtmlBase
 from pwed.convert import find_subranges
-from dials.convert import writeJson, readRefl, writeRefl, writeRefinementPhil, copyDialsFile
+from pwed.utils import CutRes
+from dials.convert import readRefl
 from dials.constants import *
 
 
-class DialsProtIntegrateSpots(EdProtIntegrateSpots):
+class DialsProtIntegrateSpots(EdProtIntegrateSpots, DialsProtBase, CutRes):
     """ Protocol for integrating spots using Dials
     """
     _label = 'integrate'
@@ -67,79 +65,31 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots):
                       help="The number of processes to use.")
 
         form.addParam('doFilter_ice', pwprot.BooleanParam, default=False,
-                      label='Filter ice?', expertLevel=pwprot.LEVEL_ADVANCED,
-                      help="Filter out reflections at typical ice ring resolutions before max_cell estimation.")
+                      label='Filter ice?',
+                      expertLevel=pwprot.LEVEL_ADVANCED,
+                      help="Filter out reflections at typical ice ring "
+                      "resolutions before max_cell estimation.")
 
         form.addParam('useScanRanges', pwprot.BooleanParam,
-                      label='Cut out some images with scan_ranges?', default=False,
-                      help="Explicitly specify the images to be processed. Only applicable when experiment list contains a single imageset.", expertLevel=pwprot.LEVEL_ADVANCED,
+                      label='Cut out some images with scan_ranges?',
+                      default=False,
+                      help="Explicitly specify the images to be processed. "
+                      "Only applicable when experiment list contains a single"
+                      " imageset.",
+                      expertLevel=pwprot.LEVEL_ADVANCED,
                       )
 
-        form.addParam('dMin', pwprot.FloatParam,
-                      default=None,
-                      allowsNull=True,
-                      label="High resolution limit",
-                      help="The maximum resolution limit")
+        # Define d_min and d_max
+        self._defineResolutionParams(form)
 
-        form.addParam('dMax', pwprot.FloatParam,
-                      default=None,
-                      allowsNull=True,
-                      label="Low resolution limit",
-                      help="The minimum resolution limit")
+        # Allow an easy way to import a phil file with parameters
+        PhilBase._definePhilParams(self, form)
 
         # Allow adding anything else with command line syntax
-        group = form.addGroup('Raw command line input parameters',
-                              expertLevel=pwprot.LEVEL_ADVANCED)
-        group.addParam('commandLineInput', pwprot.StringParam,
-                       default='',
-                       help="Anything added here will be added at the end of the command line")
+        CliBase._defineCliParams(self, form)
 
         # Add a section for creating an html report
-        form.addSection('HTML report')
-        form.addParam('makeReport', pwprot.BooleanParam,
-                      label='Do you want to create an HTML report for the output?', default=False,
-                      help="",
-                      )
-
-        form.addParam('showReport', pwprot.BooleanParam,
-                      label='Do you want to open the report as soon as the protocol is done?', default=False,
-                      help="",
-                      condition="makeReport",
-                      )
-
-        group = form.addGroup('Parameters',
-                              condition="makeReport",)
-
-        self.extDepOptions = ['remote', 'local', 'embed']
-        group.addParam('externalDependencies', pwprot.EnumParam,
-                       label='External dependencies: ',
-                       choices=self.extDepOptions,
-                       default=REMOTE,
-                       help="Whether to use remote external dependencies (files relocatable but requires an internet connection), local (does not require internet connection but files may not be relocatable) or embed all external dependencies (inflates the html file size).",
-                       )
-
-        group.addParam('pixelsPerBin', pwprot.IntParam,
-                       label='Pixels per bin',
-                       default=40,
-                       GE=1,
-                       allowsNull=True,
-                       )
-
-        group.addParam('centroidDiffMax', pwprot.FloatParam,
-                       label='Centroid diff max',
-                       default=None,
-                       allowsNull=True,
-                       expertLevel=pwprot.LEVEL_ADVANCED,
-                       help="Magnitude in pixels of shifts mapped to the extreme colours in the heatmap plots centroid_diff_x and centroid_diff_y",
-                       )
-
-        # Allow adding anything else with command line syntax
-        group = form.addGroup('HTML report command line parameters',
-                              expertLevel=pwprot.LEVEL_ADVANCED,
-                              condition="makeReport",)
-        group.addParam('commandLineInputReport', pwprot.StringParam,
-                       default='',
-                       help="Anything added here will be added at the end of the command line")
+        HtmlBase._defineHtmlParams(self, form)
 
    # -------------------------- INSERT functions ------------------------------
 
@@ -154,8 +104,8 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots):
     # -------------------------- STEPS functions -------------------------------
     def convertInputStep(self, inputSpotId):
         inputSet = self.inputSet.get()
-        self.info("Number of images: %s" % inputSet.getSize())
-        self.info("Number of spots: %s" % inputSet.getSpots())
+        self.info(f"Number of images: {inputSet.getSize()}")
+        self.info(f"Number of spots: {inputSet.getSpots()}")
         # Write new model and/or reflection file if no was supplied from set
         if self._checkWriteModel():
             self.writeJson(inputSet, self.getInputModelFile())
@@ -164,24 +114,18 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots):
 
     def integrateStep(self):
         program = 'dials.integrate'
-        arguments = self._prepCommandline(program)
+        arguments = self._prepareCommandline(program)
         try:
             self.runJob(program, arguments)
         except:
             self.info(self.getError())
-    # TODO: Create a temporary "SetOfIndexedSpotsFile" that only saves the file location
-
-    def makeHtmlReportStep(self):
-        prog = 'dials.report'
-        arguments = self._prepCommandlineReport()
-        self.runJob(prog, arguments)
-        if self.showReport:
-            dutils._showHtmlReport(self.getOutputHtmlFile())
+    # TODO: Create a temporary "SetOfIndexedSpotsFile" that
+    # only saves the file location
 
     def createOutputStep(self):
         # Check that the indexing created proper output
-        assert(os.path.exists(self.getOutputReflFile()))
-        assert(os.path.exists(self.getOutputModelFile()))
+        dutils.verifyPathExistence(self.getOutputReflFile(),
+                                   self.getOutputModelFile())
 
         outputSet = self._createSetOfIndexedSpots()
         outputSet.setDialsModel(self.getOutputModelFile())
@@ -209,7 +153,7 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots):
                 outputSet.append(iSpot)
         except Exception as e:
             self.info(
-                "createOutputStep created an exception with the message {}".format(e))
+                f"createOutputStep created an exception with the message {e}")
 
         outputSet.write()
 
@@ -218,6 +162,8 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots):
     # -------------------------- INFO functions -------------------------------
     def _validate(self):
         errors = []
+        if self.swappedResolution():
+            errors.append(self.resSwapMsg())
         return errors
 
     def _summary(self):
@@ -226,142 +172,64 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots):
             summary.append(self.getDatasets())
             summary.append("\n")
 
-        if self.getLogOutput() not in (None, ''):
-            pass
-            # summary.append(self.getLogOutput())
-
         return summary
 
-    # -------------------------- UTILS functions ------------------------------
-    def getInputModelFile(self):
-        if self.getSetModel():
-            return self.getSetModel()
-        else:
-            return self._getExtraPath('sv_refined.expt')
+    # -------------------------- BASE methods to be overridden -----------------
 
-    def getInputReflFile(self):
-        if self.getSetRefl():
-            return self.getSetRefl()
-        else:
-            return self._getExtraPath('sv_refined.refl')
-
-    def getOutputModelFile(self):
-        return self._getExtraPath('integrated_model.expt')
-
-    def getOutputReflFile(self):
-        return self._getExtraPath('integrated_reflections.refl')
-
-    def getOutputHtmlFile(self):
-        return self._getExtraPath('dials.report.html')
-
-    def getPhilPath(self):
-        return self._getTmpPath('integrate.phil')
-
-    def getDatasets(self):
-        return dutils.getDatasets(self.getInputModelFile())
+    INPUT_EXPT_FILENAME = 'sv_refined.expt'
+    OUTPUT_EXPT_FILENAME = 'integrated_model.expt'
+    INPUT_REFL_FILENAME = 'sv_refined.refl'
+    OUTPUT_REFL_FILENAME = 'integrated_reflections.refl'
 
     def getLogOutput(self):
         logOutput = dutils.readLog(
-            self.getLogFilePath(),
+            self.getLogFilePath(program='dials.integrate'),
             'Summary vs resolution',
             'Timing')
         return logOutput
 
-    def existsPath(self, path):
-        return os.path.exists(path)
-
-    def getSetModel(self):
-        inputSet = self.inputSet.get()
-        inputSet = self.inputSet.get()
-        if self.existsPath(inputSet.getDialsModel()):
-            return inputSet.getDialsModel()
-        elif self.existsPath(inputSet.getDialsModel()):
-            return inputSet.getDialsModel()
-        else:
-            return None
-
-    def getSetRefl(self):
-        inputSet = self.inputSet.get()
-        inputSet = self.inputSet.get()
-        if self.existsPath(inputSet.getDialsRefl()):
-            return inputSet.getDialsRefl()
-        elif self.existsPath(inputSet.getDialsRefl()):
-            return inputSet.getDialsRefl()
-        else:
-            return None
-
-    def getLogFilePath(self, program='dials.integrate'):
-        logPath = "{}/{}.log".format(self._getLogsPath(), program)
-        return logPath
-
-    def _checkWriteModel(self):
-        return self.getSetModel() != self.getInputModelFile()
-
-    def _checkWriteRefl(self):
-        return self.getSetRefl() != self.getInputReflFile()
-
-    def _prepCommandline(self, program):
-        "Create the command line input to run dials programs"
-
-        # Input basic parameters
-        logPath = self.getLogFilePath(program)
-        params = "{} {} output.log={} output.experiments={} output.reflections={}".format(
-            self.getInputModelFile(),
-            self.getInputReflFile(),
-            logPath,
-            self.getOutputModelFile(),
-            self.getOutputReflFile(),
-        )
-
-        # Update the command line with additional parameters
-        if self.useScanRanges.get() is True:
-            params += " {}".format(self._createScanRanges())
-
-        if self.nproc.get() not in (None, 1):
-            params += " nproc={}".format(self.nproc.get())
-
-        if self.doFilter_ice.get():
-            params += " filter.ice_rings={}".format(
-                self.doFilter_ice.get())
-
-        if self.dMin.get():
-            params += " prediction.d_min={}".format(self.dMin.get())
-
-        if self.dMax.get():
-            params += " prediction.d_max={}".format(self.dMax.get())
-
-        if self.commandLineInput.get():
-            params += " {}".format(self.commandLineInput.get())
+    def _initialParams(self, program):
+        # Add output.phil parameter
+        params = (f"{self.getInputModelFile()} {self.getInputReflFile()} "
+                  f"output.log={self.getLogFilePath(program)} "
+                  f"output.experiments={self.getOutputModelFile()} "
+                  f"output.reflections={self.getOutputReflFile()} "
+                  f"output.phil={self.getOutputPhilFile()}")
 
         return params
+
+    def _extraParams(self):
+        params = ""
+        if self.useScanRanges.get() is True:
+            params += f" {self._createScanRanges()}"
+
+        if self.nproc.get() not in (None, 1):
+            params += f" nproc={self.nproc.get()}"
+
+        if self.doFilter_ice.get():
+            params += f" filter.ice_rings={self.doFilter_ice.get()}"
+
+        if self.getDMin():
+            params += f" prediction.d_min={self.getDMin()}"
+
+        if self.getDMax():
+            params += f" prediction.d_max={self.getDMax()}"
+        return params
+
+    # -------------------------- UTILS functions ------------------------------
+
+    # Placeholder for defaulting to creating phil files
+    def getPhilPath(self):
+        return self._getTmpPath('integrate.phil')
+
+    def getOutputPhilFile(self):
+        return self._getExtraPath('dials.integrate.phil')
 
     def _createScanRanges(self):
         # Go through the
         images = [image.getObjId() for image in self.inputImages.get()
                   if image.getIgnore() is not True]
         scanranges = find_subranges(images)
-        scanrange = ' '.join('spotfinder.scan_range={},{}'.format(i, j)
+        scanrange = ' '.join(f'spotfinder.scan_range={i},{j}'
                              for i, j in scanranges)
         return scanrange
-
-    def _prepCommandlineReport(self):
-        "Create the command line input to run dials programs"
-        # Input basic parameters
-        params = "{} {} output.html={} output.external_dependencies={}".format(
-            self.getOutputModelFile(),
-            self.getOutputReflFile(),
-            self.getOutputHtmlFile(),
-            self.extDepOptions[self.externalDependencies.get()]
-        )
-
-        if self.pixelsPerBin.get():
-            params += " pixels_per_bin={}".format(self.pixelsPerBin.get())
-
-        if self.centroidDiffMax.get():
-            params += " centroid_diff_max={}".format(
-                self.centroidDiffMax.get())
-
-        if self.commandLineInputReport.get() not in (None, ''):
-            params += " {}".format(self.commandLineInputReport.get())
-
-        return params

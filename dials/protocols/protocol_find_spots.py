@@ -4,7 +4,8 @@
 # *              V. E.G: Bengtsson (viktor.bengtsson@mmk.su.se) [2]
 # *
 # * [1] SciLifeLab, Stockholm University
-# * [2] Department of Materials and Environmental Chemistry, Stockholm University
+# * [2] Department of Materials and Environmental Chemistry,
+# *     Stockholm University
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
@@ -27,22 +28,21 @@
 # **************************************************************************
 
 import os
-import re
-from glob import glob
 
 import pyworkflow.protocol as pwprot
+from dials.protocols import DialsProtBase, CliBase, PhilBase, HtmlBase
 import dials.utils as dutils
 
-from pwed.objects import DiffractionImage, SetOfDiffractionImages, DiffractionSpot, SetOfSpots
+from pwed.objects import DiffractionSpot
 from pwed.protocols import EdProtFindSpots
+from pwed.utils import CutRes
 from pwed.convert import find_subranges
 from dials.convert import writeJson, readRefl, copyDialsFile
 from dials.constants import *
 
 
-class DialsProtFindSpots(EdProtFindSpots):
-    """ Base class to all EM protocols.
-    It will contains some common functionalities.
+class DialsProtFindSpots(EdProtFindSpots, DialsProtBase, CutRes):
+    """ Protocol for performing spot finding using dials.find_spots
     """
 
     _label = 'find spots'
@@ -60,19 +60,11 @@ class DialsProtFindSpots(EdProtFindSpots):
 
         # Help messages are copied from the DIALS documentation at
         # https://dials.github.io/documentation/programs/dials_find_spots.html
-        form.addParam('dMin', pwprot.FloatParam,
-                      default=None,
-                      allowsNull=True,
-                      label="High resolution limit",
-                      help="The high resolution limit in Angstrom for a pixel "
-                      "to be accepted by the filtering algorithm.")
-
-        form.addParam('dMax', pwprot.FloatParam,
-                      default=None,
-                      allowsNull=True,
-                      label="Low resolution limit",
-                      help="The low resolution limit in Angstrom for a pixel to"
-                      " be accepted by the filtering algorithm.")
+        dminHelp = ("The high resolution limit in Angstrom for a pixel "
+                    "to be accepted by the filtering algorithm.")
+        dmaxHelp = ("The low resolution limit in Angstrom for a pixel to"
+                    " be accepted by the filtering algorithm.")
+        self._defineResolutionParams(form, dminHelp, dmaxHelp)
 
         form.addParam('minImage', pwprot.IntParam,
                       label='First image to use',
@@ -85,7 +77,8 @@ class DialsProtFindSpots(EdProtFindSpots):
                       label='Last image to use',
                       default=None,
                       allowsNull=True,
-                      help="Cut images after this index. Useful for removing frames with too much beam damage.",
+                      help="Cut images after this index. Useful for "
+                      "removing frames with too much beam damage.",
                       )
 
         group = form.addGroup('Filtering')
@@ -98,22 +91,26 @@ class DialsProtFindSpots(EdProtFindSpots):
         group.addParam('kernelSize', pwprot.IntParam,
                        default=3,
                        label="Kernel size",
-                       help="The size of the local area around the spot in which to"
-                       "calculate the mean and variance. The kernel is given as a box"
-                       "of size (2 * nx + 1, 2 * ny + 1) centred at the pixel.")
+                       help="The size of the local area around the spot in "
+                       "which to calculate the mean and variance. The kernel "
+                       "is given as a box of size (2 * nx + 1, 2 * ny + 1) "
+                       "centred at the pixel."
+                       )
 
         group.addParam('sigmaBackground', pwprot.FloatParam,
                        default=6,
                        label='sigma background',
-                       help="The number of standard deviations of the index of dispersion"
-                       "(variance / mean) in the local area below which the pixel"
-                       "will be classified as background.")
+                       help="The number of standard deviations of the index "
+                       "of dispersion (variance / mean) in the local area "
+                       "below which the pixelwill be classified as background."
+                       )
 
         group.addParam('sigmaStrong', pwprot.FloatParam,
                        default=3,
                        label="sigma strong",
-                       help="The number of standard deviations above the mean in the local"
-                       "area above which the pixel will be classified as strong.")
+                       help="The number of standard deviations above the mean"
+                       " in the localarea above which the pixel will be "
+                       "classified as strong.")
 
         group.addParam('iceRings', pwprot.BooleanParam,
                        default=False, label='Filter out ice rings? ')
@@ -146,95 +143,55 @@ class DialsProtFindSpots(EdProtFindSpots):
         group.addParam('minSpotSize', pwprot.IntParam,
                        default=None,
                        allowsNull=True,
-                       label="Minimum spot size (pixels)", help="The minimum "
-                       "number of contiguous pixels for a spot to be accepted by the filtering algorithm.",
+                       label="Minimum spot size (pixels)",
+                       help="The minimum number of contiguous pixels for a "
+                       "spot to be accepted by the filtering algorithm.",
                        expertLevel=pwprot.LEVEL_ADVANCED)
 
         group.addParam('maxSpotSize', pwprot.IntParam,
                        default=1000,
-                       label="Maximum spot size (pixels)", help="The maximum "
-                       "number of contiguous pixels for a spot to be accepted by the filtering algorithm.",
+                       label="Maximum spot size (pixels)",
+                       help="The maximum "
+                       "number of contiguous pixels for a spot to be accepted"
+                       " by the filtering algorithm.",
                        expertLevel=pwprot.LEVEL_ADVANCED)
 
         group.addParam('maxStrongPixelFraction', pwprot.FloatParam,
                        default=0.25,
                        label='Max fraction strong pixels',
-                       help="If the fraction of pixels in an image marked as strong is"
-                       "greater than this value, throw an exception",
+                       help="If the fraction of pixels in an image marked as"
+                       " strong is greater than this value, throw an "
+                       "exception",
                        expertLevel=pwprot.LEVEL_ADVANCED)
 
         group.addParam('thresholdIntensity', pwprot.FloatParam,
                        default=0,
                        label='Minimum pixel intensity',
-                       help='All pixels with a lower value will be considered part of the background',
+                       help="All pixels with a lower value will be considered"
+                       " part of the background",
                        expertLevel=pwprot.LEVEL_ADVANCED)
 
         group.addParam('maxSeparation', pwprot.FloatParam,
                        label='Max separation',
                        default=2,
-                       help="The maximum peak-to-centroid separation (in pixels) for a spot to be accepted by the filtering algorithm.",
+                       help="The maximum peak-to-centroid separation (in "
+                       "pixels) for a spot to be accepted by the filtering "
+                       "algorithm.",
                        expertLevel=pwprot.LEVEL_ADVANCED,
                        )
 
         group.addParam('thresholdAlgorithm', pwprot.EnumParam,
                        label='threshold algorithm',
-                       choices=['dispersion', 'dispersion extended'], default=DISPERSION_EXTENDED,
+                       choices=['dispersion', 'dispersion extended'],
+                       default=DISPERSION_EXTENDED,
                        help="",
                        )
 
-        # Allow adding anything else with command line syntax
-        group = form.addGroup('Raw command line input parameters',
-                              expertLevel=pwprot.LEVEL_ADVANCED)
-        group.addParam('commandLineInput', pwprot.StringParam,
-                       default='',
-                       help="Anything added here will be added at the end of the command line")
+        PhilBase._definePhilParams(self, form)
 
-        # Add a section for creating an html report
-        form.addSection('HTML report')
-        form.addParam('makeReport', pwprot.BooleanParam,
-                      label='Do you want to create an HTML report for the output?', default=False,
-                      help="",
-                      )
+        CliBase._defineCliParams(self, form)
 
-        form.addParam('showReport', pwprot.BooleanParam,
-                      label='Do you want to open the report as soon as the protocol is done?', default=False,
-                      help="",
-                      condition="makeReport",
-                      )
-
-        group = form.addGroup('Parameters',
-                              condition="makeReport",)
-
-        self.extDepOptions = ['remote', 'local', 'embed']
-        group.addParam('externalDependencies', pwprot.EnumParam,
-                       label='External dependencies: ',
-                       choices=self.extDepOptions,
-                       default=REMOTE,
-                       help="Whether to use remote external dependencies (files relocatable but requires an internet connection), local (does not require internet connection but files may not be relocatable) or embed all external dependencies (inflates the html file size).",
-                       )
-
-        group.addParam('pixelsPerBin', pwprot.IntParam,
-                       label='Pixels per bin',
-                       default=40,
-                       GE=1,
-                       allowsNull=True,
-                       )
-
-        group.addParam('centroidDiffMax', pwprot.FloatParam,
-                       label='Centroid diff max',
-                       default=None,
-                       allowsNull=True,
-                       expertLevel=pwprot.LEVEL_ADVANCED,
-                       help="Magnitude in pixels of shifts mapped to the extreme colours in the heatmap plots centroid_diff_x and centroid_diff_y",
-                       )
-
-        # Allow adding anything else with command line syntax
-        group = form.addGroup('HTML report command line parameters',
-                              expertLevel=pwprot.LEVEL_ADVANCED,
-                              condition="makeReport",)
-        group.addParam('commandLineInputReport', pwprot.StringParam,
-                       default='',
-                       help="Anything added here will be added at the end of the command line")
+        HtmlBase._defineHtmlParams(self, form)
 
     # -------------------------- INSERT functions ------------------------------
 
@@ -249,31 +206,24 @@ class DialsProtFindSpots(EdProtFindSpots):
     # -------------------------- STEPS functions -------------------------------
     def convertInputStep(self, inputId):
         inputImages = self.inputImages.get()
-        self.info("Number of images: %s" % inputImages.getSize())
+        self.info(f"Number of images: {inputImages.getSize()}")
         fileName = self.getInputModelFile()
         try:
             if os.path.exists(inputImages.getDialsModel()):
                 copyDialsFile(inputImages.getDialsModel(),
                               fn=fileName)
             else:
-                self.info("Writing new input model file {}".format(fileName))
+                self.info(f"Writing new input model file {fileName}")
                 writeJson(inputImages, fn=fileName)
         except TypeError as e:
             self.info(e)
-            self.info("Writing new input model file {}".format(fileName))
+            self.info(f"Writing new input model file {fileName}")
             writeJson(inputImages, fn=fileName)
 
     def findSpotsStep(self):
-        self.program = 'dials.find_spots'
-        arguments = self._prepCommandline()
-        self.runJob(self.program, arguments)
-
-    def makeHtmlReportStep(self):
-        prog = 'dials.report'
-        arguments = self._prepCommandlineReport()
-        self.runJob(prog, arguments)
-        if self.showReport:
-            dutils._showHtmlReport(self.getOutputHtmlFile())
+        program = 'dials.find_spots'
+        arguments = self._prepareCommandline(program)
+        self.runJob(program, arguments)
 
     def createOutputStep(self):
         reflectionData = readRefl(self.getOutputReflFile())
@@ -311,6 +261,8 @@ class DialsProtFindSpots(EdProtFindSpots):
     # -------------------------- INFO functions -------------------------------
     def _validate(self):
         errors = []
+        if self.swappedResolution():
+            errors.append(self.resSwapMsg())
         return errors
 
     def _summary(self):
@@ -320,30 +272,98 @@ class DialsProtFindSpots(EdProtFindSpots):
             summary.append("\n")
 
         if self.getLogOutput() not in (None, ''):
-            pass
-        #    summary.append(self.getLogOutput())
+            summary.append(self.getLogOutput())
 
         return summary
+    # -------------------------- BASE methods to be overridden -----------------
 
-    # -------------------------- UTILS functions ------------------------------
-    def getInputModelFile(self):
-        return self._getExtraPath('imported.expt')
-
-    def getOutputReflFile(self):
-        return self._getExtraPath('strong.refl')
-
-    def getOutputHtmlFile(self):
-        return self._getExtraPath('dials.report.html')
-
-    def getDatasets(self):
-        return dutils.getDatasets(self.getInputModelFile())
+    INPUT_EXPT_FILENAME = 'imported.expt'
+    OUTPUT_REFL_FILENAME = 'strong.refl'
 
     def getLogOutput(self):
         logOutput = dutils.readLog(
-            self.getLogFilePath(),
+            self.getLogFilePath('dials.find_spots'),
             'Histogram',
             '---')
         return logOutput
+
+    def _initialParams(self, program):
+        # Input basic parameters
+        params = (f"{self.getInputModelFile()} "
+                  f"output.log={self.getLogFilePath(program)} "
+                  f"output.reflections={self.getOutputReflFile()}")
+
+        return params
+
+    def _extraParams(self):
+        params = f" {self.getScanRanges()}"
+        # Update the command line with additional parameters
+        if self.getDMin():
+            params += f" spotfinder.filter.d_min={self.getDMin()}"
+
+        if self.getDMax():
+            params += f" spotfinder.filter.d_max={self.getDMax()}"
+
+        if self.iceRings.get():
+            params += (f" spotfinder.filter.ice_rings.filter="
+                       f"{self.iceRings.get()}")
+
+        if self.minSpotSize.get():
+            params += (f" spotfinder.filter.min_spot_size="
+                       f"{self.minSpotSize.get()}")
+
+        if self.maxSpotSize.get():
+            params += (f" spotfinder.filter.max_spot_size="
+                       f"{self.maxSpotSize.get()}")
+
+        if self.maxStrongPixelFraction.get():
+            params += (f" spotfinder.filter.max_strong_pixel_fraction="
+                       f"{self.maxStrongPixelFraction.get()}")
+
+        if self.maxSeparation.get():
+            params += (f" spotfinder.filter.max_separation="
+                       f"{self.maxSeparation.get()}")
+
+        if self.untrustedAreas.get():
+            if self.untrustedCircle.get() != '':
+                circle = self.fixString(self.untrustedCircle.get())
+                params += (f" spotfinder.filter.untrusted.circle="
+                           f"{circle}")
+            if self.untrustedRectangle_1.get() != '':
+                rectangle1 = self.fixString(self.untrustedRectangle_1.get())
+                params += (f" spotfinder.filter.untrusted.rectangle="
+                           f"{rectangle1}")
+            if self.untrustedRectangle_2.get() != '':
+                rectangle2 = self.fixString(self.untrustedRectangle_2.get())
+                params += (f" spotfinder.filter.untrusted.rectangle="
+                           f"{rectangle2}")
+
+        if self.thresholdAlgorithm.get() is DISPERSION:
+            params += f" spotfinder.threshold.algorithm=dispersion"
+        elif self.thresholdAlgorithm.get() is DISPERSION_EXTENDED:
+            params += f" spotfinder.threshold.algorithm=dispersion_extended"
+
+        if self.thresholdIntensity.get():
+            params += (f" spotfinder.threshold.dispersion.global_threshold="
+                       f"{self.thresholdIntensity.get()}")
+
+        if self.gain.get():
+            params += (f" spotfinder.threshold.dispersion.gain="
+                       f"{self.gain.get()}")
+
+        if self.sigmaBackground.get():
+            params += (f" spotfinder.threshold.dispersion.sigma_background="
+                       f"{self.sigmaBackground.get()}")
+
+        if self.sigmaStrong.get():
+            params += (f" spotfinder.threshold.dispersion.sigma_strong="
+                       f"{self.sigmaStrong.get()}")
+
+        if self.kernelSize.get():
+            params += (f" spotfinder.threshold.dispersion.kernel_size="
+                       f"{self.kernelSize.get()},{self.kernelSize.get()}")
+        return params
+    # -------------------------- UTILS functions ------------------------------
 
     def getScanRanges(self):
         # Get a list of object IDs for good images
@@ -366,115 +386,6 @@ class DialsProtFindSpots(EdProtFindSpots):
                 images.append(i)
         # Exclude skipped images from the scan range
         scanranges = find_subranges(images)
-        scanrange = ' '.join('spotfinder.scan_range={},{}'.format(i, j)
+        scanrange = ' '.join(f'spotfinder.scan_range={i},{j}'
                              for i, j in scanranges)
         return scanrange
-
-    def getLogFilePath(self, program='dials.find_spots'):
-        logPath = "{}/{}.log".format(self._getLogsPath(), program)
-        return logPath
-
-    def _prepCommandline(self):
-        "Create the command line input to run dials programs"
-        # Input basic parameters
-        logPath = "{}/{}.log".format(self._getLogsPath(), "dials.find_spots")
-        params = "{} output.log={} output.reflections={} {}".format(
-            self.getInputModelFile(), logPath, self.getOutputReflFile(), self.getScanRanges())
-
-        # Update the command line with additional parameters
-        if self.dMin.get():
-            params += " spotfinder.filter.d_min={}".format(self.dMin.get())
-
-        if self.dMax.get():
-            params += " spotfinder.filter.d_max={}".format(self.dMax.get())
-
-        if self.iceRings.get():
-            params += " spotfinder.filter.ice_rings.filter={}".format(
-                self.iceRings.get())
-
-        if self.minSpotSize.get():
-            params += " spotfinder.filter.min_spot_size={}".format(
-                self.minSpotSize.get())
-
-        if self.maxSpotSize.get():
-            params += " spotfinder.filter.max_spot_size={}".format(
-                self.maxSpotSize.get())
-
-        if self.maxStrongPixelFraction.get():
-            params += " spotfinder.filter.max_strong_pixel_fraction={}".format(
-                self.maxStrongPixelFraction.get())
-
-        if self.maxSeparation.get():
-            params += " spotfinder.filter.max_separation={}".format(
-                self.maxSeparation.get())
-
-        if self.untrustedAreas.get():
-            if self.untrustedCircle.get() != '':
-                params += " spotfinder.filter.untrusted.circle={}".format(
-                    self.untrustedCircle.get())
-            if self.untrustedRectangle_1.get() != '':
-                params += " spotfinder.filter.untrusted.rectangle={}".format(
-                    self.untrustedRectangle_1.get())
-            if self.untrustedRectangle_2.get() != '':
-                params += " spotfinder.filter.untrusted.rectangle={}".format(
-                    self.untrustedRectangle_2.get())
-
-        if self.thresholdAlgorithm.get() is DISPERSION:
-            params += " spotfinder.threshold.algorithm=dispersion"
-        elif self.thresholdAlgorithm.get() is DISPERSION_EXTENDED:
-            params += " spotfinder.threshold.algorithm=dispersion_extended"
-
-        if self.thresholdIntensity.get():
-            params += " spotfinder.threshold.dispersion.global_threshold={}".format(
-                self.thresholdIntensity.get())
-
-        if self.gain.get():
-            params += " spotfinder.threshold.dispersion.gain={}".format(
-                self.gain.get())
-
-        if self.sigmaBackground.get():
-            params += " spotfinder.threshold.dispersion.sigma_background={}".format(
-                self.sigmaBackground.get())
-
-        if self.sigmaStrong.get():
-            params += " spotfinder.threshold.dispersion.sigma_strong={}".format(
-                self.sigmaStrong.get())
-
-        if self.kernelSize.get():
-            params += " spotfinder.threshold.dispersion.kernel_size={},{}".format(
-                self.kernelSize.get(), self.kernelSize.get())
-
-        if self.commandLineInput.get():
-            params += " {}".format(self.commandLineInput.get())
-
-        return params
-
-    def _createScanRanges(self):
-        # FIXME: Remove if getScanRanges() works
-        images = [image.getObjId() for image in self.inputImages.get()
-                  if image.getIgnore() is not True]
-        scanranges = find_subranges(images)
-        scanrange = ' '.join('spotfinder.scan_range={},{}'.format(i, j)
-                             for i, j in scanranges)
-        return scanrange
-
-    def _prepCommandlineReport(self):
-        "Create the command line input to run dials programs"
-        # Input basic parameters
-        params = "{} output.html={} output.external_dependencies={}".format(
-            self.getOutputReflFile(),
-            self.getOutputHtmlFile(),
-            self.extDepOptions[self.externalDependencies.get()]
-        )
-
-        if self.pixelsPerBin.get():
-            params += " pixels_per_bin={}".format(self.pixelsPerBin.get())
-
-        if self.centroidDiffMax.get():
-            params += " centroid_diff_max={}".format(
-                self.centroidDiffMax.get())
-
-        if self.commandLineInputReport.get() not in (None, ''):
-            params += " {}".format(self.commandLineInputReport.get())
-
-        return params

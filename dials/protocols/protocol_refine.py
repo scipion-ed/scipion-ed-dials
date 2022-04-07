@@ -4,7 +4,8 @@
 # *              V. E.G: Bengtsson (viktor.bengtsson@mmk.su.se) [2]
 # *
 # * [1] SciLifeLab, Stockholm University
-# * [2] Department of Materials and Environmental Chemistry, Stockholm University
+# * [2] Department of Materials and Environmental Chemistry,
+# *     Stockholm University
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
@@ -27,21 +28,19 @@
 # **************************************************************************
 
 import os
-import re
-from glob import glob
-from pathlib import Path
 
 import pyworkflow.protocol as pwprot
 import dials.utils as dutils
 
-from pwed.objects import IndexedSpot, SetOfIndexedSpots
+from pwed.objects import IndexedSpot
 from pwed.protocols import EdProtRefineSpots
-from pwed.convert import find_subranges
-from dials.convert import writeJson, readRefl, writeRefl, writeRefinementPhil, copyDialsFile
+from dials.protocols import (
+    DialsProtBase, PhilBase, CliBase, HtmlBase, RefineParamsBase)
+from dials.convert import readRefl, writeRestraintsPhil
 from dials.constants import *
 
 
-class DialsProtRefineSpots(EdProtRefineSpots):
+class DialsProtRefineSpots(EdProtRefineSpots, DialsProtBase):
     """ Protocol for refining spots using Dials
     """
     _label = 'refine'
@@ -59,162 +58,98 @@ class DialsProtRefineSpots(EdProtRefineSpots):
                       label="Input indexed spots",
                       help="")
 
-        # TODO: Add auto option
-        form.addParam('scanVarying', pwprot.BooleanParam,
-                      label='Perform scan-varying refinement?', default=False,
-                      help="Allow models that are not forced to be static to vary during the scan, Auto will run one macrocycle with static then scan varying refinement for the crystal",
+        # Keep old option and syntax for compatibility, but do not show it.
+        form.addHidden('scanVarying', pwprot.BooleanParam,
+                       label='Perform scan-varying refinement?', default=None,
+                       allowsNull=True)
+
+        form.addParam('useScanVaryingFromWorkflow', pwprot.BooleanParam,
+                      label='Use scan varying option from imported workflow?',
+                      default=True,
+                      condition='scanVarying==True',
+                      help="It appears that a workflow from an older version"
+                      " used scan-varying refinement. Do you want to keep "
+                      "using that option?")
+
+        form.addParam('scanVaryingNew', pwprot.EnumParam,
+                      label='Scan varying or static?',
+                      choices=['Auto', 'Static',
+                               'Scan-varying', 'Dials default'],
+                      default=UNSET,
+                      condition="scanVarying!=True or "
+                      "useScanVaryingFromWorkflow==False",
+                      help="Allow models that are not forced to be static to "
+                      "vary during the scan, Auto will run one macrocycle with"
+                      " static then scan varying refinement for the crystal. "
+                      "The option \"Dials default\" will use the default as "
+                      "indicated in https://dials.github.io/documentation/"
+                      "programs/dials_refine.html.",
                       )
+
+        form.addParam('useRestraint', pwprot.BooleanParam,
+                      label="Do you want to restrain the unit cell?",
+                      default=False,)
+
+        form.addParam('targetUnitCell', pwprot.StringParam,
+                      label="Unit cell values",
+                      allowsNull=True, default=None,
+                      condition='useRestraint==True',
+                      help="Target unit cell parameters for the restraint for"
+                      " this parameterisation")
+
+        form.addParam('targetSigmas', pwprot.StringParam,
+                      label="Sigmas for determining restraint weight",
+                      allowsNull=True, default=None,
+                      condition='useRestraint==True',
+                      help="The unit cell target values are associated with "
+                      "sigmas which are used to determine the weight of each "
+                      "restraint. A sigma of zero will remove the restraint at"
+                      " that position. If symmetry constrains two cell "
+                      "dimensions to be equal then only the smaller of the two"
+                      " sigmas will be kept")
 
         # Help messages are copied from the DIALS documentation at
         # https://dials.github.io/documentation/programs/dials_index.html
         form.addParam('Nproc', pwprot.IntParam,
                       label="How many processors do you want to use?",
-                      default=1, help='The number of processes to use. Not all choices of refinement engine support nproc > 1.'
-                      'Where multiprocessing is possible, it is helpful only in certain circumstances,'
-                      'so this is not recommended for typical use.',
+                      default=1,
+                      help="The number of processes to use. Not all choices of"
+                      " refinement engine support nproc > 1. Where "
+                      "multiprocessing is possible, it is helpful only in "
+                      "certain circumstances, so this is not recommended for "
+                      "typical use.",
                       expertLevel=pwprot.LEVEL_ADVANCED)
 
-        group = form.addGroup('Parametrisation')
-
-        group.addParam('beamFixAll', pwprot.BooleanParam,
-                       label='Fix all beam parameters?', default=False,
-                       help="Whether to fix beam parameters. By default, in_spindle_plane is selected, and one of the two"
-                       "parameters is fixed. If a goniometer is present this leads to the beam orientation being restricted to a"
-                       "direction in the initial spindle-beam plane. Wavelength is also fixed by default, to allow refinement of"
-                       "the unit cell volume.",
-                       )
-
-        group.addParam('beamFixInSpindlePlane', pwprot.BooleanParam,
-                       label='Fix beam in spindle plane?', default=True, condition="beamFixAll==False",
-                       help="Whether to fix beam parameters. By default, in_spindle_plane is selected, and one of the two"
-                       "parameters is fixed. If a goniometer is present this leads to the beam orientation being restricted to a"
-                       "direction in the initial spindle-beam plane. Wavelength is also fixed by default, to allow refinement of"
-                       "the unit cell volume.",
-                       )
-
-        group.addParam('beamFixOutSpindlePlane', pwprot.BooleanParam,
-                       label='Fix beam out of spindle plane?', default=False, condition="beamFixAll==False",
-                       help="Whether to fix beam parameters. By default, in_spindle_plane is selected, and one of the two"
-                       "parameters is fixed. If a goniometer is present this leads to the beam orientation being restricted to"
-                       "a direction in the initial spindle-beam plane. Wavelength is also fixed by default, to allow refinement"
-                       "of the unit cell volume.",
-                       )
-
-        group.addParam('beamFixWavelength', pwprot.BooleanParam,
-                       label='Fix beam wavelength?', default=True, condition="beamFixAll==False",
-                       help="Whether to fix beam parameters. By default, in_spindle_plane is selected, and one of the two"
-                       "parameters is fixed. If a goniometer is present this leads to the beam orientation being restricted"
-                       "to a direction in the initial spindle-beam plane. Wavelength is also fixed by default, to allow"
-                       "refinement of the unit cell volume.",
-                       )
-
-        group.addParam('beamForceStatic', pwprot.BooleanParam,
-                       label='Force static parametrisation for the beam?', default=True, condition="scanVarying==True",
-                       help="Force a static parameterisation for the beam when doing scan-varying refinement",
-                       )
-
-        group.addParam('crystalFixCell', pwprot.BooleanParam,
-                       label='Crystal: Fix cell?', default=True,
-                       help="Fix crystal parameters",
-                       )
-
-        group.addParam('crystalFixOrientation', pwprot.BooleanParam,
-                       label='Crystal: Fix orientation?', default=True,
-                       help="Fix crystal parameters",
-                       )
-
-        group.addParam('detectorFixAll', pwprot.BooleanParam,
-                       label='Fix all detector parameters?', default=False,
-                       help="Fix detector parameters. The translational parameters (position) may be set"
-                       "separately to the orientation.",
-                       )
-
-        group.addParam('detectorFixPosition', pwprot.BooleanParam,
-                       label='Fix detector position?', default=False,
-                       help="Fix detector parameters. The translational parameters (position) may be set"
-                       "separately to the orientation.", condition="detectorFixAll==False",
-                       )
-
-        group.addParam('detectorFixOrientation', pwprot.BooleanParam,
-                       label='Fix detector orientation?', default=False,
-                       help="Fix detector parameters. The translational parameters (position) may be set"
-                       "separately to the orientation.", condition="detectorFixAll==False",
-                       )
-
-        group.addParam('detectorFixdistance', pwprot.BooleanParam,
-                       label='Fix detector distance?', default=False,
-                       help="Fix detector parameters. The translational parameters (position) may be set"
-                       "separately to the orientation.", condition="detectorFixAll==False",
-                       )
+        RefineParamsBase._defineParametrisations(self, form)
 
         group = form.addGroup('Refinery')
 
         group.addParam('doSetMaxIterations', pwprot.BooleanParam,
-                       label='Do you want to set the maximum number of iterations?', default=False,
+                       label="Do you want to set the maximum number of "
+                       "iterations?",
+                       default=False,
                        expertLevel=pwprot.LEVEL_ADVANCED,
-                       help="Maximum number of iterations in refinement before termination.",
+                       help="Maximum number of iterations in refinement before"
+                       " termination.",
                        )
 
         group.addParam('refineryMaxIterations', pwprot.IntParam,
                        default=None,
-                       allowsNull=True, help="Maximum number of iterations in refinement before termination."
+                       allowsNull=True,
+                       help="Maximum number of iterations in refinement before"
+                       " termination."
                        "None implies the engine supplies its own default.",
                        label='Max iterations', condition="doSetMaxIterations",
                        )
 
+        # Allow an easy way to import a phil file with parameters
+        PhilBase._definePhilParams(self, form)
+
         # Allow adding anything else with command line syntax
-        group = form.addGroup('Raw command line input parameters',
-                              expertLevel=pwprot.LEVEL_ADVANCED)
-        group.addParam('commandLineInput', pwprot.StringParam,
-                       default='',
-                       help="Anything added here will be added at the end of the command line")
+        CliBase._defineCliParams(self, form)
 
         # Add a section for creating an html report
-        form.addSection('HTML report')
-        form.addParam('makeReport', pwprot.BooleanParam,
-                      label='Do you want to create an HTML report for the output?', default=False,
-                      help="",
-                      )
-
-        form.addParam('showReport', pwprot.BooleanParam,
-                      label='Do you want to open the report as soon as the protocol is done?', default=False,
-                      help="",
-                      condition="makeReport",
-                      )
-
-        group = form.addGroup('Parameters',
-                              condition="makeReport",)
-
-        self.extDepOptions = ['remote', 'local', 'embed']
-        group.addParam('externalDependencies', pwprot.EnumParam,
-                       label='External dependencies: ',
-                       choices=self.extDepOptions,
-                       default=REMOTE,
-                       help="Whether to use remote external dependencies (files relocatable but requires an internet connection), local (does not require internet connection but files may not be relocatable) or embed all external dependencies (inflates the html file size).",
-                       )
-
-        group.addParam('pixelsPerBin', pwprot.IntParam,
-                       label='Pixels per bin',
-                       default=40,
-                       GE=1,
-                       allowsNull=True,
-                       )
-
-        group.addParam('centroidDiffMax', pwprot.FloatParam,
-                       label='Centroid diff max',
-                       default=None,
-                       allowsNull=True,
-                       expertLevel=pwprot.LEVEL_ADVANCED,
-                       help="Magnitude in pixels of shifts mapped to the extreme colours in the heatmap plots centroid_diff_x and centroid_diff_y",
-                       )
-
-        # Allow adding anything else with command line syntax
-        group = form.addGroup('HTML report command line parameters',
-                              expertLevel=pwprot.LEVEL_ADVANCED,
-                              condition="makeReport",)
-        group.addParam('commandLineInputReport', pwprot.StringParam,
-                       default='',
-                       help="Anything added here will be added at the end of the command line")
+        HtmlBase._defineHtmlParams(self, form)
 
    # -------------------------- INSERT functions ------------------------------
 
@@ -229,8 +164,8 @@ class DialsProtRefineSpots(EdProtRefineSpots):
     # -------------------------- STEPS functions -------------------------------
     def convertInputStep(self, inputSpotId):
         inputSet = self.inputSet.get()
-        self.info("Number of images: %s" % inputSet.getSize())
-        self.info("Number of spots: %s" % inputSet.getSpots())
+        self.info(f"Number of images: {inputSet.getSize()}")
+        self.info(f"Number of spots: {inputSet.getSpots()}")
         # Write new model and/or reflection file if no was supplied from set
         if self._checkWriteModel():
             self.writeJson(inputSet, self.getInputModelFile())
@@ -239,23 +174,16 @@ class DialsProtRefineSpots(EdProtRefineSpots):
 
     def refineStep(self):
         program = 'dials.refine'
-        arguments = self._prepCommandline(program)
+        arguments = self._prepareCommandline(program)
         try:
             self.runJob(program, arguments)
         except:
             self.info(self.getError())
 
-    def makeHtmlReportStep(self):
-        prog = 'dials.report'
-        arguments = self._prepCommandlineReport()
-        self.runJob(prog, arguments)
-        if self.showReport:
-            dutils._showHtmlReport(self.getOutputHtmlFile())
-
     def createOutputStep(self):
         # Check that the indexing created proper output
-        assert(os.path.exists(self.getOutputReflFile()))
-        assert(os.path.exists(self.getOutputModelFile()))
+        dutils.verifyPathExistence(self.getOutputModelFile(),
+                                   self.getOutputReflFile())
 
         outputSet = self._createSetOfIndexedSpots()
         outputSet.setDialsModel(self.getOutputModelFile())
@@ -302,50 +230,73 @@ class DialsProtRefineSpots(EdProtRefineSpots):
 
         return summary
 
+    # -------------------------- BASE methods to be overridden -----------------
+
+    INPUT_EXPT_FILENAME = 'indexed.expt'
+    OUTPUT_EXPT_FILENAME = 'refined.expt'
+    INPUT_REFL_FILENAME = 'indexed.refl'
+    OUTPUT_REFL_FILENAME = 'refined.refl'
+
+    def _extraParams(self):
+        params = ""
+        if self.Nproc.get() not in (None, 1):
+            params += f" nproc={self.Nproc.get()}"
+
+        params += self.getScanVaryingCommand()
+
+        params += RefineParamsBase.getBeamFixParams(self)
+
+        if self.beamForceStatic.get() not in (None, True):
+            if self.getScanVaryingStatus():
+                params += f" beam.force_static={self.beamForceStatic.get()}"
+
+        params += RefineParamsBase.getCrystalFixParams(self)
+
+        params += RefineParamsBase.getDetectorFixParams(self)
+
+        params += RefineParamsBase.getGonioFixParams(self)
+
+        if self.refineryMaxIterations.get() is not None:
+            params += (f" refinery.max_iterations="
+                       f"{self.refineryMaxIterations.get()}")
+
+        if self.useRestraint:
+            # Make the phil when it is known that it will be used
+            self.makeRestraintsPhil()
+            params += f" {self.getRestraintsPhil()}"
+
+        return params
+
     # -------------------------- UTILS functions ------------------------------
-    def getInputModelFile(self):
-        if self.getSetModel():
-            return self.getSetModel()
-        else:
-            return self._getExtraPath('indexed.expt')
 
-    def getInputReflFile(self):
-        if self.getSetRefl():
-            return self.getSetRefl()
-        else:
-            return self._getExtraPath('indexed.refl')
+    def getScanVaryingCommand(self):
+        if self.scanVarying.get() is True and self.useScanVaryingFromWorkflow.get() is True:
+            return " scan_varying=True"
+        elif self.scanVaryingNew.get() == SCAN_VARYING:
+            return " scan_varying=True"
+        elif self.scanVaryingNew.get() == STATIC:
+            return " scan_varying=False"
+        elif self.scanVaryingNew.get() == AUTO:
+            return " scan_varying=Auto"
+        elif self.scanVaryingNew.get() == UNSET:
+            return ""
+        return ""
 
-    def getOutputModelFile(self):
-        return self._getExtraPath('refined.expt')
-
-    def getOutputReflFile(self):
-        return self._getExtraPath('refined.refl')
-
-    def getOutputHtmlFile(self):
-        return self._getExtraPath('dials.report.html')
-
-    def existsPath(self, path):
-        return os.path.exists(path)
-
-    def getSetModel(self):
-        inputSet = self.inputSet.get()
-        if self.existsPath(inputSet.getDialsModel()):
-            return inputSet.getDialsModel()
-        else:
+    def getScanVaryingStatus(self):
+        try:
+            return self.getScanVaryingCommand().split("=")[-1].lower() == "true"
+        except:
             return None
 
-    def getSetRefl(self):
-        inputSet = self.inputSet.get()
-        if self.existsPath(inputSet.getDialsRefl()):
-            return inputSet.getDialsRefl()
-        else:
-            return None
+    def getRestraintsPhil(self):
+        return self._getExtraPath("restraints.phil")
 
-    def getDatasets(self):
-        return dutils.getDatasets(self.getInputModelFile())
-
-    def getLogOutput(self):
-        return ''
+    def makeRestraintsPhil(self):
+        writeRestraintsPhil(
+            fn=self.getRestraintsPhil(),
+            values=self.targetUnitCell.get(),
+            sigmas=self.targetSigmas.get()
+        )
 
     def _checkWriteModel(self):
         return self.getSetModel() != self.getInputModelFile()
@@ -357,25 +308,22 @@ class DialsProtRefineSpots(EdProtRefineSpots):
         "Create the command line input to run dials programs"
 
         # Input basic parameters
-        logPath = "{}/{}.log".format(self._getLogsPath(), program)
-        params = "{} {} output.log={} output.experiments={} output.reflections={}".format(
-            self.getInputModelFile(),
-            self.getInputReflFile(),
-            logPath,
-            self.getOutputModelFile(),
-            self.getOutputReflFile(),
-        )
+        logPath = f"{self._getLogsPath()}/{program}.log"
+        params = (f"{self.getInputModelFile()} {self.getInputReflFile()} "
+                  f"output.log={logPath} "
+                  f"output.experiments={self.getOutputModelFile()}"
+                  f" output.reflections={self.getOutputReflFile()}")
 
         # Update the command line with additional parameters
 
         if self.Nproc.get() not in (None, 1):
-            params += " nproc={}".format(self.Nproc.get())
+            params += f" nproc={self.Nproc.get()}"
 
-        if self.scanVarying:
-            params += " scan_varying=True"
+        params += self.getScanVaryingCommand()
 
         if self.beamFixAll:
-            params += " beam.fix='*all in_spindle_plane out_spindle_plane wavelength'"
+            params += (" beam.fix='*all in_spindle_plane"
+                       " out_spindle_plane wavelength'")
         else:
             beamfix = []
             beamfix += "'all "
@@ -388,11 +336,11 @@ class DialsProtRefineSpots(EdProtRefineSpots):
             if self.beamFixWavelength:
                 beamfix += "*"
             beamfix += "wavelength'"
-            params += " beam.fix={}".format("".join(beamfix))
+            params += f" beam.fix={''.join(beamfix)}"
 
         if self.beamForceStatic.get() not in (None, True):
-            params += " beam.force_static={}".format(
-                self.beamForceStatic.get())
+            if self.getScanVaryingStatus():
+                params += f" beam.force_static={self.beamForceStatic.get()}"
 
         crystalfix = []
         if self.crystalFixCell and self.crystalFixOrientation:
@@ -405,7 +353,7 @@ class DialsProtRefineSpots(EdProtRefineSpots):
             if self.crystalFixOrientation:
                 crystalfix += "*"
             crystalfix += "orientation'"
-            params += " crystal.fix={}".format(''.join(crystalfix))
+            params += f" crystal.fix={''.join(crystalfix)}"
 
         detectorfix = []
         if self.detectorFixAll:
@@ -421,35 +369,21 @@ class DialsProtRefineSpots(EdProtRefineSpots):
             if self.detectorFixdistance:
                 detectorfix += "*"
             detectorfix += "distance'"
-        params += " detector.fix={}".format(''.join(detectorfix))
+        params += f" detector.fix={''.join(detectorfix)}"
 
         if self.refineryMaxIterations.get() is not None:
-            params += " refinery.max_iterations={}".format(
-                self.refineryMaxIterations.get())
+            params += (f" refinery.max_iterations="
+                       f"{self.refineryMaxIterations.get()}")
+
+        if self.useRestraint:
+            # Make the phil when it is known that it will be used
+            self.makeRestraintsPhil()
+            params += f" {self.getRestraintsPhil()}"
+
+        if self.extraPhilPath.get():
+            params += f" {self.getExtraPhilsPath()}"
 
         if self.commandLineInput.get():
-            params += " {}".format(self.commandLineInput.get())
-
-        return params
-
-    def _prepCommandlineReport(self):
-        "Create the command line input to run dials programs"
-        # Input basic parameters
-        params = "{} {} output.html={} output.external_dependencies={}".format(
-            self.getOutputModelFile(),
-            self.getOutputReflFile(),
-            self.getOutputHtmlFile(),
-            self.extDepOptions[self.externalDependencies.get()]
-        )
-
-        if self.pixelsPerBin.get():
-            params += " pixels_per_bin={}".format(self.pixelsPerBin.get())
-
-        if self.centroidDiffMax.get():
-            params += " centroid_diff_max={}".format(
-                self.centroidDiffMax.get())
-
-        if self.commandLineInputReport.get() not in (None, ''):
-            params += " {}".format(self.commandLineInputReport.get())
+            params += f" {self.commandLineInput.get()}"
 
         return params

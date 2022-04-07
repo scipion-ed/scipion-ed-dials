@@ -13,8 +13,8 @@ def writeJson(inputImages, fn='model.expt', idname="ExperimentList", overwriteMo
     imageList = [img.clone() for img in inputImages]
     firstimage = imageList[0]
     lastimage = imageList[-1]
-    templatepath = "{}/#####{}".format(firstimage.getDirName(),
-                                       firstimage.getExtension())
+    templatepath = (
+        f"{firstimage.getDirName()}/#####{firstimage.getExtension()}")
     origin = [-firstimage.getBeamCenterMm()[0], firstimage.getBeamCenterMm()[1],
               -firstimage.getDistance()]
     exposure_time = []
@@ -179,7 +179,7 @@ def writeJson(inputImages, fn='model.expt', idname="ExperimentList", overwriteMo
     ]
 
     output = {
-        "__id__": "{}".format(idname),
+        "__id__": f"{idname}",
         "experiment": [
             {
                 "__id__": "Experiment",
@@ -288,33 +288,6 @@ def writeRefl(inputSpots, fn='reflections.refl', **kwargs):
 
         with open(fn, 'wb') as f:
             f.write(msgpack.packb(output))
-
-
-def writeRefinementPhil(fn='refinement.phil', **kwargs):
-    template = ["refinement {",
-                "   parameterisation {",
-                "        beam {",
-                "            fix = all *in_spindle_plane out_spindle_plane *wavelength",
-                "            }",
-                "        crystal {",
-                "            fix = all cell orientation",
-                "            }",
-                "        detector {",
-                "            fix = all position orientation distance",
-                "            }",
-                "        goniometer {",
-                "            fix = *all in_beam_plane out_beam_plane",
-                "      }",
-                "   }",
-                "    reflections {",
-                "    outlier {",
-                "      algorithm = null *auto mcd tukey sauter_poon",
-                "    }",
-                "  }",
-                "}"]
-
-    with open(fn, 'w') as f:
-        f.write("\n".join(template))
 
 
 def copyDialsFile(originalDialsFile, fn=None):
