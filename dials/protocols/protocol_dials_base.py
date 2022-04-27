@@ -53,6 +53,7 @@ class DialsProtBase(EdBaseProtocol):
     # --------------------------- INFO functions -----------------------------
     def _citations(self):
         cites = []
+        cites.append("bengtsson:sped2022")
         cites.append("Winter:di5011")
         return cites
 

@@ -59,4 +59,17 @@ abstract = {Combining X-ray diffraction data from multiple samples requires dete
 keywords = {Patterson group symmetry, partial data sets, indexing ambiguity},
 }
 
+@article{bengtsson:sped2022,
+title = {{\it Scipion-{ED}}: A Graphical User Interface for Batch Processing and Analysis of {{3D ED}}/{{MicroED}} Data},
+author = {Bengtsson, V. E. G. and Pacoste, L. and de la Rosa-Trevin, J. M. and Hofer, G. and Zou, X. and Xu, H.},
+year = {2022},
+month = "June",
+journal = {Journal of Applied Crystallography},
+volume = {55},
+number = {3},
+doi = {http://doi.org/10.1107/S1600576722002758},
+url = {https://journals.iucr.org/j/issues/2022/03/00/yr5085/},
+abstract = {The design and usage of Scipion-ED, a graphical user interface program for processing and analysis of three-dimensional electron diffraction (3D ED)/microcrystal electron diffraction (MicroED) data, are presented. A study of the influence of data merging strategies on the ability to resolve unmodelled features of tetragonal lysozyme is included as an illustration of the advantages of Scipion-ED.},
+}
+
 """
