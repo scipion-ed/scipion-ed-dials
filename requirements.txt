@@ -1,4 +1,4 @@
-scipion-pyworkflow
-scipion-ed >=3!1.0.0
 msgpack
 packaging
+scipion-ed >=3!1.0.0
+scipion-pyworkflow

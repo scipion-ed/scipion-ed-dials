@@ -1,4 +1,4 @@
-''' Define constants for use in protocols and/or tests '''
+""" Define constants for use in protocols and/or tests """
 
 # spot-finding algorithm choice
 DISPERSION = 0

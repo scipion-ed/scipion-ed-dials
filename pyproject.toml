@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools >= 40.6.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.black]
+line-length = 79
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+    \.git
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+skip_gitignore = true
+line_length = 79
+known_third_party = ["pyworkflow"]
+known_first_party = ["scipion-ed"]

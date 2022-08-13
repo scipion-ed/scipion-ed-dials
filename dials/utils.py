@@ -26,11 +26,12 @@
 import json
 import os.path as p
 import subprocess
-from packaging import version
+
 import pyworkflow.gui.text as text
 import pyworkflow.utils as pwutils
+from packaging import version
 
-from dials.objects import *
+from dials.objects import MissingPathException
 
 
 def _showHtmlReport(reportPath):
@@ -42,8 +43,8 @@ def getModelDataPath(exptFile):
     dataPaths = []
     with open(exptFile) as json_file:
         data = json.load(json_file)
-        for imageset in data['imageset']:
-            template = imageset['template']
+        for imageset in data["imageset"]:
+            template = imageset["template"]
             dataPaths.append(p.dirname(template))
     return dataPaths
 
@@ -51,10 +52,10 @@ def getModelDataPath(exptFile):
 def getDatasets(modelFile):
     datasets = getModelDataPath(modelFile)
     if len(datasets) >= 1:
-        newlineDatasets = '\n'.join(f'{item}' for item in datasets)
+        newlineDatasets = "\n".join(f"{item}" for item in datasets)
         return f"Source of data:\n{newlineDatasets}"
     else:
-        return ''
+        return ""
 
 
 def existsPath(path):
@@ -68,7 +69,7 @@ def joinPath(*args):
 def readLog(logfile, start, stop, flush=None):
     # based on https://stackoverflow.com/a/18865133
     contentList = []
-    content = ''
+    content = ""
     with open(logfile) as infile:
         append = False
         for line in infile:
@@ -86,7 +87,7 @@ def readLog(logfile, start, stop, flush=None):
             elif append:
                 contentList.append(line)
 
-    newlineList = ''.join(f'{item}' for item in contentList)
+    newlineList = "".join(f"{item}" for item in contentList)
     content = f"{newlineList}"
 
     return content

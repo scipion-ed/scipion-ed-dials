@@ -1,4 +1,3 @@
-# coding: latin-1
 # **************************************************************************
 # *
 # * Authors:     J.M. De la Rosa Trevin (delarosatrevin@scilifelab.se) [1]
@@ -27,7 +26,7 @@
 # *
 # **************************************************************************
 
-"""
+r"""
 
 @article{Winter:di5011,
 author = "Winter, Graeme and Waterman, David G. and Parkhurst, James M. and Brewster, Aaron S. and Gildea, Richard J. and Gerstel, Markus and Fuentes-Montero, Luis and Vollmar, Melanie and Michels-Clark, Tara and Young, Iris D. and Sauter, Nicholas K. and Evans, Gwyndaf",
