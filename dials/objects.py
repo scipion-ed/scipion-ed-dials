@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #  **************************************************************************
 # *
 # * Authors:     J.M. De la Rosa Trevin (delarosatrevin@scilifelab.se) [1]
@@ -27,9 +26,18 @@
 # *
 # **************************************************************************
 
+
 class MissingPathException(Exception):
     pass
 
 
 class IsNoneError(Exception):
+    pass
+
+
+class RunJobError(Exception):
+    pass
+
+
+class FixMeError(Exception):
     pass

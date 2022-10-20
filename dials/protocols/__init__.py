@@ -26,13 +26,20 @@
 # *
 # **************************************************************************
 
-from .protocol_dials_base import DialsProtBase, CliBase, PhilBase, HtmlBase, RefineParamsBase, ImageExclusions
+from .protocol_dials_base import (
+    CliBase,
+    DialsProtBase,
+    HtmlBase,
+    ImageExclusions,
+    PhilBase,
+    RefineParamsBase,
+)
 from .protocol_dials_import import DialsProtImportDiffractionImages
+from .protocol_export import DialsProtExport
 from .protocol_find_spots import DialsProtFindSpots
 from .protocol_index import DialsProtIndexSpots
-from .protocol_refine import DialsProtRefineSpots
 from .protocol_integrate import DialsProtIntegrateSpots
-from .protocol_export import DialsProtExport
-from .protocol_symmetry import DialsProtSymmetry
-from .protocol_scaling import DialsProtScaling
 from .protocol_merge import DialsProtMerge
+from .protocol_refine import DialsProtRefineSpots
+from .protocol_scaling import DialsProtScaling
+from .protocol_symmetry import DialsProtSymmetry

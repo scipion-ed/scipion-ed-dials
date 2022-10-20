@@ -1,4 +1,3 @@
-# coding: latin-1
 # **************************************************************************
 # *
 # * Authors:     J.M. De la Rosa Trevin (delarosatrevin@scilifelab.se) [1]
@@ -27,7 +26,7 @@
 # *
 # **************************************************************************
 
-"""
+r"""
 
 @article{Winter:di5011,
 author = "Winter, Graeme and Waterman, David G. and Parkhurst, James M. and Brewster, Aaron S. and Gildea, Richard J. and Gerstel, Markus and Fuentes-Montero, Luis and Vollmar, Melanie and Michels-Clark, Tara and Young, Iris D. and Sauter, Nicholas K. and Evans, Gwyndaf",
@@ -57,6 +56,19 @@ doi = {http://doi.org/10.1107/S2059798318002978},
 url = {http://doi.org/10.1107/S2059798318002978},
 abstract = {Combining X-ray diffraction data from multiple samples requires determination of the symmetry and resolution of any indexing ambiguity. For the partial data sets typical of {\it in situ} room-temperature experiments, determination of the correct symmetry is often not straightforward. The potential for indexing ambiguity in polar space groups is also an issue, although methods to resolve this are available if the true symmetry is known. Here, a method is presented to simultaneously resolve the determination of the Patterson symmetry and the indexing ambiguity for partial data sets.},
 keywords = {Patterson group symmetry, partial data sets, indexing ambiguity},
+}
+
+@article{bengtsson:sped2022,
+title = {{\it Scipion-{ED}}: A Graphical User Interface for Batch Processing and Analysis of {{3D ED}}/{{MicroED}} Data},
+author = {Bengtsson, V. E. G. and Pacoste, L. and de la Rosa-Trevin, J. M. and Hofer, G. and Zou, X. and Xu, H.},
+year = {2022},
+month = "June",
+journal = {Journal of Applied Crystallography},
+volume = {55},
+number = {3},
+doi = {http://doi.org/10.1107/S1600576722002758},
+url = {https://journals.iucr.org/j/issues/2022/03/00/yr5085/},
+abstract = {The design and usage of Scipion-ED, a graphical user interface program for processing and analysis of three-dimensional electron diffraction (3D ED)/microcrystal electron diffraction (MicroED) data, are presented. A study of the influence of data merging strategies on the ability to resolve unmodelled features of tetragonal lysozyme is included as an illustration of the advantages of Scipion-ED.},
 }
 
 """

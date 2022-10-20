@@ -28,18 +28,19 @@
 # **************************************************************************
 
 import pyworkflow.protocol as pwprot
-import dials.utils as dutils
 
-from dials.protocols import DialsProtBase, PhilBase, CliBase, HtmlBase
-from dials.constants import *
 import dials.convert as dconv
+import dials.utils as dutils
+from dials.objects import RunJobError
+from dials.protocols import CliBase, DialsProtBase, HtmlBase, PhilBase
 
 
 class DialsProtSymmetry(DialsProtBase, HtmlBase):
-    """ Protocol for checking symmetry of integrated spots using the
+    """Protocol for checking symmetry of integrated spots using the
     POINTLESS algorithm as implemented in DIALS
     """
-    _label = 'symmetry'
+
+    _label = "symmetry"
 
     # -------------------------- DEFINE param functions -----------------------
 
@@ -47,12 +48,15 @@ class DialsProtSymmetry(DialsProtBase, HtmlBase):
         # EdProtIndexSpots._defineParams(self, form)
 
         # The start of the actually relevant part.
-        form.addSection(label='Input')
+        form.addSection(label="Input")
 
-        form.addParam('inputSet', pwprot.PointerParam,
-                      pointerClass='SetOfIndexedSpots',
-                      label="Indexed spots to symmetry check",
-                      help="")
+        form.addParam(
+            "inputSet",
+            pwprot.PointerParam,
+            pointerClass="SetOfIndexedSpots",
+            label="Indexed spots to symmetry check",
+            help="",
+        )
 
         # Allow an easy way to import a phil file with parameters
         PhilBase._definePhilParams(self, form)
@@ -63,15 +67,14 @@ class DialsProtSymmetry(DialsProtBase, HtmlBase):
         # Add a section for creating an html report
         self._defineHtmlParams(form)
 
-   # -------------------------- INSERT functions ------------------------------
+    # -------------------------- INSERT functions ------------------------------
 
     def _insertAllSteps(self):
-        self._insertFunctionStep(
-            'convertInputStep', self.inputSet.getObjId())
-        self._insertFunctionStep('symmetryStep')
+        self._insertFunctionStep("convertInputStep", self.inputSet.getObjId())
+        self._insertFunctionStep("symmetryStep")
         if self.makeReport:
-            self._insertFunctionStep('makeHtmlReportStep')
-        self._insertFunctionStep('createOutputStep')
+            self._insertFunctionStep("makeHtmlReportStep")
+        self._insertFunctionStep("createOutputStep")
 
     # -------------------------- STEPS functions -------------------------------
     def convertInputStep(self, inputSpotId):
@@ -85,17 +88,18 @@ class DialsProtSymmetry(DialsProtBase, HtmlBase):
             dconv.writeRefl(inputSet, self.getInputReflFile())
 
     def symmetryStep(self):
-        program = 'dials.symmetry'
+        program = "dials.symmetry"
         arguments = self._prepareCommandline(program)
         try:
             self.runJob(program, arguments)
-        except:
+        except RunJobError:
             self.info(self.getError())
 
     def createOutputStep(self):
         # Check that the indexing created proper output
-        dutils.verifyPathExistence(self.getOutputReflFile(),
-                                   self.getOutputModelFile())
+        dutils.verifyPathExistence(
+            self.getOutputReflFile(), self.getOutputModelFile()
+        )
 
         outputSet = self._createSetOfIndexedSpots()
         outputSet.setDialsModel(self.getOutputModelFile())
@@ -113,28 +117,28 @@ class DialsProtSymmetry(DialsProtBase, HtmlBase):
     def _summary(self):
         summary = []
 
-        if self.getDatasets() not in (None, ''):
+        if self.getDatasets() not in (None, ""):
             summary.append(self.getDatasets())
             summary.append("\n")
 
-        if self.getLogOutput() not in (None, ''):
+        if self.getLogOutput() not in (None, ""):
             summary.append(self.getLogOutput())
 
         return summary
+
     # -------------------------- BASE methods to be overridden -----------------
 
-    INPUT_EXPT_FILENAME = 'integrated.expt'
-    OUTPUT_EXPT_FILENAME = 'symmetrized.expt'
-    INPUT_REFL_FILENAME = 'integrated.refl'
-    OUTPUT_REFL_FILENAME = 'symmetrized.refl'
+    INPUT_EXPT_FILENAME = "integrated.expt"
+    OUTPUT_EXPT_FILENAME = "symmetrized.expt"
+    INPUT_REFL_FILENAME = "integrated.refl"
+    OUTPUT_REFL_FILENAME = "symmetrized.refl"
     OUTPUT_HTML_FILENAME = "dials.symmetry.html"
     OUTPUT_JSON_FILENAME = "dials.symmetry.json"
 
     def getLogOutput(self):
         logOutput = dutils.readLog(
-            self.getLogFilePath("dials.symmetry"),
-            'Recommended',
-            'Saving')
+            self.getLogFilePath("dials.symmetry"), "Recommended", "Saving"
+        )
         return logOutput.strip()
 
     def _extraParams(self):
@@ -147,4 +151,4 @@ class DialsProtSymmetry(DialsProtBase, HtmlBase):
 
     # Prepare to use phils as default files
     def getPhilPath(self):
-        return self._getTmpPath('symmetry.phil')
+        return self._getTmpPath("symmetry.phil")

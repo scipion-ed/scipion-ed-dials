@@ -28,21 +28,21 @@
 # **************************************************************************
 
 import pyworkflow.protocol as pwprot
-import dials.utils as dutils
-
+from pwed.convert import find_subranges
 from pwed.objects import IndexedSpot
 from pwed.protocols import EdProtIntegrateSpots
-from dials.protocols import DialsProtBase, PhilBase, CliBase, HtmlBase
-from pwed.convert import find_subranges
 from pwed.utils import CutRes
+
+import dials.utils as dutils
 from dials.convert import readRefl
-from dials.constants import *
+from dials.objects import RunJobError
+from dials.protocols import CliBase, DialsProtBase, HtmlBase, PhilBase
 
 
 class DialsProtIntegrateSpots(EdProtIntegrateSpots, DialsProtBase, CutRes):
-    """ Protocol for integrating spots using Dials
-    """
-    _label = 'integrate'
+    """Protocol for integrating spots using Dials"""
+
+    _label = "integrate"
 
     # -------------------------- DEFINE param functions -----------------------
 
@@ -50,34 +50,46 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots, DialsProtBase, CutRes):
         # EdProtIndexSpots._defineParams(self, form)
 
         # The start of the actually relevant part.
-        form.addSection(label='Input')
+        form.addSection(label="Input")
 
-        form.addParam('inputSet', pwprot.PointerParam,
-                      pointerClass='SetOfIndexedSpots',
-                      label="Input spots",
-                      help="")
+        form.addParam(
+            "inputSet",
+            pwprot.PointerParam,
+            pointerClass="SetOfIndexedSpots",
+            label="Input spots",
+            help="",
+        )
 
         # Help messages are copied from the DIALS documentation at
         # https://dials.github.io/documentation/programs/dials_integrate.html
-        form.addParam('nproc', pwprot.IntParam,
-                      label="How many processors do you want to use?",
-                      default=1,
-                      help="The number of processes to use.")
+        form.addParam(
+            "nproc",
+            pwprot.IntParam,
+            label="How many processors do you want to use?",
+            default=1,
+            help="The number of processes to use.",
+        )
 
-        form.addParam('doFilter_ice', pwprot.BooleanParam, default=False,
-                      label='Filter ice?',
-                      expertLevel=pwprot.LEVEL_ADVANCED,
-                      help="Filter out reflections at typical ice ring "
-                      "resolutions before max_cell estimation.")
+        form.addParam(
+            "doFilter_ice",
+            pwprot.BooleanParam,
+            default=False,
+            label="Filter ice?",
+            expertLevel=pwprot.LEVEL_ADVANCED,
+            help="Filter out reflections at typical ice ring "
+            "resolutions before max_cell estimation.",
+        )
 
-        form.addParam('useScanRanges', pwprot.BooleanParam,
-                      label='Cut out some images with scan_ranges?',
-                      default=False,
-                      help="Explicitly specify the images to be processed. "
-                      "Only applicable when experiment list contains a single"
-                      " imageset.",
-                      expertLevel=pwprot.LEVEL_ADVANCED,
-                      )
+        form.addParam(
+            "useScanRanges",
+            pwprot.BooleanParam,
+            label="Cut out some images with scan_ranges?",
+            default=False,
+            help="Explicitly specify the images to be processed. "
+            "Only applicable when experiment list contains a single"
+            " imageset.",
+            expertLevel=pwprot.LEVEL_ADVANCED,
+        )
 
         # Define d_min and d_max
         self._defineResolutionParams(form)
@@ -91,15 +103,14 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots, DialsProtBase, CutRes):
         # Add a section for creating an html report
         HtmlBase._defineHtmlParams(self, form)
 
-   # -------------------------- INSERT functions ------------------------------
+    # -------------------------- INSERT functions ------------------------------
 
     def _insertAllSteps(self):
-        self._insertFunctionStep(
-            'convertInputStep', self.inputSet.getObjId())
-        self._insertFunctionStep('integrateStep')
+        self._insertFunctionStep("convertInputStep", self.inputSet.getObjId())
+        self._insertFunctionStep("integrateStep")
         if self.makeReport:
-            self._insertFunctionStep('makeHtmlReportStep')
-        self._insertFunctionStep('createOutputStep')
+            self._insertFunctionStep("makeHtmlReportStep")
+        self._insertFunctionStep("createOutputStep")
 
     # -------------------------- STEPS functions -------------------------------
     def convertInputStep(self, inputSpotId):
@@ -113,19 +124,21 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots, DialsProtBase, CutRes):
             self.writeRefl(inputSet, self.getInputReflFile())
 
     def integrateStep(self):
-        program = 'dials.integrate'
+        program = "dials.integrate"
         arguments = self._prepareCommandline(program)
         try:
             self.runJob(program, arguments)
-        except:
+        except RunJobError:
             self.info(self.getError())
+
     # TODO: Create a temporary "SetOfIndexedSpotsFile" that
     # only saves the file location
 
     def createOutputStep(self):
         # Check that the indexing created proper output
-        dutils.verifyPathExistence(self.getOutputReflFile(),
-                                   self.getOutputModelFile())
+        dutils.verifyPathExistence(
+            self.getOutputReflFile(), self.getOutputModelFile()
+        )
 
         outputSet = self._createSetOfIndexedSpots()
         outputSet.setDialsModel(self.getOutputModelFile())
@@ -140,20 +153,22 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots, DialsProtBase, CutRes):
             outputSet.setSpots(numberOfSpots)
 
             for i in range(0, numberOfSpots):
-                iSpot.setObjId(i+1)
-                iSpot.setSpotId(reflDict['id'][i])
-                iSpot.setBbox(reflDict['bbox'][i])
-                iSpot.setFlag(reflDict['flags'][i])
-                iSpot.setIntensitySumValue(reflDict['intensity.sum.value'][i])
+                iSpot.setObjId(i + 1)
+                iSpot.setSpotId(reflDict["id"][i])
+                iSpot.setBbox(reflDict["bbox"][i])
+                iSpot.setFlag(reflDict["flags"][i])
+                iSpot.setIntensitySumValue(reflDict["intensity.sum.value"][i])
                 iSpot.setIntensitySumVariance(
-                    reflDict['intensity.sum.variance'][i])
-                iSpot.setPanel(reflDict['panel'][i])
-                iSpot.setXyzobsPxValue(reflDict['xyzobs.px.value'][i])
-                iSpot.setXyzobsPxVariance(reflDict['xyzobs.px.variance'][i])
+                    reflDict["intensity.sum.variance"][i]
+                )
+                iSpot.setPanel(reflDict["panel"][i])
+                iSpot.setXyzobsPxValue(reflDict["xyzobs.px.value"][i])
+                iSpot.setXyzobsPxVariance(reflDict["xyzobs.px.variance"][i])
                 outputSet.append(iSpot)
         except Exception as e:
             self.info(
-                f"createOutputStep created an exception with the message {e}")
+                f"createOutputStep created an exception with the message {e}"
+            )
 
         outputSet.write()
 
@@ -168,7 +183,7 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots, DialsProtBase, CutRes):
 
     def _summary(self):
         summary = []
-        if self.getDatasets() not in (None, ''):
+        if self.getDatasets() not in (None, ""):
             summary.append(self.getDatasets())
             summary.append("\n")
 
@@ -176,25 +191,28 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots, DialsProtBase, CutRes):
 
     # -------------------------- BASE methods to be overridden -----------------
 
-    INPUT_EXPT_FILENAME = 'sv_refined.expt'
-    OUTPUT_EXPT_FILENAME = 'integrated_model.expt'
-    INPUT_REFL_FILENAME = 'sv_refined.refl'
-    OUTPUT_REFL_FILENAME = 'integrated_reflections.refl'
+    INPUT_EXPT_FILENAME = "sv_refined.expt"
+    OUTPUT_EXPT_FILENAME = "integrated_model.expt"
+    INPUT_REFL_FILENAME = "sv_refined.refl"
+    OUTPUT_REFL_FILENAME = "integrated_reflections.refl"
 
     def getLogOutput(self):
         logOutput = dutils.readLog(
-            self.getLogFilePath(program='dials.integrate'),
-            'Summary vs resolution',
-            'Timing')
+            self.getLogFilePath(program="dials.integrate"),
+            "Summary vs resolution",
+            "Timing",
+        )
         return logOutput
 
     def _initialParams(self, program):
         # Add output.phil parameter
-        params = (f"{self.getInputModelFile()} {self.getInputReflFile()} "
-                  f"output.log={self.getLogFilePath(program)} "
-                  f"output.experiments={self.getOutputModelFile()} "
-                  f"output.reflections={self.getOutputReflFile()} "
-                  f"output.phil={self.getOutputPhilFile()}")
+        params = (
+            f"{self.getInputModelFile()} {self.getInputReflFile()} "
+            f"output.log={self.getLogFilePath(program)} "
+            f"output.experiments={self.getOutputModelFile()} "
+            f"output.reflections={self.getOutputReflFile()} "
+            f"output.phil={self.getOutputPhilFile()}"
+        )
 
         return params
 
@@ -220,16 +238,20 @@ class DialsProtIntegrateSpots(EdProtIntegrateSpots, DialsProtBase, CutRes):
 
     # Placeholder for defaulting to creating phil files
     def getPhilPath(self):
-        return self._getTmpPath('integrate.phil')
+        return self._getTmpPath("integrate.phil")
 
     def getOutputPhilFile(self):
-        return self._getExtraPath('dials.integrate.phil')
+        return self._getExtraPath("dials.integrate.phil")
 
     def _createScanRanges(self):
         # Go through the
-        images = [image.getObjId() for image in self.inputImages.get()
-                  if image.getIgnore() is not True]
+        images = [
+            image.getObjId()
+            for image in self.inputImages.get()
+            if image.getIgnore() is not True
+        ]
         scanranges = find_subranges(images)
-        scanrange = ' '.join(f'spotfinder.scan_range={i},{j}'
-                             for i, j in scanranges)
+        scanrange = " ".join(
+            f"spotfinder.scan_range={i},{j}" for i, j in scanranges
+        )
         return scanrange

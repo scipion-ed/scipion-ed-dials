@@ -28,21 +28,21 @@
 
 
 import pyworkflow.protocol as pwprot
-import dials.utils as dutils
-
 from pwed.protocols import EdBaseProtocol
-from dials.constants import *
+
+import dials.utils as dutils
+from dials.constants import EMBED, LOCAL, REMOTE
 
 
 class DialsProtBase(EdBaseProtocol):
-    """ Base protocol for DIALS
-    """
+    """Base protocol for DIALS"""
+
     # Define default filenames
-    INPUT_EXPT_FILENAME = 'input.expt'
-    OUTPUT_EXPT_FILENAME = 'output.expt'
-    INPUT_REFL_FILENAME = 'input.refl'
-    OUTPUT_REFL_FILENAME = 'output.refl'
-    OUTPUT_HTML_FILENAME = 'dials.report.html'
+    INPUT_EXPT_FILENAME = "input.expt"
+    OUTPUT_EXPT_FILENAME = "output.expt"
+    INPUT_REFL_FILENAME = "input.refl"
+    OUTPUT_REFL_FILENAME = "output.refl"
+    OUTPUT_HTML_FILENAME = "dials.report.html"
     OUTPUT_JSON_FILENAME = "dials.program.json"
 
     # -------------------------- STEPS functions -----------------------------
@@ -53,6 +53,7 @@ class DialsProtBase(EdBaseProtocol):
     # --------------------------- INFO functions -----------------------------
     def _citations(self):
         cites = []
+        cites.append("bengtsson:sped2022")
         cites.append("Winter:di5011")
         return cites
 
@@ -136,25 +137,31 @@ class DialsProtBase(EdBaseProtocol):
             except TypeError:
                 pass
 
-    def getLogFilePath(self, program='dials.*'):
+    def getLogFilePath(self, program="dials.*"):
         logPath = f"{self._getLogsPath()}/{program}.log"
         return logPath
 
     def getLogOutput(self):
-        return ''
+        return ""
 
     def _checkWriteModel(self, inputSource=None):
-        return self.getSetModel(inputSource) != self.getInputModelFile(inputSource)
+        return self.getSetModel(inputSource) != self.getInputModelFile(
+            inputSource
+        )
 
     def _checkWriteRefl(self, inputSource=None):
-        return self.getSetRefl(inputSource) != self.getInputReflFile(inputSource)
+        return self.getSetRefl(inputSource) != self.getInputReflFile(
+            inputSource
+        )
 
     def _initialParams(self, program):
         # Base method that can more easily be overridden when needed
-        params = (f"{self.getInputModelFile()} {self.getInputReflFile()} "
-                  f"output.log={self.getLogFilePath(program)} "
-                  f"output.experiments={self.getOutputModelFile()} "
-                  f"output.reflections={self.getOutputReflFile()}")
+        params = (
+            f"{self.getInputModelFile()} {self.getInputReflFile()} "
+            f"output.log={self.getLogFilePath(program)} "
+            f"output.experiments={self.getOutputModelFile()} "
+            f"output.reflections={self.getOutputReflFile()}"
+        )
 
         return params
 
@@ -189,12 +196,17 @@ class DialsProtBase(EdBaseProtocol):
 class CliBase(EdBaseProtocol):
     def _defineCliParams(self, form):
         # Allow adding anything else with command line syntax
-        group = form.addGroup('Raw command line input parameters',
-                              expertLevel=pwprot.LEVEL_ADVANCED)
-        group.addParam('commandLineInput', pwprot.StringParam,
-                       default='',
-                       help="Anything added here will be added at the "
-                       "end of the command line")
+        group = form.addGroup(
+            "Raw command line input parameters",
+            expertLevel=pwprot.LEVEL_ADVANCED,
+        )
+        group.addParam(
+            "commandLineInput",
+            pwprot.StringParam,
+            default="",
+            help="Anything added here will be added at the "
+            "end of the command line",
+        )
 
     def _getCommandLineInput(self):
         if self.commandLineInput.get():
@@ -208,128 +220,169 @@ class RefineParamsBase(EdBaseProtocol):
     # -------------------------- DEFINE param functions ----------------------
 
     def _defineParametrisations(self, form):
-        group = form.addGroup('Model parametrisation')
+        group = form.addGroup("Model parametrisation")
 
-        group.addHidden('beamFixAll', pwprot.BooleanParam,
-                        label='Fix all beam parameters?', default=False,
-                        help="Whether to fix beam parameters. By default, "
-                        "in_spindle_plane is selected, and one of the two "
-                        "parameters is fixed. If a goniometer is present "
-                        "this leads to the beam orientation being restricted"
-                        " to a direction in the initial spindle-beam plane. "
-                        "Wavelength is also fixed by default, to allow "
-                        "refinement of the unit cell volume.",
-                        )
+        group.addHidden(
+            "beamFixAll",
+            pwprot.BooleanParam,
+            label="Fix all beam parameters?",
+            default=False,
+            help="Whether to fix beam parameters. By default, "
+            "in_spindle_plane is selected, and one of the two "
+            "parameters is fixed. If a goniometer is present "
+            "this leads to the beam orientation being restricted"
+            " to a direction in the initial spindle-beam plane. "
+            "Wavelength is also fixed by default, to allow "
+            "refinement of the unit cell volume.",
+        )
 
-        group.addParam('beamFixInSpindlePlane', pwprot.BooleanParam,
-                       label='Fix beam in spindle plane?', default=True,
-                       condition="beamFixAll==False",
-                       help="Whether to fix beam parameters. By default, "
-                       "in_spindle_plane is selected, and one of the two "
-                       "parameters is fixed. If a goniometer is present this "
-                       "leads to the beam orientation being restricted to a "
-                       "direction in the initial spindle-beam plane. "
-                       "Wavelength is also fixed by default, to allow "
-                       "refinement of the unit cell volume.",
-                       )
+        group.addParam(
+            "beamFixInSpindlePlane",
+            pwprot.BooleanParam,
+            label="Fix beam in spindle plane?",
+            default=True,
+            condition="beamFixAll==False",
+            help="Whether to fix beam parameters. By default, "
+            "in_spindle_plane is selected, and one of the two "
+            "parameters is fixed. If a goniometer is present this "
+            "leads to the beam orientation being restricted to a "
+            "direction in the initial spindle-beam plane. "
+            "Wavelength is also fixed by default, to allow "
+            "refinement of the unit cell volume.",
+        )
 
-        group.addParam('beamFixOutSpindlePlane', pwprot.BooleanParam,
-                       label='Fix beam out of spindle plane?', default=False,
-                       condition="beamFixAll==False",
-                       help="Whether to fix beam parameters. By default, "
-                       "in_spindle_plane is selected, and one of the two "
-                       "parameters is fixed. If a goniometer is present "
-                       "this leads to the beam orientation being restricted "
-                       "to a direction in the initial spindle-beam plane. "
-                       "Wavelength is also fixed by default, to allow "
-                       "refinement of the unit cell volume.",
-                       )
+        group.addParam(
+            "beamFixOutSpindlePlane",
+            pwprot.BooleanParam,
+            label="Fix beam out of spindle plane?",
+            default=False,
+            condition="beamFixAll==False",
+            help="Whether to fix beam parameters. By default, "
+            "in_spindle_plane is selected, and one of the two "
+            "parameters is fixed. If a goniometer is present "
+            "this leads to the beam orientation being restricted "
+            "to a direction in the initial spindle-beam plane. "
+            "Wavelength is also fixed by default, to allow "
+            "refinement of the unit cell volume.",
+        )
 
-        group.addParam('beamFixWavelength', pwprot.BooleanParam,
-                       label='Fix beam wavelength?', default=True,
-                       condition="beamFixAll==False",
-                       help="Whether to fix beam parameters. By default, "
-                       "in_spindle_plane is selected, and one of the two "
-                       "parameters is fixed. If a goniometer is present this "
-                       "leads to the beam orientation being restricted to a "
-                       "direction in the initial spindle-beam plane. "
-                       "Wavelength is also fixed by default, to allow "
-                       "refinement of the unit cell volume.",
-                       )
+        group.addParam(
+            "beamFixWavelength",
+            pwprot.BooleanParam,
+            label="Fix beam wavelength?",
+            default=True,
+            condition="beamFixAll==False",
+            help="Whether to fix beam parameters. By default, "
+            "in_spindle_plane is selected, and one of the two "
+            "parameters is fixed. If a goniometer is present this "
+            "leads to the beam orientation being restricted to a "
+            "direction in the initial spindle-beam plane. "
+            "Wavelength is also fixed by default, to allow "
+            "refinement of the unit cell volume.",
+        )
 
-        group.addParam('beamForceStatic', pwprot.BooleanParam,
-                       label="Force static parametrisation for the beam? "
-                       "(only applies to scan-varying refinement)",
-                       default=True,
-                       help="Force a static parametrisation for the beam "
-                       "when doing scan-varying refinement",
-                       )
+        group.addParam(
+            "beamForceStatic",
+            pwprot.BooleanParam,
+            label="Force static parametrisation for the beam? "
+            "(only applies to scan-varying refinement)",
+            default=True,
+            help="Force a static parametrisation for the beam "
+            "when doing scan-varying refinement",
+        )
 
-        group.addParam('crystalFixCell', pwprot.BooleanParam,
-                       label='Crystal: Fix cell?', default=False,
-                       help="Fix crystal parameters",
-                       )
+        group.addParam(
+            "crystalFixCell",
+            pwprot.BooleanParam,
+            label="Crystal: Fix cell?",
+            default=False,
+            help="Fix crystal parameters",
+        )
 
-        group.addParam('crystalFixOrientation', pwprot.BooleanParam,
-                       label='Crystal: Fix orientation?', default=False,
-                       help="Fix crystal parameters",
-                       )
+        group.addParam(
+            "crystalFixOrientation",
+            pwprot.BooleanParam,
+            label="Crystal: Fix orientation?",
+            default=False,
+            help="Fix crystal parameters",
+        )
 
-        group.addHidden('detectorFixAll', pwprot.BooleanParam,
-                        label='Fix all detector parameters?', default=False,
-                        help="Fix detector parameters. The translational "
-                        "parameters (position) may be set"
-                        "separately to the orientation.",
-                        )
+        group.addHidden(
+            "detectorFixAll",
+            pwprot.BooleanParam,
+            label="Fix all detector parameters?",
+            default=False,
+            help="Fix detector parameters. The translational "
+            "parameters (position) may be set"
+            "separately to the orientation.",
+        )
 
-        group.addParam('detectorFixPosition', pwprot.BooleanParam,
-                       label='Fix detector position?', default=False,
-                       help="Fix detector parameters. The translational "
-                       "parameters (position) may be set"
-                       "separately to the orientation.",
-                       condition="detectorFixAll==False",
-                       )
+        group.addParam(
+            "detectorFixPosition",
+            pwprot.BooleanParam,
+            label="Fix detector position?",
+            default=False,
+            help="Fix detector parameters. The translational "
+            "parameters (position) may be set"
+            "separately to the orientation.",
+            condition="detectorFixAll==False",
+        )
 
-        group.addParam('detectorFixOrientation', pwprot.BooleanParam,
-                       label='Fix detector orientation?', default=False,
-                       help="Fix detector parameters. The translational "
-                       "parameters (position) may be set"
-                       "separately to the orientation.",
-                       condition="detectorFixAll==False",
-                       )
+        group.addParam(
+            "detectorFixOrientation",
+            pwprot.BooleanParam,
+            label="Fix detector orientation?",
+            default=False,
+            help="Fix detector parameters. The translational "
+            "parameters (position) may be set"
+            "separately to the orientation.",
+            condition="detectorFixAll==False",
+        )
 
-        group.addParam('detectorFixDistance', pwprot.BooleanParam,
-                       label='Fix detector distance?', default=True,
-                       help="Fix detector parameters. The translational "
-                       "parameters (position) may be set"
-                       "separately to the orientation.",
-                       condition="detectorFixAll==False",
-                       )
+        group.addParam(
+            "detectorFixDistance",
+            pwprot.BooleanParam,
+            label="Fix detector distance?",
+            default=True,
+            help="Fix detector parameters. The translational "
+            "parameters (position) may be set"
+            "separately to the orientation.",
+            condition="detectorFixAll==False",
+        )
 
-        group.addParam('goniometerFixInBeamPlane', pwprot.BooleanParam,
-                       label='Fix goniometer in beam plane?', default=True,
-                       help="Whether to fix goniometer parameters. By default,"
-                       " fix all. Alternatively the setting matrix can be "
-                       "constrained to allow rotation only within the spindle-"
-                       "beam plane or to allow rotation only around an axis "
-                       "that lies in that plane. Set to None to refine the in "
-                       "two orthogonal directions.",
-                       )
+        group.addParam(
+            "goniometerFixInBeamPlane",
+            pwprot.BooleanParam,
+            label="Fix goniometer in beam plane?",
+            default=True,
+            help="Whether to fix goniometer parameters. By default,"
+            " fix all. Alternatively the setting matrix can be "
+            "constrained to allow rotation only within the spindle-"
+            "beam plane or to allow rotation only around an axis "
+            "that lies in that plane. Set to None to refine the in "
+            "two orthogonal directions.",
+        )
 
-        group.addParam('goniometerFixOutBeamPlane', pwprot.BooleanParam,
-                       label='Fix goniometer out of beam plane?',
-                       default=True,
-                       help="Whether to fix goniometer parameters. By default,"
-                       " fix all. Alternatively the setting matrix can be "
-                       "constrained to allow rotation only within the spindle-"
-                       "beam plane or to allow rotation only around an axis "
-                       "that lies in that plane. Set to None to refine the in "
-                       "two orthogonal directions.",
-                       )
+        group.addParam(
+            "goniometerFixOutBeamPlane",
+            pwprot.BooleanParam,
+            label="Fix goniometer out of beam plane?",
+            default=True,
+            help="Whether to fix goniometer parameters. By default,"
+            " fix all. Alternatively the setting matrix can be "
+            "constrained to allow rotation only within the spindle-"
+            "beam plane or to allow rotation only around an axis "
+            "that lies in that plane. Set to None to refine the in "
+            "two orthogonal directions.",
+        )
 
     def getBeamFixParams(self):
         beamfix = []
-        if self.beamFixInSpindlePlane and self.beamFixOutSpindlePlane and self.beamFixWavelength:
+        if (
+            self.beamFixInSpindlePlane
+            and self.beamFixOutSpindlePlane
+            and self.beamFixWavelength
+        ):
             beamfix += "'*all in_spindle_plane out_spindle_plane wavelength'"
         else:
             beamfix += "'all "
@@ -342,7 +395,9 @@ class RefineParamsBase(EdBaseProtocol):
             if self.beamFixWavelength:
                 beamfix += "*"
             beamfix += "wavelength'"
-        beamfixparams = f" refinement.parameterisation.beam.fix={''.join(beamfix)}"
+        beamfixparams = (
+            f" refinement.parameterisation.beam.fix={''.join(beamfix)}"
+        )
         return beamfixparams
 
     def getCrystalFixParams(self):
@@ -357,12 +412,18 @@ class RefineParamsBase(EdBaseProtocol):
             if self.crystalFixOrientation:
                 crystalfix += "*"
             crystalfix += "orientation'"
-        crystalfixparams = f" refinement.parameterisation.crystal.fix={''.join(crystalfix)}"
+        crystalfixparams = (
+            f" refinement.parameterisation.crystal.fix={''.join(crystalfix)}"
+        )
         return crystalfixparams
 
     def getDetectorFixParams(self):
         detectorfix = []
-        if self.detectorFixAll or (self.detectorFixPosition and self.detectorFixOrientation and self.detectorFixDistance):
+        if self.detectorFixAll or (
+            self.detectorFixPosition
+            and self.detectorFixOrientation
+            and self.detectorFixDistance
+        ):
             detectorfix += "'*all position orientation distance'"
         else:
             detectorfix += "'all "
@@ -375,7 +436,9 @@ class RefineParamsBase(EdBaseProtocol):
             if self.detectorFixDistance:
                 detectorfix += "*"
             detectorfix += "distance'"
-        detectorfixparams = f" refinement.parameterisation.detector.fix={''.join(detectorfix)}"
+        detectorfixparams = (
+            f" refinement.parameterisation.detector.fix={''.join(detectorfix)}"
+        )
         return detectorfixparams
 
     def getGonioFixParams(self):
@@ -390,73 +453,92 @@ class RefineParamsBase(EdBaseProtocol):
             if self.goniometerFixOutBeamPlane:
                 goniofix += "*"
             goniofix += "out_beam_plane'"
-        goniofixparams = f" refinement.parameterisation.goniometer.fix={''.join(goniofix)}"
+        goniofixparams = (
+            f" refinement.parameterisation.goniometer.fix={''.join(goniofix)}"
+        )
         return goniofixparams
 
 
 class HtmlBase(EdBaseProtocol):
     def _defineHtmlParams(self, form):
         # Add a section for creating an html report
-        form.addSection('HTML report')
-        form.addParam('makeReport', pwprot.BooleanParam,
-                      label='Do you want to create an HTML report for the output?',
-                      default=False,
-                      help="",
-                      )
+        form.addSection("HTML report")
+        form.addParam(
+            "makeReport",
+            pwprot.BooleanParam,
+            label="Do you want to create an HTML report for the output?",
+            default=False,
+            help="",
+        )
 
-        form.addParam('showReport', pwprot.BooleanParam,
-                      label='Do you want to open the report as soon as the protocol is done?',
-                      default=False,
-                      help="",
-                      condition="makeReport",
-                      )
+        form.addParam(
+            "showReport",
+            pwprot.BooleanParam,
+            label="Do you want to open the report as soon as the protocol is done?",
+            default=False,
+            help="",
+            condition="makeReport",
+        )
 
-        group = form.addGroup('Parameters',
-                              condition="makeReport",)
+        group = form.addGroup(
+            "Parameters",
+            condition="makeReport",
+        )
 
-        self.extDepOptions = ['remote', 'local', 'embed']
-        group.addParam('externalDependencies', pwprot.EnumParam,
-                       label='External dependencies: ',
-                       choices=self.extDepOptions,
-                       default=REMOTE,
-                       help="Whether to use remote external dependencies "
-                       "(files relocatable but requires an internet "
-                       "connection), local (does not require internet "
-                       "connection but files may not be relocatable) or "
-                       "embed all external dependencies (inflates the html"
-                       " file size).",
-                       )
+        self.extDepOptions = ["remote", "local", "embed"]
+        group.addParam(
+            "externalDependencies",
+            pwprot.EnumParam,
+            label="External dependencies: ",
+            choices=self.extDepOptions,
+            default=REMOTE,
+            help="Whether to use remote external dependencies "
+            "(files relocatable but requires an internet "
+            "connection), local (does not require internet "
+            "connection but files may not be relocatable) or "
+            "embed all external dependencies (inflates the html"
+            " file size).",
+        )
 
-        group.addParam('pixelsPerBin', pwprot.IntParam,
-                       label='Pixels per bin',
-                       default=40,
-                       GE=1,
-                       allowsNull=True,
-                       )
+        group.addParam(
+            "pixelsPerBin",
+            pwprot.IntParam,
+            label="Pixels per bin",
+            default=40,
+            GE=1,
+            allowsNull=True,
+        )
 
-        group.addParam('centroidDiffMax', pwprot.FloatParam,
-                       label='Centroid diff max',
-                       default=None,
-                       allowsNull=True,
-                       expertLevel=pwprot.LEVEL_ADVANCED,
-                       help="Magnitude in pixels of shifts mapped to the "
-                       "extreme colours in the heatmap plots centroid_diff_x"
-                       " and centroid_diff_y",
-                       )
+        group.addParam(
+            "centroidDiffMax",
+            pwprot.FloatParam,
+            label="Centroid diff max",
+            default=None,
+            allowsNull=True,
+            expertLevel=pwprot.LEVEL_ADVANCED,
+            help="Magnitude in pixels of shifts mapped to the "
+            "extreme colours in the heatmap plots centroid_diff_x"
+            " and centroid_diff_y",
+        )
 
         # Allow adding anything else with command line syntax
-        group = form.addGroup('HTML report command line parameters',
-                              expertLevel=pwprot.LEVEL_ADVANCED,
-                              condition="makeReport",)
-        group.addParam('commandLineInputReport', pwprot.StringParam,
-                       default='',
-                       help="Anything added here will be added at the end"
-                       " of the command line")
+        group = form.addGroup(
+            "HTML report command line parameters",
+            expertLevel=pwprot.LEVEL_ADVANCED,
+            condition="makeReport",
+        )
+        group.addParam(
+            "commandLineInputReport",
+            pwprot.StringParam,
+            default="",
+            help="Anything added here will be added at the end"
+            " of the command line",
+        )
 
     # -------------------------- STEPS functions -------------------------------
 
     def makeHtmlReportStep(self):
-        prog = 'dials.report'
+        prog = "dials.report"
         arguments = HtmlBase._prepCommandlineReport(self)
         self.runJob(prog, arguments)
         if self.showReport:
@@ -467,16 +549,18 @@ class HtmlBase(EdBaseProtocol):
         if self.OUTPUT_HTML_FILENAME:
             return self._getExtraPath(self.OUTPUT_HTML_FILENAME)
         else:
-            return self._getExtraPath('dials.report.html')
+            return self._getExtraPath("dials.report.html")
 
     def _prepCommandlineReport(self):
         "Create the command line input to run dials programs"
         # Input basic parameters
-        params = (f"{DialsProtBase.getOutputModelFile(self)} "
-                  f"{DialsProtBase.getOutputReflFile(self)} "
-                  f"output.html={HtmlBase.getOutputHtmlFile(self)} "
-                  f"output.external_dependencies="
-                  f"{self.extDepOptions[self.externalDependencies.get()]}")
+        params = (
+            f"{DialsProtBase.getOutputModelFile(self)} "
+            f"{DialsProtBase.getOutputReflFile(self)} "
+            f"output.html={HtmlBase.getOutputHtmlFile(self)} "
+            f"output.external_dependencies="
+            f"{self.extDepOptions[self.externalDependencies.get()]}"
+        )
 
         if self.pixelsPerBin.get():
             params += f" pixels_per_bin={self.pixelsPerBin.get()}"
@@ -484,7 +568,7 @@ class HtmlBase(EdBaseProtocol):
         if self.centroidDiffMax.get():
             params += f" centroid_diff_max={self.centroidDiffMax.get()}"
 
-        if self.commandLineInputReport.get() not in (None, ''):
+        if self.commandLineInputReport.get() not in (None, ""):
             params += f" {self.commandLineInputReport.get()}"
 
         return params
@@ -493,13 +577,16 @@ class HtmlBase(EdBaseProtocol):
 class PhilBase(EdBaseProtocol):
     def _definePhilParams(self, form):
         # Allow an easy way to import a phil file with parameters
-        form.addParam('extraPhilPath', pwprot.PathParam,
-                      expertLevel=pwprot.LEVEL_ADVANCED,
-                      allowsNull=True,
-                      default=None,
-                      label="Add phil file",
-                      help="Enter the path to a phil file that you want "
-                      "to add to include.")
+        form.addParam(
+            "extraPhilPath",
+            pwprot.PathParam,
+            expertLevel=pwprot.LEVEL_ADVANCED,
+            allowsNull=True,
+            default=None,
+            label="Add phil file",
+            help="Enter the path to a phil file that you want "
+            "to add to include.",
+        )
 
     def _addPhilPath(self):
         if self.extraPhilPath.get():
@@ -512,345 +599,384 @@ class ImageExclusions(DialsProtBase):
     def _defineExcludeParams(self, form, inputsetsLabel="the input set"):
         group = form.addGroup("Selections")
 
-        group.addParam("excludeImages", pwprot.BooleanParam,
-                       label="Do you want to exclude images from a dataset?",
-                       default=False,
-                       help="",
-                       )
+        group.addParam(
+            "excludeImages",
+            pwprot.BooleanParam,
+            label="Do you want to exclude images from a dataset?",
+            default=False,
+            help="",
+        )
 
-        group.addParam("numberOfExclusions", pwprot.IntParam,
-                       label=("How many groups of images do you want to "
-                              "exclude?"),
-                       default=0,
-                       condition="excludeImages",
-                       help="If you want to use more than 20 groups, you will "
-                       "need to add it as command line parameters under "
-                       "advanced options",
-                       )
+        group.addParam(
+            "numberOfExclusions",
+            pwprot.IntParam,
+            label=("How many groups of images do you want to " "exclude?"),
+            default=0,
+            condition="excludeImages",
+            help="If you want to use more than 20 groups, you will "
+            "need to add it as command line parameters under "
+            "advanced options",
+        )
 
-        group.addParam("imageGroup1", pwprot.StringParam,
-                       label="Image group 1",
-                       default=None,
-                       allowsNull=True,
-                       condition="excludeImages and numberOfExclusions "
-                       "in range(1,21)",
-                       help=f"Input in the format exp:start:end\nExclude a "
-                       f"range of images (start,stop) from the dataset with "
-                       f"experiment identifier exp  (inclusive of frames "
-                       f"start, stop). For the first dataset listed in "
-                       f"{inputsetsLabel}, the identifier exp is typically"
-                       f" 0. For the next it is 1, and so on.\nTo exclude "
-                       f"images 22, 23 and 24 from the second dataset "
-                       f"listed, the syntax is 1:22:24.",
-                       )
+        group.addParam(
+            "imageGroup1",
+            pwprot.StringParam,
+            label="Image group 1",
+            default=None,
+            allowsNull=True,
+            condition="excludeImages and numberOfExclusions " "in range(1,21)",
+            help=f"Input in the format exp:start:end\nExclude a "
+            f"range of images (start,stop) from the dataset with "
+            f"experiment identifier exp  (inclusive of frames "
+            f"start, stop). For the first dataset listed in "
+            f"{inputsetsLabel}, the identifier exp is typically"
+            f" 0. For the next it is 1, and so on.\nTo exclude "
+            f"images 22, 23 and 24 from the second dataset "
+            f"listed, the syntax is 1:22:24.",
+        )
 
-        group.addParam("imageGroup2", pwprot.StringParam,
-                       label="Image group 2",
-                       default=None,
-                       allowsNull=True,
-                       condition="excludeImages and numberOfExclusions in "
-                       "range(2,21)",
-                       help=f"Input in the format exp:start:end\nExclude a "
-                       f"range of images (start,stop) from the dataset with "
-                       f"experiment identifier exp  (inclusive of frames "
-                       f"start, stop). For the first dataset listed in "
-                       f"{inputsetsLabel}, the identifier exp is typically"
-                       f" 0. For the next it is 1, and so on.\nTo exclude "
-                       f"images 22, 23 and 24 from the second dataset "
-                       f"listed, the syntax is 1:22:24.",
-                       )
+        group.addParam(
+            "imageGroup2",
+            pwprot.StringParam,
+            label="Image group 2",
+            default=None,
+            allowsNull=True,
+            condition="excludeImages and numberOfExclusions in " "range(2,21)",
+            help=f"Input in the format exp:start:end\nExclude a "
+            f"range of images (start,stop) from the dataset with "
+            f"experiment identifier exp  (inclusive of frames "
+            f"start, stop). For the first dataset listed in "
+            f"{inputsetsLabel}, the identifier exp is typically"
+            f" 0. For the next it is 1, and so on.\nTo exclude "
+            f"images 22, 23 and 24 from the second dataset "
+            f"listed, the syntax is 1:22:24.",
+        )
 
-        group.addParam("imageGroup3", pwprot.StringParam,
-                       label="Image group 3",
-                       default=None,
-                       allowsNull=True,
-                       condition="excludeImages and numberOfExclusions in "
-                       "range(3,21)",
-                       help=f"Input in the format exp:start:end\nExclude "
-                       f"a range of images (start,stop) from the dataset "
-                       f"with experiment identifier exp  (inclusive of "
-                       f"frames start, stop). For the first dataset listed "
-                       f"in {inputsetsLabel}, the identifier exp is typically"
-                       f" 0. For the next it is 1, and so on.\nTo exclude "
-                       f"images 22, 23 and 24 from the second dataset listed, "
-                       f"the syntax is 1:22:24.",
-                       )
+        group.addParam(
+            "imageGroup3",
+            pwprot.StringParam,
+            label="Image group 3",
+            default=None,
+            allowsNull=True,
+            condition="excludeImages and numberOfExclusions in " "range(3,21)",
+            help=f"Input in the format exp:start:end\nExclude "
+            f"a range of images (start,stop) from the dataset "
+            f"with experiment identifier exp  (inclusive of "
+            f"frames start, stop). For the first dataset listed "
+            f"in {inputsetsLabel}, the identifier exp is typically"
+            f" 0. For the next it is 1, and so on.\nTo exclude "
+            f"images 22, 23 and 24 from the second dataset listed, "
+            f"the syntax is 1:22:24.",
+        )
 
-        group.addParam("imageGroup4", pwprot.StringParam,
-                       label="Image group 4",
-                       default=None,
-                       allowsNull=True,
-                       condition="excludeImages and numberOfExclusions in "
-                       "range(4,21)",
-                       help=f"Input in the format exp:start:end\nExclude a "
-                       f"range of images (start,stop) from the dataset with "
-                       f"experiment identifier exp  (inclusive of frames "
-                       f"start, stop). For the first dataset listed in "
-                       f"{inputsetsLabel}, the identifier exp is typically "
-                       f"0. For the next it is 1, and so on.\nTo exclude images"
-                       f" 22, 23 and 24 from the second dataset listed, the "
-                       f"syntax is 1:22:24.",
-                       )
+        group.addParam(
+            "imageGroup4",
+            pwprot.StringParam,
+            label="Image group 4",
+            default=None,
+            allowsNull=True,
+            condition="excludeImages and numberOfExclusions in " "range(4,21)",
+            help=f"Input in the format exp:start:end\nExclude a "
+            f"range of images (start,stop) from the dataset with "
+            f"experiment identifier exp  (inclusive of frames "
+            f"start, stop). For the first dataset listed in "
+            f"{inputsetsLabel}, the identifier exp is typically "
+            f"0. For the next it is 1, and so on.\nTo exclude images"
+            f" 22, 23 and 24 from the second dataset listed, the "
+            f"syntax is 1:22:24.",
+        )
 
-        group.addParam("imageGroup5", pwprot.StringParam,
-                       label="Image group 5",
-                       default=None,
-                       allowsNull=True,
-                       condition="excludeImages and numberOfExclusions in "
-                       "range"
-                       "(5,21)",
-                       help=f"Input in the format exp:start:end\nExclude a "
-                       f"range of images (start,stop) from the dataset with "
-                       f"experiment identifier exp  (inclusive of frames "
-                       f"start, stop). For the first dataset listed in "
-                       f"{inputsetsLabel}, the identifier exp is typically"
-                       f" 0. For the next it is 1, and so on.\nTo exclude "
-                       f"images 22, 23 and 24 from the second dataset "
-                       f"listed, the syntax is 1:22:24.",
-                       )
+        group.addParam(
+            "imageGroup5",
+            pwprot.StringParam,
+            label="Image group 5",
+            default=None,
+            allowsNull=True,
+            condition="excludeImages and numberOfExclusions in "
+            "range"
+            "(5,21)",
+            help=f"Input in the format exp:start:end\nExclude a "
+            f"range of images (start,stop) from the dataset with "
+            f"experiment identifier exp  (inclusive of frames "
+            f"start, stop). For the first dataset listed in "
+            f"{inputsetsLabel}, the identifier exp is typically"
+            f" 0. For the next it is 1, and so on.\nTo exclude "
+            f"images 22, 23 and 24 from the second dataset "
+            f"listed, the syntax is 1:22:24.",
+        )
 
-        group.addParam("imageGroup6", pwprot.StringParam,
-                       label="Image group 6",
-                       default=None,
-                       allowsNull=True,
-                       condition="excludeImages and numberOfExclusions in "
-                       "range"
-                       "(6,21)",
-                       help=f"Input in the format exp:start:end\nExclude a "
-                       f"range of images (start,stop) from the dataset with "
-                       f"experiment identifier exp  (inclusive of frames "
-                       f"start, stop). For the first dataset listed in "
-                       f"{inputsetsLabel}, the identifier exp is typically"
-                       f" 0. For the next it is 1, and so on.\nTo exclude "
-                       f"images 22, 23 and 24 from the second dataset "
-                       f"listed, the syntax is 1:22:24.",
-                       )
+        group.addParam(
+            "imageGroup6",
+            pwprot.StringParam,
+            label="Image group 6",
+            default=None,
+            allowsNull=True,
+            condition="excludeImages and numberOfExclusions in "
+            "range"
+            "(6,21)",
+            help=f"Input in the format exp:start:end\nExclude a "
+            f"range of images (start,stop) from the dataset with "
+            f"experiment identifier exp  (inclusive of frames "
+            f"start, stop). For the first dataset listed in "
+            f"{inputsetsLabel}, the identifier exp is typically"
+            f" 0. For the next it is 1, and so on.\nTo exclude "
+            f"images 22, 23 and 24 from the second dataset "
+            f"listed, the syntax is 1:22:24.",
+        )
 
-        group.addParam("imageGroup7", pwprot.StringParam,
-                       label="Image group 7",
-                       default=None,
-                       allowsNull=True,
-                       condition="excludeImages and numberOfExclusions in "
-                       "range"
-                       "(7, 21)",
-                       help=f"Input in the format exp:start:end\nExclude a "
-                       f"range of images (start,stop) from the dataset with "
-                       f"experiment identifier exp  (inclusive of frames "
-                       f"start, stop). For the first dataset listed in "
-                       f"{inputsetsLabel}, the identifier exp is typically"
-                       f" 0. For the next it is 1, and so on.\nTo exclude "
-                       f"images 22, 23 and 24 from the second dataset "
-                       f"listed, the syntax is 1:22:24.",
-                       )
+        group.addParam(
+            "imageGroup7",
+            pwprot.StringParam,
+            label="Image group 7",
+            default=None,
+            allowsNull=True,
+            condition="excludeImages and numberOfExclusions in "
+            "range"
+            "(7, 21)",
+            help=f"Input in the format exp:start:end\nExclude a "
+            f"range of images (start,stop) from the dataset with "
+            f"experiment identifier exp  (inclusive of frames "
+            f"start, stop). For the first dataset listed in "
+            f"{inputsetsLabel}, the identifier exp is typically"
+            f" 0. For the next it is 1, and so on.\nTo exclude "
+            f"images 22, 23 and 24 from the second dataset "
+            f"listed, the syntax is 1:22:24.",
+        )
 
-        group.addParam("imageGroup8", pwprot.StringParam,
-                       label="Image group 8",
-                       default=None,
-                       allowsNull=True,
-                       condition="excludeImages and numberOfExclusions in "
-                       "range(8, 21)",
-                       help=f"Input in the format exp:start:end\nExclude a "
-                       f"range of images (start,stop) from the dataset with "
-                       f"experiment identifier exp  (inclusive of frames "
-                       f"start, stop). For the first dataset listed in "
-                       f"{inputsetsLabel}, the identifier exp is typically"
-                       f" 0. For the next it is 1, and so on.\nTo exclude "
-                       f"images 22, 23 and 24 from the second dataset "
-                       f"listed, the syntax is 1:22:24.",
-                       )
+        group.addParam(
+            "imageGroup8",
+            pwprot.StringParam,
+            label="Image group 8",
+            default=None,
+            allowsNull=True,
+            condition="excludeImages and numberOfExclusions in "
+            "range(8, 21)",
+            help=f"Input in the format exp:start:end\nExclude a "
+            f"range of images (start,stop) from the dataset with "
+            f"experiment identifier exp  (inclusive of frames "
+            f"start, stop). For the first dataset listed in "
+            f"{inputsetsLabel}, the identifier exp is typically"
+            f" 0. For the next it is 1, and so on.\nTo exclude "
+            f"images 22, 23 and 24 from the second dataset "
+            f"listed, the syntax is 1:22:24.",
+        )
 
-        group.addParam("imageGroup9", pwprot.StringParam,
-                       label="Image group 9",
-                       default=None,
-                       allowsNull=True,
-                       condition="excludeImages and numberOfExclusions in "
-                       "range"
-                       "(9,21)",
-                       help=f"Input in the format exp:start:end\nExclude a "
-                       f"range of images (start,stop) from the dataset with "
-                       f"experiment identifier exp  (inclusive of frames "
-                       f"start, stop). For the first dataset listed in "
-                       f"{inputsetsLabel}, the identifier exp is typically"
-                       f" 0. For the next it is 1, and so on.\nTo exclude "
-                       f"images 22, 23 and 24 from the second dataset "
-                       f"listed, the syntax is 1:22:24.",
-                       )
+        group.addParam(
+            "imageGroup9",
+            pwprot.StringParam,
+            label="Image group 9",
+            default=None,
+            allowsNull=True,
+            condition="excludeImages and numberOfExclusions in "
+            "range"
+            "(9,21)",
+            help=f"Input in the format exp:start:end\nExclude a "
+            f"range of images (start,stop) from the dataset with "
+            f"experiment identifier exp  (inclusive of frames "
+            f"start, stop). For the first dataset listed in "
+            f"{inputsetsLabel}, the identifier exp is typically"
+            f" 0. For the next it is 1, and so on.\nTo exclude "
+            f"images 22, 23 and 24 from the second dataset "
+            f"listed, the syntax is 1:22:24.",
+        )
 
-        group.addParam("imageGroup10", pwprot.StringParam,
-                       label="Image group 10",
-                       default=None,
-                       allowsNull=True,
-                       condition="excludeImages and numberOfExclusions in "
-                       "range(10,21)",
-                       help=f"Input in the format exp:start:end\nExclude a "
-                       f"range of images (start,stop) from the dataset with "
-                       f"experiment identifier exp  (inclusive of frames "
-                       f"start, stop). For the first dataset listed in "
-                       f"{inputsetsLabel}, the identifier exp is typically"
-                       f" 0. For the next it is 1, and so on.\nTo exclude "
-                       f"images 22, 23 and 24 from the second dataset "
-                       f"listed, the syntax is 1:22:24.",
-                       )
+        group.addParam(
+            "imageGroup10",
+            pwprot.StringParam,
+            label="Image group 10",
+            default=None,
+            allowsNull=True,
+            condition="excludeImages and numberOfExclusions in "
+            "range(10,21)",
+            help=f"Input in the format exp:start:end\nExclude a "
+            f"range of images (start,stop) from the dataset with "
+            f"experiment identifier exp  (inclusive of frames "
+            f"start, stop). For the first dataset listed in "
+            f"{inputsetsLabel}, the identifier exp is typically"
+            f" 0. For the next it is 1, and so on.\nTo exclude "
+            f"images 22, 23 and 24 from the second dataset "
+            f"listed, the syntax is 1:22:24.",
+        )
 
-        group.addParam("imageGroup11", pwprot.StringParam,
-                       label="Image group 11",
-                       default=None,
-                       allowsNull=True,
-                       condition="excludeImages and numberOfExclusions in "
-                       "range(11,21)",
-                       help=f"Input in the format exp:start:end\nExclude a "
-                       f"range of images (start,stop) from the dataset with "
-                       f"experiment identifier exp  (inclusive of frames "
-                       f"start, stop). For the first dataset listed in "
-                       f"{inputsetsLabel}, the identifier exp is typically"
-                       f" 0. For the next it is 1, and so on.\nTo exclude "
-                       f"images 22, 23 and 24 from the second dataset "
-                       f"listed, the syntax is 1:22:24.",
-                       )
+        group.addParam(
+            "imageGroup11",
+            pwprot.StringParam,
+            label="Image group 11",
+            default=None,
+            allowsNull=True,
+            condition="excludeImages and numberOfExclusions in "
+            "range(11,21)",
+            help=f"Input in the format exp:start:end\nExclude a "
+            f"range of images (start,stop) from the dataset with "
+            f"experiment identifier exp  (inclusive of frames "
+            f"start, stop). For the first dataset listed in "
+            f"{inputsetsLabel}, the identifier exp is typically"
+            f" 0. For the next it is 1, and so on.\nTo exclude "
+            f"images 22, 23 and 24 from the second dataset "
+            f"listed, the syntax is 1:22:24.",
+        )
 
-        group.addParam("imageGroup12", pwprot.StringParam,
-                       label="Image group 12",
-                       default=None,
-                       allowsNull=True,
-                       condition="excludeImages and numberOfExclusions in "
-                       "range(12,21)",
-                       help=f"Input in the format exp:start:end\nExclude a "
-                       f"range of images (start,stop) from the dataset with "
-                       f"experiment identifier exp  (inclusive of frames "
-                       f"start, stop). For the first dataset listed in "
-                       f"{inputsetsLabel}, the identifier exp is typically"
-                       f" 0. For the next it is 1, and so on.\nTo exclude "
-                       f"images 22, 23 and 24 from the second dataset "
-                       f"listed, the syntax is 1:22:24.",
-                       )
+        group.addParam(
+            "imageGroup12",
+            pwprot.StringParam,
+            label="Image group 12",
+            default=None,
+            allowsNull=True,
+            condition="excludeImages and numberOfExclusions in "
+            "range(12,21)",
+            help=f"Input in the format exp:start:end\nExclude a "
+            f"range of images (start,stop) from the dataset with "
+            f"experiment identifier exp  (inclusive of frames "
+            f"start, stop). For the first dataset listed in "
+            f"{inputsetsLabel}, the identifier exp is typically"
+            f" 0. For the next it is 1, and so on.\nTo exclude "
+            f"images 22, 23 and 24 from the second dataset "
+            f"listed, the syntax is 1:22:24.",
+        )
 
-        group.addParam("imageGroup13", pwprot.StringParam,
-                       label="Image group 13",
-                       default=None,
-                       allowsNull=True,
-                       condition="excludeImages and numberOfExclusions in "
-                       "range(13,21)",
-                       help=f"Input in the format exp:start:end\nExclude a "
-                       f"range of images (start,stop) from the dataset with "
-                       f"experiment identifier exp  (inclusive of frames "
-                       f"start, stop). For the first dataset listed in "
-                       f"{inputsetsLabel}, the identifier exp is typically"
-                       f" 0. For the next it is 1, and so on.\nTo exclude "
-                       f"images 22, 23 and 24 from the second dataset "
-                       f"listed, the syntax is 1:22:24.",
-                       )
+        group.addParam(
+            "imageGroup13",
+            pwprot.StringParam,
+            label="Image group 13",
+            default=None,
+            allowsNull=True,
+            condition="excludeImages and numberOfExclusions in "
+            "range(13,21)",
+            help=f"Input in the format exp:start:end\nExclude a "
+            f"range of images (start,stop) from the dataset with "
+            f"experiment identifier exp  (inclusive of frames "
+            f"start, stop). For the first dataset listed in "
+            f"{inputsetsLabel}, the identifier exp is typically"
+            f" 0. For the next it is 1, and so on.\nTo exclude "
+            f"images 22, 23 and 24 from the second dataset "
+            f"listed, the syntax is 1:22:24.",
+        )
 
-        group.addParam("imageGroup14", pwprot.StringParam,
-                       label="Image group 14",
-                       default=None,
-                       allowsNull=True,
-                       condition="excludeImages and numberOfExclusions in "
-                       "range(14,21)",
-                       help=f"Input in the format exp:start:end\nExclude a "
-                       f"range of images (start,stop) from the dataset with "
-                       f"experiment identifier exp  (inclusive of frames "
-                       f"start, stop). For the first dataset listed in "
-                       f"{inputsetsLabel}, the identifier exp is typically"
-                       f" 0. For the next it is 1, and so on.\nTo exclude "
-                       f"images 22, 23 and 24 from the second dataset "
-                       f"listed, the syntax is 1:22:24.",
-                       )
+        group.addParam(
+            "imageGroup14",
+            pwprot.StringParam,
+            label="Image group 14",
+            default=None,
+            allowsNull=True,
+            condition="excludeImages and numberOfExclusions in "
+            "range(14,21)",
+            help=f"Input in the format exp:start:end\nExclude a "
+            f"range of images (start,stop) from the dataset with "
+            f"experiment identifier exp  (inclusive of frames "
+            f"start, stop). For the first dataset listed in "
+            f"{inputsetsLabel}, the identifier exp is typically"
+            f" 0. For the next it is 1, and so on.\nTo exclude "
+            f"images 22, 23 and 24 from the second dataset "
+            f"listed, the syntax is 1:22:24.",
+        )
 
-        group.addParam("imageGroup15", pwprot.StringParam,
-                       label="Image group 15",
-                       default=None,
-                       allowsNull=True,
-                       condition="excludeImages and numberOfExclusions in "
-                       "range(15,21)",
-                       help=f"Input in the format exp:start:end\nExclude a "
-                       f"range of images (start,stop) from the dataset with "
-                       f"experiment identifier exp  (inclusive of frames "
-                       f"start, stop). For the first dataset listed in "
-                       f"{inputsetsLabel}, the identifier exp is typically"
-                       f" 0. For the next it is 1, and so on.\nTo exclude "
-                       f"images 22, 23 and 24 from the second dataset "
-                       f"listed, the syntax is 1:22:24.",
-                       )
+        group.addParam(
+            "imageGroup15",
+            pwprot.StringParam,
+            label="Image group 15",
+            default=None,
+            allowsNull=True,
+            condition="excludeImages and numberOfExclusions in "
+            "range(15,21)",
+            help=f"Input in the format exp:start:end\nExclude a "
+            f"range of images (start,stop) from the dataset with "
+            f"experiment identifier exp  (inclusive of frames "
+            f"start, stop). For the first dataset listed in "
+            f"{inputsetsLabel}, the identifier exp is typically"
+            f" 0. For the next it is 1, and so on.\nTo exclude "
+            f"images 22, 23 and 24 from the second dataset "
+            f"listed, the syntax is 1:22:24.",
+        )
 
-        group.addParam("imageGroup16", pwprot.StringParam,
-                       label="Image group 16",
-                       default=None,
-                       allowsNull=True,
-                       condition="excludeImages and numberOfExclusions in "
-                       "range(16,21)",
-                       help=f"Input in the format exp:start:end\nExclude a "
-                       f"range of images (start,stop) from the dataset with "
-                       f"experiment identifier exp  (inclusive of frames "
-                       f"start, stop). For the first dataset listed in "
-                       f"{inputsetsLabel}, the identifier exp is typically"
-                       f" 0. For the next it is 1, and so on.\nTo exclude "
-                       f"images 22, 23 and 24 from the second dataset "
-                       f"listed, the syntax is 1:22:24.",
-                       )
+        group.addParam(
+            "imageGroup16",
+            pwprot.StringParam,
+            label="Image group 16",
+            default=None,
+            allowsNull=True,
+            condition="excludeImages and numberOfExclusions in "
+            "range(16,21)",
+            help=f"Input in the format exp:start:end\nExclude a "
+            f"range of images (start,stop) from the dataset with "
+            f"experiment identifier exp  (inclusive of frames "
+            f"start, stop). For the first dataset listed in "
+            f"{inputsetsLabel}, the identifier exp is typically"
+            f" 0. For the next it is 1, and so on.\nTo exclude "
+            f"images 22, 23 and 24 from the second dataset "
+            f"listed, the syntax is 1:22:24.",
+        )
 
-        group.addParam("imageGroup17", pwprot.StringParam,
-                       label="Image group 17",
-                       default=None,
-                       allowsNull=True,
-                       condition="excludeImages and numberOfExclusions in "
-                       "range(17,21)",
-                       help=f"Input in the format exp:start:end\nExclude a "
-                       f"range of images (start,stop) from the dataset with "
-                       f"experiment identifier exp  (inclusive of frames "
-                       f"start, stop). For the first dataset listed in "
-                       f"{inputsetsLabel}, the identifier exp is typically"
-                       f" 0. For the next it is 1, and so on.\nTo exclude "
-                       f"images 22, 23 and 24 from the second dataset "
-                       f"listed, the syntax is 1:22:24.",
-                       )
+        group.addParam(
+            "imageGroup17",
+            pwprot.StringParam,
+            label="Image group 17",
+            default=None,
+            allowsNull=True,
+            condition="excludeImages and numberOfExclusions in "
+            "range(17,21)",
+            help=f"Input in the format exp:start:end\nExclude a "
+            f"range of images (start,stop) from the dataset with "
+            f"experiment identifier exp  (inclusive of frames "
+            f"start, stop). For the first dataset listed in "
+            f"{inputsetsLabel}, the identifier exp is typically"
+            f" 0. For the next it is 1, and so on.\nTo exclude "
+            f"images 22, 23 and 24 from the second dataset "
+            f"listed, the syntax is 1:22:24.",
+        )
 
-        group.addParam("imageGroup18", pwprot.StringParam,
-                       label="Image group 18",
-                       default=None,
-                       allowsNull=True,
-                       condition="excludeImages and numberOfExclusions in "
-                       "range(18,21)",
-                       help=f"Input in the format exp:start:end\nExclude a "
-                       f"range of images (start,stop) from the dataset with "
-                       f"experiment identifier exp  (inclusive of frames "
-                       f"start, stop). For the first dataset listed in "
-                       f"{inputsetsLabel}, the identifier exp is typically"
-                       f" 0. For the next it is 1, and so on.\nTo exclude "
-                       f"images 22, 23 and 24 from the second dataset "
-                       f"listed, the syntax is 1:22:24.",
-                       )
+        group.addParam(
+            "imageGroup18",
+            pwprot.StringParam,
+            label="Image group 18",
+            default=None,
+            allowsNull=True,
+            condition="excludeImages and numberOfExclusions in "
+            "range(18,21)",
+            help=f"Input in the format exp:start:end\nExclude a "
+            f"range of images (start,stop) from the dataset with "
+            f"experiment identifier exp  (inclusive of frames "
+            f"start, stop). For the first dataset listed in "
+            f"{inputsetsLabel}, the identifier exp is typically"
+            f" 0. For the next it is 1, and so on.\nTo exclude "
+            f"images 22, 23 and 24 from the second dataset "
+            f"listed, the syntax is 1:22:24.",
+        )
 
-        group.addParam("imageGroup19", pwprot.StringParam,
-                       label="Image group 19",
-                       default=None,
-                       allowsNull=True,
-                       condition="excludeImages and numberOfExclusions in "
-                       "range(19,21)",
-                       help=f"Input in the format exp:start:end\nExclude a "
-                       f"range of images (start,stop) from the dataset with "
-                       f"experiment identifier exp  (inclusive of frames "
-                       f"start, stop). For the first dataset listed in "
-                       f"{inputsetsLabel}, the identifier exp is typically"
-                       f" 0. For the next it is 1, and so on.\nTo exclude "
-                       f"images 22, 23 and 24 from the second dataset "
-                       f"listed, the syntax is 1:22:24.",
-                       )
+        group.addParam(
+            "imageGroup19",
+            pwprot.StringParam,
+            label="Image group 19",
+            default=None,
+            allowsNull=True,
+            condition="excludeImages and numberOfExclusions in "
+            "range(19,21)",
+            help=f"Input in the format exp:start:end\nExclude a "
+            f"range of images (start,stop) from the dataset with "
+            f"experiment identifier exp  (inclusive of frames "
+            f"start, stop). For the first dataset listed in "
+            f"{inputsetsLabel}, the identifier exp is typically"
+            f" 0. For the next it is 1, and so on.\nTo exclude "
+            f"images 22, 23 and 24 from the second dataset "
+            f"listed, the syntax is 1:22:24.",
+        )
 
-        group.addParam("imageGroup20", pwprot.StringParam,
-                       label="Image group 20",
-                       default=None,
-                       allowsNull=True,
-                       condition="excludeImages and numberOfExclusions in "
-                       "range(20,21)",
-                       help=f"Input in the format exp:start:end\nExclude a "
-                       f"range of images (start,stop) from the dataset with "
-                       f"experiment identifier exp  (inclusive of frames "
-                       f"start, stop). For the first dataset listed in "
-                       f"{inputsetsLabel}, the identifier exp is typically"
-                       f" 0. For the next it is 1, and so on.\nTo exclude "
-                       f"images 22, 23 and 24 from the second dataset "
-                       f"listed, the syntax is 1:22:24.",
-                       )
+        group.addParam(
+            "imageGroup20",
+            pwprot.StringParam,
+            label="Image group 20",
+            default=None,
+            allowsNull=True,
+            condition="excludeImages and numberOfExclusions in "
+            "range(20,21)",
+            help=f"Input in the format exp:start:end\nExclude a "
+            f"range of images (start,stop) from the dataset with "
+            f"experiment identifier exp  (inclusive of frames "
+            f"start, stop). For the first dataset listed in "
+            f"{inputsetsLabel}, the identifier exp is typically"
+            f" 0. For the next it is 1, and so on.\nTo exclude "
+            f"images 22, 23 and 24 from the second dataset "
+            f"listed, the syntax is 1:22:24.",
+        )
 
     def getExclusions(self):
         return self.numberOfExclusions.get()

@@ -22,12 +22,12 @@ authors:
     orcid: "https://orcid.org/0000-0002-3320-1269"
 identifiers:
   - type: doi
-    value: 10.5281/zenodo.6035832
+    value: 10.5281/zenodo.6035831
     description: >-
       Scipion-ED plugin to use programs from DIALS
       for Electron Diffraction image processing.
 repository-code: "https://github.com/scipion-ed/scipion-ed-dials"
 license: GPL-3.0
-commit: 8e6c10d
-version: v3!1.0.0b2
-date-released: "2022-02-10"
+commit: 1adba66
+version: v3!1.0.1
+date-released: "2022-04-08"

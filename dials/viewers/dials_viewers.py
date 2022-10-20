@@ -26,18 +26,18 @@
 # *
 # **************************************************************************
 
-import tkinter as tk
 import textwrap
+import tkinter as tk
 
-from pyworkflow.gui.widgets import Button, HotButton
 import pyworkflow.gui as pwgui
 import pyworkflow.gui.text as pwtext
-import pyworkflow.utils as pwutils
-import pyworkflow.viewer as pwviewer
 import pyworkflow.protocol.params as params
+import pyworkflow.viewer as pwviewer
+from pyworkflow.gui.widgets import Button, HotButton
 
 import dials.protocols as dialsProt
 import dials.utils as dutils
+
 from . import dials_viewer_utils as dvutils
 
 
@@ -46,13 +46,15 @@ class DialsImageView(pwviewer.CommandView):
 
         if reflectionFile is None:
             pwviewer.CommandView.__init__(
-                self, f"dials.image_viewer '{modelFile}' &", **kwargs)
+                self, f"dials.image_viewer '{modelFile}' &", **kwargs
+            )
         else:
             pwviewer.CommandView.__init__(
                 self,
                 f"dials.image_viewer experiments='{modelFile}' "
                 f"reflections='{reflectionFile}' &",
-                **kwargs)
+                **kwargs,
+            )
 
 
 class DialsReciprocalLatticeView(pwviewer.CommandView):
@@ -61,7 +63,8 @@ class DialsReciprocalLatticeView(pwviewer.CommandView):
             self,
             f"dials.reciprocal_lattice_viewer "
             f"'{modelFile}' '{reflectionFile}' &",
-            **kwargs)
+            **kwargs,
+        )
 
 
 IMAGE_VIEWER = 0
@@ -69,38 +72,44 @@ RECIPROCAL_VIEWER = 1
 
 
 class DialsFoundSpotsViewer(pwviewer.ProtocolViewer):
-    """ Vizualisation of Dials imported images and results from spotfinding
-    and indexing """
+    """Vizualisation of Dials imported images and results from spotfinding
+    and indexing"""
 
     _environments = [pwviewer.DESKTOP_TKINTER]
-    _targets = [dialsProt.DialsProtImportDiffractionImages,
-                dialsProt.DialsProtFindSpots,
-                dialsProt.DialsProtIndexSpots,
-                dialsProt.DialsProtRefineSpots,
-                dialsProt.DialsProtIntegrateSpots]
+    _targets = [
+        dialsProt.DialsProtImportDiffractionImages,
+        dialsProt.DialsProtFindSpots,
+        dialsProt.DialsProtIndexSpots,
+        dialsProt.DialsProtRefineSpots,
+        dialsProt.DialsProtIntegrateSpots,
+    ]
 
     def _defineParams(self, form):
-        form.addSection(label='Pick viewer')
+        form.addSection(label="Pick viewer")
 
         form.addParam(
-            'viewSelection', params.EnumParam,
-            choices=['image viewer', 'reciprocal lattice viewer'],
+            "viewSelection",
+            params.EnumParam,
+            choices=["image viewer", "reciprocal lattice viewer"],
             default=IMAGE_VIEWER,
-            label='Display data with',
+            label="Display data with",
             display=params.EnumParam.DISPLAY_HLIST,
             help="*image viewer*: Display the images used in spotfinding. "
             "Option to show the found spots on the images\n"
             "*reciprocal viewer*: View the found spots in reciprocal space. "
-            "Does not work if the protocol is importing diffraction images.")
+            "Does not work if the protocol is importing diffraction images.",
+        )
 
-        form.addParam('viewSpotsOnImage', params.BooleanParam,
-                      default=True, label='View the found spots on the images?',
-                      condition='viewSelection==%d' % IMAGE_VIEWER)
+        form.addParam(
+            "viewSpotsOnImage",
+            params.BooleanParam,
+            default=True,
+            label="View the found spots on the images?",
+            condition="viewSelection==%d" % IMAGE_VIEWER,
+        )
 
     def _getVisualizeDict(self):
-        visualizeDict = {
-            'viewSelection': self._viewerSelection
-        }
+        visualizeDict = {"viewSelection": self._viewerSelection}
         return visualizeDict
 
     def _viewerSelection(self, paramName=None):
@@ -112,81 +121,83 @@ class DialsFoundSpotsViewer(pwviewer.ProtocolViewer):
     def _viewImages(self, reflFn=None, **kwargs):
         if self.viewSpotsOnImage:
             reflFn = dvutils._getRefls(self.protocol)
-        DialsImageView(dvutils._getModel(self.protocol),
-                       reflectionFile=reflFn).show()
+        DialsImageView(
+            dvutils._getModel(self.protocol), reflectionFile=reflFn
+        ).show()
 
     def _viewReciprocal(self, **kwargs):
         DialsReciprocalLatticeView(
             dvutils._getModel(self.protocol),
-            reflectionFile=dvutils._getRefls(self.protocol)
+            reflectionFile=dvutils._getRefls(self.protocol),
         ).show()
 
 
 class DialsResultsViewer(pwviewer.Viewer):
-    """ Viewer for analyzing results from dials processing in general  """
+    """Viewer for analyzing results from dials processing in general"""
+
     _environments = [pwviewer.DESKTOP_TKINTER]
-    _targets = [dialsProt.DialsProtImportDiffractionImages,
-                dialsProt.DialsProtFindSpots,
-                dialsProt.DialsProtIndexSpots,
-                dialsProt.DialsProtRefineSpots,
-                dialsProt.DialsProtIntegrateSpots,
-                dialsProt.DialsProtSymmetry,
-                dialsProt.DialsProtScaling,
-                dialsProt.DialsProtExport]
+    _targets = [
+        dialsProt.DialsProtImportDiffractionImages,
+        dialsProt.DialsProtFindSpots,
+        dialsProt.DialsProtIndexSpots,
+        dialsProt.DialsProtRefineSpots,
+        dialsProt.DialsProtIntegrateSpots,
+        dialsProt.DialsProtSymmetry,
+        dialsProt.DialsProtScaling,
+        dialsProt.DialsProtExport,
+    ]
 
     def visualize(self, obj, **kwargs):
-        self.resultsWindow = self.tkWindow(ResultsWindow,
-                                           title='Results',
-                                           protocol=obj
-                                           )
+        self.resultsWindow = self.tkWindow(
+            ResultsWindow, title="Results", protocol=obj
+        )
         self.resultsWindow.show()
 
 
 class ResultsWindow(pwgui.Window):
-
     def __init__(self, **kwargs):
         pwgui.Window.__init__(self, **kwargs)
 
-        self.protocol = kwargs.get('protocol')
+        self.protocol = kwargs.get("protocol")
 
         content = tk.Frame(self.root)
         self._createContent(content)
-        content.grid(row=0, column=0, sticky='news')
+        content.grid(row=0, column=0, sticky="news")
         content.columnconfigure(0, weight=1)
 
     def _createContent(self, content):
         topFrame = tk.Frame(content)
         content.columnconfigure(0, weight=1)
-        topFrame.grid(row=0, column=0, sticky='new', padx=5, pady=5)
+        topFrame.grid(row=0, column=0, sticky="new", padx=5, pady=5)
 
         content.rowconfigure(1, weight=1)
         resultsFrame = tk.Frame(content)
         # Descide how much relative space the frames should fill
         resultsFrame.rowconfigure(0, weight=100)
         resultsFrame.columnconfigure(0, weight=2)
-        resultsFrame.grid(row=1, column=0, sticky='news', padx=5, pady=5)
+        resultsFrame.grid(row=1, column=0, sticky="news", padx=5, pady=5)
 
         buttonsFrame = tk.Frame(content)
-        buttonsFrame.grid(row=2, column=0, sticky='new', padx=5, pady=5)
+        buttonsFrame.grid(row=2, column=0, sticky="new", padx=5, pady=5)
 
         self._fillTopFrame(topFrame)
         self._fillResultsFrame(resultsFrame)
         self._fillButtonsFrame(buttonsFrame)
 
     def _fillTopFrame(self, frame):
-        p1 = tk.Label(frame, text='Project: ')
-        p1.grid(row=0, column=0, sticky='nw', padx=5, pady=5)
+        p1 = tk.Label(frame, text="Project: ")
+        p1.grid(row=0, column=0, sticky="nw", padx=5, pady=5)
         projName = self.protocol.getProject().getShortName()
         p2 = tk.Label(frame, text=projName, font=self.fontBold)
-        p2.grid(row=0, column=1, sticky='nw', padx=5, pady=5)
+        p2.grid(row=0, column=1, sticky="nw", padx=5, pady=5)
         dataSource = self.protocol.getDatasets()
-        splitSource = dataSource.split('\n')
+        splitSource = dataSource.split("\n")
         expl = splitSource[0]
         source = "\n".join(splitSource[1:])
         p3 = tk.Label(frame, text=expl)
-        p3.grid(row=1, column=0, sticky='nw', padx=5, pady=5)
+        p3.grid(row=1, column=0, sticky="nw", padx=5, pady=5)
         p4 = tk.Label(frame, text=source)
-        p4.grid(row=1, column=1, sticky='nw', padx=5, pady=5)
+        p4.grid(row=1, column=1, sticky="nw", padx=5, pady=5)
 
     def _fillResultsFrame(self, frame):
         try:
@@ -197,55 +208,68 @@ class ResultsWindow(pwgui.Window):
         # TODO: add monospace font
         s = pwtext.Text(frame)
         s.addText(txt)
-        s.configure(state='disabled')
-        s.grid(row=0, column=0, sticky='news')
+        s.configure(state="disabled")
+        s.grid(row=0, column=0, sticky="news")
 
     def _fillButtonsFrame(self, frame):
         subframe = tk.Frame(frame)
-        subframe.grid(row=0, column=0, sticky='nw')
+        subframe.grid(row=0, column=0, sticky="nw")
         frame.columnconfigure(1, weight=1)
 
-        imgPlainBtn = Button(subframe, "View plain images",
-                             command=self._viewPlainImages)
-        imgPlainBtn.grid(row=0, column=0, sticky='nw', padx=(0, 5))
+        imgPlainBtn = Button(
+            subframe, "View plain images", command=self._viewPlainImages
+        )
+        imgPlainBtn.grid(row=0, column=0, sticky="nw", padx=(0, 5))
         if dvutils._getModel(self.protocol) is None:
-            imgPlainBtn['state'] = 'disabled'
+            imgPlainBtn["state"] = "disabled"
 
-        imgOverlaidBtn = Button(subframe, "View images with spots",
-                                command=self._viewOverlaidImages)
-        imgOverlaidBtn.grid(row=0, column=1, sticky='nw', padx=(0, 5))
-        if None in {dvutils._getModel(self.protocol),
-                    dvutils._getRefls(self.protocol)}:
-            imgOverlaidBtn['state'] = 'disabled'
+        imgOverlaidBtn = Button(
+            subframe,
+            "View images with spots",
+            command=self._viewOverlaidImages,
+        )
+        imgOverlaidBtn.grid(row=0, column=1, sticky="nw", padx=(0, 5))
+        if None in {
+            dvutils._getModel(self.protocol),
+            dvutils._getRefls(self.protocol),
+        }:
+            imgOverlaidBtn["state"] = "disabled"
 
-        reciprocalBtn = Button(subframe, "View reciprocal lattice",
-                               command=self._viewReciprocal)
-        reciprocalBtn.grid(row=0, column=2, sticky='nw', padx=(0, 5))
-        if None in {dvutils._getModel(self.protocol),
-                    dvutils._getRefls(self.protocol)}:
-            reciprocalBtn['state'] = 'disabled'
+        reciprocalBtn = Button(
+            subframe, "View reciprocal lattice", command=self._viewReciprocal
+        )
+        reciprocalBtn.grid(row=0, column=2, sticky="nw", padx=(0, 5))
+        if None in {
+            dvutils._getModel(self.protocol),
+            dvutils._getRefls(self.protocol),
+        }:
+            reciprocalBtn["state"] = "disabled"
 
-        htmlBtn = HotButton(subframe, 'Open HTML Report',
-                            command=self._openHTML)
-        htmlBtn.grid(row=0, column=3, sticky='nw', padx=(0, 5))
+        htmlBtn = HotButton(
+            subframe, "Open HTML Report", command=self._openHTML
+        )
+        htmlBtn.grid(row=0, column=3, sticky="nw", padx=(0, 5))
         if dvutils._getHtml(self.protocol) is None:
-            htmlBtn['state'] = 'disabled'
+            htmlBtn["state"] = "disabled"
 
         closeBtn = self.createCloseButton(frame)
-        closeBtn.grid(row=0, column=1, sticky='ne')
+        closeBtn.grid(row=0, column=1, sticky="ne")
 
     def _viewPlainImages(self, e=None):
-        DialsImageView(dvutils._getModel(self.protocol),
-                       reflectionFile=None).show()
+        DialsImageView(
+            dvutils._getModel(self.protocol), reflectionFile=None
+        ).show()
 
     def _viewOverlaidImages(self, e=None):
-        DialsImageView(dvutils._getModel(self.protocol),
-                       reflectionFile=dvutils._getRefls(self.protocol)).show()
+        DialsImageView(
+            dvutils._getModel(self.protocol),
+            reflectionFile=dvutils._getRefls(self.protocol),
+        ).show()
 
     def _viewReciprocal(self, e=None):
         DialsReciprocalLatticeView(
             dvutils._getModel(self.protocol),
-            reflectionFile=dvutils._getRefls(self.protocol)
+            reflectionFile=dvutils._getRefls(self.protocol),
         ).show()
 
     def _openHTML(self, e=None):

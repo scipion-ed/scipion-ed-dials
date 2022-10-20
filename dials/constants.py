@@ -1,4 +1,4 @@
-''' Define constants for use in protocols and/or tests '''
+""" Define constants for use in protocols and/or tests """
 
 import dials.utils as dutils
 
@@ -7,7 +7,7 @@ DISPERSION = 0
 DISPERSION_EXTENDED = 1
 RADIAL_PROFILE = 2
 
-thresholdAlgorithimChoices = ['dispersion', 'dispersion extended']
+thresholdAlgorithimChoices = ["dispersion", "dispersion extended"]
 thresholdDefault = DISPERSION_EXTENDED
 
 if dutils.isMinDialsVersion("3.9.0"):
@@ -58,8 +58,7 @@ JSON = 5
 SHELX = 6
 PETS = 7
 
-exportFormatChoices = ['mtz', 'sadabs', 'nxs', 'mmcif',
-                       'xds_ascii', 'json']
+exportFormatChoices = ["mtz", "sadabs", "nxs", "mmcif", "xds_ascii", "json"]
 
 if dutils.isMinDialsVersion("3.9.0"):
     exportFormatChoices.append("shelx")
