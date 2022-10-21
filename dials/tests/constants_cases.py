@@ -23,6 +23,8 @@
 # **************************************************************************
 from __future__ import annotations
 
+import dials.tests.testing_utils as tutils
+
 # Create toggles for skipping some tests
 SKIP_PIPELINES = False
 SKIP_LYSO = False
@@ -125,12 +127,20 @@ gonioParams = (
 
 
 def lysoImportCommandLine(
-    pathlist: list,
+    location: str,
     extraPath: str,
     logPath: str,
     experiment: dict,
-    distance: str,
 ) -> str:
+    pathlist = tutils.makePathList(
+        experiment["scan_range"],
+        location=location,
+        pattern=experiment["files_pattern"],
+    )
+    if experiment["distance"] is not None:
+        distance = f" distance={experiment['distance']}"
+    else:
+        distance = ""
     command_line = (
         f"{' '.join(pathlist)} "
         f"output.log={logPath}/dials.import.log "

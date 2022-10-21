@@ -27,26 +27,23 @@
 # **************************************************************************
 
 import os
-from typing import Union
 
 import pwed
 import pyworkflow as pw
 import pyworkflow.tests as pwtests
 from pwed.objects import *
-from pwed.protocols import ProtImportDiffractionImages
 
 import dials.tests.constants_cases as cc
+import dials.tests.testing_utils as tutils
 from dials.constants import *
 from dials.convert import writeRestraintsPhil
-from dials.protocols import *
-from dials.protocols.protocol_merge import DialsProtMerge
 
 pw.Config.setDomain(pwed)
 if not pw.Config.debugOn():
     pw.Config.toggleDebug()
 
 
-class TestEdDialsProtocols(pwtests.BaseTest):
+class TestEdDialsProtocols(tutils.ProtocolRunner, tutils.HelperCollection):
     @classmethod
     def setUpClass(cls):
         if cc.SKIP_PIPELINES:
@@ -67,164 +64,6 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             # Clean up all output files from the test
             pw.utils.cleanPath(cls.getOutputPath())
 
-    # Functions for running protocols
-
-    def _runImportImages(
-        self, filesPath, filesPattern="SMV/data/00{TI}.img", **kwargs
-    ) -> ProtImportDiffractionImages:
-        protImport = self.newProtocol(
-            ProtImportDiffractionImages,
-            filesPath=filesPath,
-            filesPattern=filesPattern,
-            **kwargs,
-        )
-        self.launchProtocol(protImport)
-        return protImport
-
-    def _runDialsImportImages(
-        self, filesPath, filesPattern="SMV/data/00{TI}.img", **kwargs
-    ) -> DialsProtImportDiffractionImages:
-        protImport = self.newProtocol(
-            DialsProtImportDiffractionImages,
-            filesPath=filesPath,
-            filesPattern=filesPattern,
-            **kwargs,
-        )
-        self.launchProtocol(protImport)
-        return protImport
-
-    def _runFindSpots(self, inputImages, **kwargs) -> DialsProtFindSpots:
-        protFindSpots = self.newProtocol(
-            DialsProtFindSpots, inputImages=inputImages, **kwargs
-        )
-        self.launchProtocol(protFindSpots)
-        return protFindSpots
-
-    def _runIndex(
-        self, inputImages, inputSpots, **kwargs
-    ) -> DialsProtIndexSpots:
-        protIndex = self.newProtocol(
-            DialsProtIndexSpots,
-            inputImages=inputImages,
-            inputSpots=inputSpots,
-            **kwargs,
-        )
-        self.launchProtocol(protIndex)
-        return protIndex
-
-    def _runRefine(self, inputSet, **kwargs) -> DialsProtRefineSpots:
-        protRefine = self.newProtocol(
-            DialsProtRefineSpots, inputSet=inputSet, **kwargs
-        )
-        self.launchProtocol(protRefine)
-        return protRefine
-
-    def _runIntegrate(self, inputSet, **kwargs) -> DialsProtIntegrateSpots:
-        protIntegrate = self.newProtocol(
-            DialsProtIntegrateSpots, inputSet=inputSet, **kwargs
-        )
-        self.launchProtocol(protIntegrate)
-        return protIntegrate
-
-    def _runSymmetry(self, inputSet, **kwargs) -> DialsProtSymmetry:
-        protSymmetry = self.newProtocol(
-            DialsProtSymmetry, inputSet=inputSet, **kwargs
-        )
-        self.launchProtocol(protSymmetry)
-        return protSymmetry
-
-    def _runScaling(self, inputSets, **kwargs) -> DialsProtScaling:
-        protScaling = self.newProtocol(
-            DialsProtScaling, inputSets=inputSets, **kwargs
-        )
-        self.launchProtocol(protScaling)
-        return protScaling
-
-    def _runMerging(self, inputSet, **kwargs) -> DialsProtMerge:
-        protMerging = self.newProtocol(
-            DialsProtMerge, inputSet=inputSet, **kwargs
-        )
-        self.launchProtocol(protMerging)
-        return protMerging
-
-    def _runExport(self, inputSet, **kwargs) -> DialsProtExport:
-        protExport = self.newProtocol(
-            DialsProtExport, inputSet=inputSet, **kwargs
-        )
-        self.launchProtocol(protExport)
-        return protExport
-
-    # Helper functions
-    def makePathList(
-        self,
-        scanRange,
-        digits=3,
-        location=None,
-        pattern="SMV/data/00{TI}.img",
-        wildcard="{TI}",
-    ) -> list:
-        first, last = scanRange.split(",")
-        numbers = range(int(first), int(last) + 1)
-        replacements = [str(num).zfill(digits) for num in numbers]
-        images = [
-            pattern.replace(wildcard, replacement)
-            for replacement in replacements
-        ]
-        imageList = [os.path.join(location, i) for i in images]
-        return imageList
-
-    def lysoTestExperiments(self) -> list:
-        experiments = []
-        experiments.append(cc.lyso_experiment_14)
-        experiments.append(cc.lyso_experiment_24)
-        return experiments
-
-    def getGarnetExperiment(self) -> dict:
-        return cc.garnet_experiment
-
-    def checkLogDataset(
-        self, protocol: DialsProtBase, dataset, logOutput=""
-    ) -> None:
-        datasetString = (
-            f"Source of data:\n" f"{os.path.join(dataset, 'SMV/data')}"
-        )
-        self.assertEqual(protocol.getDatasets(), datasetString)
-        outputCompare = protocol.getLogOutput().split("\n")[0]
-        self.assertEqual(outputCompare.strip(), logOutput.strip())
-
-    def _getCommand(
-        self,
-        protocol: Union[DialsProtBase, DialsProtRefineSpots, HtmlBase],
-        program=None,
-    ) -> str:
-        try:
-            return protocol._prepareCommandline(program)
-        except AttributeError:
-            pass
-        try:
-            return protocol._prepCommandline(program)
-        except AttributeError:
-            pass
-
-    def assertCommand(
-        self,
-        protocol: DialsProtBase,
-        commandString: str,
-        program: Union[str, None] = None,
-    ):
-        CL = self._getCommand(protocol, program)
-        self.assertEqual(CL, commandString)
-
-    def assertFileExists(self, file):
-        self.assertTrue(os.path.exists(file))
-
-    def comparePhils(self, goodPhil="restraints.phil", testPhil=None):
-        self.assertIsNotNone(goodPhil)
-        self.assertIsNotNone(testPhil)
-        with open(goodPhil) as f1:
-            with open(testPhil) as f2:
-                self.assertEqual(f1.read(), f2.read())
-
     # Pipelines
     def test_lyso_pipeline(self):
         if cc.SKIP_LYSO:
@@ -235,7 +74,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
         multiDataset = []
 
         # Start the run
-        for experiment in self.lysoTestExperiments():
+        for experiment in [cc.lyso_experiment_14, cc.lyso_experiment_24]:
             exptId = experiment["location"]
             with self.subTest(
                 msg=f"Pipeline using {exptId}", experiment=exptId
@@ -253,25 +92,16 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                     rotationAxis=experiment["rotation_axis"],
                     overwriteDetectorDistance=experiment["distance"],
                 )
-                if experiment["distance"] is not None:
-                    distance = f" distance={experiment['distance']}"
-                else:
-                    distance = ""
-
-            pathlist = self.makePathList(
-                experiment["scan_range"],
-                location=dataset,
-                pattern=experiment["files_pattern"],
+            self.assertCommand(
+                protImport,
+                cc.lysoImportCommandLine(
+                    location=dataset,
+                    extraPath=protImport._getExtraPath(),
+                    logPath=protImport._getLogsPath(),
+                    experiment=experiment,
+                ),
+                program="dials.import",
             )
-            importCL = cc.lysoImportCommandLine(
-                pathlist=pathlist,
-                extraPath=protImport._getExtraPath(),
-                logPath=protImport._getLogsPath(),
-                experiment=experiment,
-                distance=distance,
-            )
-
-            self.assertCommand(protImport, importCL, program="dials.import")
             outputModel = protImport.getOutputModelFile()
             self.assertFileExists(outputModel)
             importedset = getattr(protImport, "outputDiffractionImages", None)
@@ -291,14 +121,15 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             )
             inputModel = protFindSpots.getInputModelFile()
             self.assertFileExists(inputModel)
-            findSpotCL = cc.lysoStandardFindSpotCommandLine(
-                inputExtraPath=protImport._getExtraPath(),
-                outputExtraPath=protFindSpots._getExtraPath(),
-                logPath=protFindSpots._getLogsPath(),
-                experiment=experiment,
-            )
             self.assertCommand(
-                protFindSpots, findSpotCL, program="dials.find_spots"
+                protFindSpots,
+                cc.lysoStandardFindSpotCommandLine(
+                    inputExtraPath=protImport._getExtraPath(),
+                    outputExtraPath=protFindSpots._getExtraPath(),
+                    logPath=protFindSpots._getLogsPath(),
+                    experiment=experiment,
+                ),
+                program="dials.find_spots",
             )
             foundspotset = getattr(
                 protFindSpots, "outputDiffractionSpots", None
@@ -380,16 +211,13 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                     enterSpaceGroup=True,
                     knownSpaceGroup=spaceGroup,
                 )
-                indexTmpPhil = protIndexPhil._getTmpPath()
-                indexLogsPhil = protIndexPhil._getLogsPath()
-                indexExtraPhil = protIndexPhil._getExtraPath()
                 self.assertEqual(
                     protIndexPhil._prepIndexCommandline("dials.index"),
                     cc.lysoIndexCommandLine(
                         modelPath=protImport._getExtraPath(),
                         spotsPath=protFindSpots._getExtraPath(),
-                        logPath=indexLogsPhil,
-                        indexTmp=indexTmpPhil,
+                        logPath=protIndexPhil._getLogsPath(),
+                        indexTmp=protIndexPhil._getTmpPath(),
                         spaceGroup=spaceGroup,
                     ),
                 )
@@ -414,7 +242,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
                 self.assertCommand(
                     protRefinePhil,
                     cc.lysoRefineCommandLine(
-                        inputExtraPath=indexExtraPhil,
+                        inputExtraPath=protIndexPhil._getExtraPath(),
                         outputExtraPath=protRefinePhil._getExtraPath(),
                         logPath=protRefinePhil._getLogsPath(),
                         static=True,
@@ -733,7 +561,7 @@ class TestEdDialsProtocols(pwtests.BaseTest):
             self.skipTest("Skipping garnet pipeline test")
 
         # Define all experiment variables in one place
-        experiment = self.getGarnetExperiment()
+        experiment = cc.garnet_experiment
         exptId = experiment["location"]
         dataset = os.path.join(self.dataPath, exptId)
 
