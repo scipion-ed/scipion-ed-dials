@@ -447,24 +447,8 @@ class DialsProtExport(EdProtExport, DialsProtBase):
 
     def _extraParams(self):
         params = ""
-        if self.exportFormat.get() is MTZ:
-            if self.mtzCombinePartials:
-                params += " mtz.combine_partials=True"
-
-        elif self.getFormat() is SADABS:
-            params += self.sadabsExtraParams()
-
-        elif self.getFormat() is NXS:
-            params += self.nxsExtraParams()
-
-            if self.mtzForceStaticModel:
-                params += " mtz.force_static_model=True"
-
-            if self.mtzFilter_ice:
-                params += " mtz.filter_ice_rings=True"
-
-            if self.mtzDMin.get() is not None:
-                params += f" mtz.d_min={self.mtzDMin.get()}"
+        if self.getFormat() is MTZ:
+            params += self.mtzExtraParams()
 
         elif self.getFormat() is SADABS:
             params += self.sadabsExtraParams()
@@ -480,8 +464,6 @@ class DialsProtExport(EdProtExport, DialsProtBase):
 
         elif self.getFormat() is PETS:
             params += self.petsExtraParams()
-
-            params += f" nxs.source_name={self.nxsSourceName.get()}"
 
         return params
 
