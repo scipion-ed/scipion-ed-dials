@@ -23,7 +23,7 @@
 # **************************************************************************
 from __future__ import annotations
 
-import tests.utils as tutils
+from .utils import makePathList
 
 # -------------------------- Test case dictionaries --------------------------
 
@@ -122,7 +122,7 @@ def lysoImportCommandLine(
     logPath: str,
     experiment: dict,
 ) -> str:
-    pathlist = tutils.makePathList(
+    pathlist = makePathList(
         experiment["scan_range"],
         location=location,
         pattern=experiment["files_pattern"],

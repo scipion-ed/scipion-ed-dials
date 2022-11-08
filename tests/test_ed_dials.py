@@ -1,10 +1,9 @@
 # **************************************************************************
 # *
 # * Authors:     J.M. De la Rosa Trevin (delarosatrevin@scilifelab.se) [1]
-# *              V E.G. Bengtsson       (viktor.bengtsson@mmk.su.se)   [2]
+# *              V E.G. Bengtsson       (viktor.e.g.bengtsson@gmail.com)
 # *
 # * [1] SciLifeLab, Stockholm University
-# * [2] Department of Materials and Environmental Chemistry, Stockholm University
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
@@ -33,18 +32,40 @@ import pyworkflow as pw
 import pyworkflow.tests as pwtests
 
 import dials.constants as dconst
-import tests.constants_cases as cc
-import tests.utils as tutils
 from dials.convert import writeRestraintsPhil
 from dials.objects import MissingPathException
-from tests.config import Toggles
+
+from .config import Toggles
+from .constants_cases import (
+    exportMtzCommandLine,
+    garnet_experiment,
+    garnetImportCommandLine,
+    garnetIndexCommandLine,
+    garnetRefineCommandLine,
+    garnetStandardFindSpotCommandLine,
+    integrateCommandLine,
+    lyso_experiment_14,
+    lyso_experiment_24,
+    lysoImportCommandLine,
+    lysoIndexCommandLine,
+    lysoMergeCommandLine,
+    lysoMultiScalingCommandLine,
+    lysoRefineCommandLine,
+    lysoScaleExclusionCommandLine,
+    lysoStandardFindSpotCommandLine,
+    refineBravaisLatticeCommandLine,
+    reindexCommandLine,
+    scalingCommandLine,
+    symmetryCommandLine,
+)
+from .utils import HelperCollection, ProtocolRunner
 
 pw.Config.setDomain(pwed)
 if not pw.Config.debugOn():
     pw.Config.toggleDebug()
 
 
-class TestEdDialsProtocols(tutils.ProtocolRunner, tutils.HelperCollection):
+class TestEdDialsProtocols(ProtocolRunner, HelperCollection):
     @classmethod
     def setUpClass(cls):
         if Toggles.SKIP_PIPELINES:
@@ -75,7 +96,7 @@ class TestEdDialsProtocols(tutils.ProtocolRunner, tutils.HelperCollection):
         multiDataset = []
 
         # Start the run
-        for experiment in [cc.lyso_experiment_14, cc.lyso_experiment_24]:
+        for experiment in [lyso_experiment_14, lyso_experiment_24]:
             exptId = experiment["location"]
             with self.subTest(
                 msg=f"Pipeline using {exptId}", experiment=exptId
@@ -95,7 +116,7 @@ class TestEdDialsProtocols(tutils.ProtocolRunner, tutils.HelperCollection):
                 )
             self.assertCommand(
                 protImport,
-                cc.lysoImportCommandLine(
+                lysoImportCommandLine(
                     location=dataset,
                     extraPath=protImport._getExtraPath(),
                     logPath=protImport._getLogsPath(),
@@ -124,7 +145,7 @@ class TestEdDialsProtocols(tutils.ProtocolRunner, tutils.HelperCollection):
             self.assertFileExists(inputModel)
             self.assertCommand(
                 protFindSpots,
-                cc.lysoStandardFindSpotCommandLine(
+                lysoStandardFindSpotCommandLine(
                     inputExtraPath=protImport._getExtraPath(),
                     outputExtraPath=protFindSpots._getExtraPath(),
                     logPath=protFindSpots._getLogsPath(),
@@ -170,7 +191,7 @@ class TestEdDialsProtocols(tutils.ProtocolRunner, tutils.HelperCollection):
             indexExtra = protIndex._getExtraPath()
             self.assertEqual(
                 protIndex._prepIndexCommandline("dials.index"),
-                cc.lysoIndexCommandLine(
+                lysoIndexCommandLine(
                     modelPath=protImport._getExtraPath(),
                     spotsPath=protFindSpots._getExtraPath(),
                     logPath=indexLogs,
@@ -181,15 +202,13 @@ class TestEdDialsProtocols(tutils.ProtocolRunner, tutils.HelperCollection):
                 protIndex._prepBravaisCommandline(
                     "dials.refine_bravais_settings"
                 ),
-                cc.refineBravaisLatticeCommandLine(
+                refineBravaisLatticeCommandLine(
                     indexTmp=indexTmp, indexLogs=indexLogs
                 ),
             )
             self.assertEqual(
                 protIndex._prepReindexCommandline(),
-                cc.reindexCommandLine(
-                    experiment=experiment, indexTmp=indexTmp
-                ),
+                reindexCommandLine(experiment=experiment, indexTmp=indexTmp),
             )
             indexedset = getattr(protIndex, "outputIndexedSpots", None)
             self.assertIsNotNone(protIndex.outputIndexedSpots)
@@ -214,7 +233,7 @@ class TestEdDialsProtocols(tutils.ProtocolRunner, tutils.HelperCollection):
                 )
                 self.assertEqual(
                     protIndexPhil._prepIndexCommandline("dials.index"),
-                    cc.lysoIndexCommandLine(
+                    lysoIndexCommandLine(
                         modelPath=protImport._getExtraPath(),
                         spotsPath=protFindSpots._getExtraPath(),
                         logPath=protIndexPhil._getLogsPath(),
@@ -242,7 +261,7 @@ class TestEdDialsProtocols(tutils.ProtocolRunner, tutils.HelperCollection):
                 )
                 self.assertCommand(
                     protRefinePhil,
-                    cc.lysoRefineCommandLine(
+                    lysoRefineCommandLine(
                         inputExtraPath=protIndexPhil._getExtraPath(),
                         outputExtraPath=protRefinePhil._getExtraPath(),
                         logPath=protRefinePhil._getLogsPath(),
@@ -280,7 +299,7 @@ class TestEdDialsProtocols(tutils.ProtocolRunner, tutils.HelperCollection):
             )
             self.assertCommand(
                 protRefine,
-                cc.lysoRefineCommandLine(
+                lysoRefineCommandLine(
                     inputExtraPath=indexExtra,
                     outputExtraPath=protRefine._getExtraPath(),
                     logPath=protRefine._getLogsPath(),
@@ -307,7 +326,7 @@ class TestEdDialsProtocols(tutils.ProtocolRunner, tutils.HelperCollection):
             )
             self.assertCommand(
                 protSvRefine,
-                cc.lysoRefineCommandLine(
+                lysoRefineCommandLine(
                     inputExtraPath=protRefine._getExtraPath(),
                     outputExtraPath=protSvRefine._getExtraPath(),
                     logPath=protSvRefine._getLogsPath(),
@@ -335,7 +354,7 @@ class TestEdDialsProtocols(tutils.ProtocolRunner, tutils.HelperCollection):
             )
             self.assertCommand(
                 protSvRefineOld,
-                cc.lysoRefineCommandLine(
+                lysoRefineCommandLine(
                     inputExtraPath=protRefine._getExtraPath(),
                     outputExtraPath=protSvRefineOld._getExtraPath(),
                     logPath=protSvRefineOld._getLogsPath(),
@@ -360,7 +379,7 @@ class TestEdDialsProtocols(tutils.ProtocolRunner, tutils.HelperCollection):
             )
             self.assertCommand(
                 protIntegrate,
-                cc.integrateCommandLine(
+                integrateCommandLine(
                     inputExtraPath=protSvRefine._getExtraPath(),
                     outputExtraPath=protIntegrate._getExtraPath(),
                     logPath=protIntegrate._getLogsPath(),
@@ -386,7 +405,7 @@ class TestEdDialsProtocols(tutils.ProtocolRunner, tutils.HelperCollection):
 
             self.assertCommand(
                 protSymmetry,
-                cc.symmetryCommandLine(
+                symmetryCommandLine(
                     inputExtraPath=protIntegrate._getExtraPath(),
                     outputExtraPath=protSymmetry._getExtraPath(),
                     logPath=protSymmetry._getLogsPath(),
@@ -411,7 +430,7 @@ class TestEdDialsProtocols(tutils.ProtocolRunner, tutils.HelperCollection):
             )
             self.assertCommand(
                 protScaling,
-                cc.scalingCommandLine(
+                scalingCommandLine(
                     inputExtraPath=protIntegrate._getExtraPath(),
                     outputExtraPath=protScaling._getExtraPath(),
                     logPath=protScaling._getLogsPath(),
@@ -453,7 +472,7 @@ class TestEdDialsProtocols(tutils.ProtocolRunner, tutils.HelperCollection):
             unmergedMtzFile = f"{self.getOutputPath()}/{unmergedFn}"
             self.assertCommand(
                 protMultiScaling,
-                cc.lysoMultiScalingCommandLine(
+                lysoMultiScalingCommandLine(
                     inputExtraList=scaledExtra,
                     outputExtraPath=protMultiScaling._getExtraPath(),
                     logPath=protMultiScaling._getLogsPath(),
@@ -489,7 +508,7 @@ class TestEdDialsProtocols(tutils.ProtocolRunner, tutils.HelperCollection):
 
             self.assertCommand(
                 protMerge,
-                cc.lysoMergeCommandLine(
+                lysoMergeCommandLine(
                     inputExtraPath=protMultiScaling._getExtraPath(),
                     outputExtraPath=protMerge._getExtraPath(),
                     logPath=protMerge._getLogsPath(),
@@ -512,7 +531,7 @@ class TestEdDialsProtocols(tutils.ProtocolRunner, tutils.HelperCollection):
             )
             self.assertCommand(
                 protExportMtz,
-                cc.exportMtzCommandLine(
+                exportMtzCommandLine(
                     inputExtraPath=protMultiScaling._getExtraPath(),
                     outputExtraPath=protExportMtz._getExtraPath(),
                     logPath=protExportMtz._getLogsPath(),
@@ -539,7 +558,7 @@ class TestEdDialsProtocols(tutils.ProtocolRunner, tutils.HelperCollection):
             )
             self.assertCommand(
                 protScalingExclude,
-                cc.lysoScaleExclusionCommandLine(
+                lysoScaleExclusionCommandLine(
                     inputExtraPath=protIntegrate._getExtraPath(),
                     outputExtraPath=protScalingExclude._getExtraPath(),
                     logPath=protScalingExclude._getLogsPath(),
@@ -562,7 +581,7 @@ class TestEdDialsProtocols(tutils.ProtocolRunner, tutils.HelperCollection):
             self.skipTest("Skipping garnet pipeline test")
 
         # Define all experiment variables in one place
-        experiment = cc.garnet_experiment
+        experiment = garnet_experiment
         exptId = experiment["location"]
         dataset = os.path.join(self.dataPath, exptId)
 
@@ -579,7 +598,7 @@ class TestEdDialsProtocols(tutils.ProtocolRunner, tutils.HelperCollection):
 
         self.assertCommand(
             protImport,
-            cc.garnetImportCommandLine(
+            garnetImportCommandLine(
                 dataset=dataset,
                 extraPath=protImport._getExtraPath(),
                 logPath=protImport._getLogsPath(),
@@ -613,7 +632,7 @@ class TestEdDialsProtocols(tutils.ProtocolRunner, tutils.HelperCollection):
         self.assertFileExists(inputModel)
         self.assertCommand(
             protFindSpots,
-            cc.garnetStandardFindSpotCommandLine(
+            garnetStandardFindSpotCommandLine(
                 inputExtraPath=protImport._getExtraPath(),
                 outputExtraPath=protFindSpots._getExtraPath(),
                 logPath=protFindSpots._getLogsPath(),
@@ -660,7 +679,7 @@ class TestEdDialsProtocols(tutils.ProtocolRunner, tutils.HelperCollection):
 
         self.assertEqual(
             protIndex._prepIndexCommandline("dials.index"),
-            cc.garnetIndexCommandLine(
+            garnetIndexCommandLine(
                 modelPath=protImport._getExtraPath(),
                 spotsPath=protFindSpots._getExtraPath(),
                 logPath=indexLogs,
@@ -669,13 +688,13 @@ class TestEdDialsProtocols(tutils.ProtocolRunner, tutils.HelperCollection):
         )
         self.assertEqual(
             protIndex._prepBravaisCommandline("dials.refine_bravais_settings"),
-            cc.refineBravaisLatticeCommandLine(
+            refineBravaisLatticeCommandLine(
                 indexTmp=indexTmp, indexLogs=indexLogs
             ),
         )
         self.assertEqual(
             protIndex._prepReindexCommandline(),
-            cc.reindexCommandLine(experiment=experiment, indexTmp=indexTmp),
+            reindexCommandLine(experiment=experiment, indexTmp=indexTmp),
         )
         indexedset = getattr(protIndex, "outputIndexedSpots", None)
         self.assertIsNotNone(protIndex.outputIndexedSpots)
@@ -699,7 +718,7 @@ class TestEdDialsProtocols(tutils.ProtocolRunner, tutils.HelperCollection):
                 protIndexCopy._prepBravaisCommandline(
                     "dials.refine_bravais_settings"
                 ),
-                cc.refineBravaisLatticeCommandLine(
+                refineBravaisLatticeCommandLine(
                     indexTmp=protIndexCopy._getTmpPath(),
                     indexLogs=protIndexCopy._getLogsPath(),
                     copied=True,
@@ -713,7 +732,7 @@ class TestEdDialsProtocols(tutils.ProtocolRunner, tutils.HelperCollection):
         )
         self.assertCommand(
             protRefine,
-            cc.garnetRefineCommandLine(
+            garnetRefineCommandLine(
                 inputExtraPath=protIndex._getExtraPath(),
                 outputExtraPath=protRefine._getExtraPath(),
                 logPath=protRefine._getLogsPath(),
@@ -738,7 +757,7 @@ class TestEdDialsProtocols(tutils.ProtocolRunner, tutils.HelperCollection):
         )
         self.assertCommand(
             protIntegrate,
-            cc.integrateCommandLine(
+            integrateCommandLine(
                 inputExtraPath=protRefine._getExtraPath(),
                 outputExtraPath=protIntegrate._getExtraPath(),
                 logPath=protIntegrate._getLogsPath(),
@@ -773,7 +792,7 @@ class TestEdDialsProtocols(tutils.ProtocolRunner, tutils.HelperCollection):
         )
         self.assertCommand(
             protSymmetry,
-            cc.symmetryCommandLine(
+            symmetryCommandLine(
                 inputExtraPath=protIntegrate._getExtraPath(),
                 outputExtraPath=protSymmetry._getExtraPath(),
                 logPath=protSymmetry._getLogsPath(),
@@ -797,7 +816,7 @@ class TestEdDialsProtocols(tutils.ProtocolRunner, tutils.HelperCollection):
         )
         self.assertCommand(
             protScaling,
-            cc.scalingCommandLine(
+            scalingCommandLine(
                 inputExtraPath=protIntegrate._getExtraPath(),
                 outputExtraPath=protScaling._getExtraPath(),
                 logPath=protScaling._getLogsPath(),
@@ -831,7 +850,7 @@ class TestEdDialsProtocols(tutils.ProtocolRunner, tutils.HelperCollection):
         )
         self.assertCommand(
             protExportMtz,
-            cc.exportMtzCommandLine(
+            exportMtzCommandLine(
                 inputExtraPath=protScaling._getExtraPath(),
                 outputExtraPath=protExportMtz._getExtraPath(),
                 logPath=protExportMtz._getLogsPath(),

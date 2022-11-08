@@ -26,7 +26,7 @@
 
 class Toggles:
     # Create toggles for skipping some tests
-    SKIP_PIPELINES = True
+    SKIP_PIPELINES = False
     SKIP_LYSO = False
     SKIP_GARNET = False
     if SKIP_LYSO and SKIP_GARNET:
