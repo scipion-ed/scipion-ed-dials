@@ -89,7 +89,7 @@ setup(
     #
     # Epoch indicates compatible main Scipion version
     # major.minor.micro versioning starting with 1.0.0 in the new epoch
-    version=get_version("dials/__init__.py"),  # Required
+    version=get_version("src/dials/__init__.py"),  # Required
     # This is a one-line description or tagline of what your project does. This
     # corresponds to the "Summary" metadata field:
     # https://packaging.python.org/specifications/core-metadata/#summary
@@ -115,7 +115,7 @@ setup(
     # This should be a valid email address corresponding to the author listed
     # above.
     author_email="delarosatrevin@scilifelab.se, "
-    "viktor.bengtsson@mmk.su.se",  # Optional
+    "viktor.e.g.bengtsson@gmail.com",  # Optional
     # Classifiers help users find your project by categorizing it.
     #
     # For a list of valid classifiers, see
@@ -154,7 +154,8 @@ setup(
     #   py_modules=["my_module"],
     #
     # packages=find_packages(exclude=['contrib', 'docs', 'tests']),  # Required
-    packages=find_packages(),
+    packages=find_packages(where="src"),
+    package_dir={"dials": "src/dials"},
     # This field lists other packages that your project depends on to run.
     # Any package you put here will be installed by pip when your project is
     # installed, so they must be valid existing projects.

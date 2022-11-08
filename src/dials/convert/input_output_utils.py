@@ -10,13 +10,13 @@ import numpy as np
 
 def writeJson(
     inputImages, fn="model.expt", idname="ExperimentList", overwriteModel=False
-):
+) -> None:
     if overwriteModel is False and os.path.exists(fn):
         return
     imageList = [img.clone() for img in inputImages]
     firstimage = imageList[0]
     lastimage = imageList[-1]
-    templatepath = (
+    templatepath: str = (
         f"{firstimage.getDirName()}/#####{firstimage.getExtension()}"
     )
     origin = [
@@ -223,7 +223,7 @@ def writeRefl(inputSpots, fn="reflections.refl", **kwargs):
             f.write(msgpack.packb(output))
 
 
-def copyDialsFile(originalDialsFile, fn=None):
+def copyDialsFile(originalDialsFile, fn: str) -> None:
     try:
         shutil.copy(originalDialsFile, fn)
     except shutil.SameFileError:

@@ -49,7 +49,7 @@ class DialsProtBase(EdBaseProtocol):
 
     # -------------------------- STEPS functions -----------------------------
 
-    def makeHtmlReportStep(self):
+    def makeHtmlReportStep(self) -> None:
         HtmlBase.makeHtmlReportStep(self)
 
     # --------------------------- INFO functions -----------------------------
@@ -83,7 +83,7 @@ class DialsProtBase(EdBaseProtocol):
         else:
             return self._getExtraPath(self.INPUT_REFL_FILENAME)
 
-    def getDatasets(self):
+    def getDatasets(self) -> str:
         return dutils.getDatasets(self.getInputModelFile())
 
     def getOutputModelFile(self) -> str:
@@ -203,13 +203,13 @@ class DialsProtBase(EdBaseProtocol):
         params = ""
         return params
 
-    def _getExtraPhilsPath(self):
+    def _getExtraPhilsPath(self) -> str:
         return PhilBase._addPhilPath(self)
 
-    def _getCLI(self):
+    def _getCLI(self) -> str:
         return CliBase._getCommandLineInput(self).rstrip()
 
-    def _prepareCommandline(self, program: str):
+    def _prepareCommandline(self, program: str) -> str:
         """Create the command line input to run dials programs"""
 
         # Input basic parameters
@@ -228,7 +228,7 @@ class DialsProtBase(EdBaseProtocol):
 
 
 class CliBase(EdBaseProtocol):
-    def _defineCliParams(self, form):
+    def _defineCliParams(self, form) -> None:
         # Allow adding anything else with command line syntax
         group = form.addGroup(
             "Raw command line input parameters",
@@ -242,7 +242,7 @@ class CliBase(EdBaseProtocol):
             "end of the command line",
         )
 
-    def _getCommandLineInput(self):
+    def _getCommandLineInput(self) -> str:
         if self.commandLineInput.get():
             return f" {self.commandLineInput.get()}"
         else:
@@ -253,7 +253,7 @@ class RefineParamsBase(EdBaseProtocol):
 
     # -------------------------- DEFINE param functions ----------------------
 
-    def _defineParametrisations(self, form):
+    def _defineParametrisations(self, form) -> None:
         group = form.addGroup("Model parametrisation")
 
         group.addHidden(
@@ -496,7 +496,7 @@ class RefineParamsBase(EdBaseProtocol):
 
 
 class HtmlBase(EdBaseProtocol):
-    def _defineHtmlParams(self, form):
+    def _defineHtmlParams(self, form) -> None:
         # Add a section for creating an html report
         form.addSection("HTML report")
         form.addParam(
@@ -573,7 +573,7 @@ class HtmlBase(EdBaseProtocol):
 
     # -------------------------- STEPS functions -------------------------------
 
-    def makeHtmlReportStep(self):
+    def makeHtmlReportStep(self) -> None:
         prog = "dials.report"
         arguments = HtmlBase._prepCommandlineReport(self)
         self.runJob(prog, arguments)
@@ -587,7 +587,7 @@ class HtmlBase(EdBaseProtocol):
         else:
             return self._getExtraPath("dials.report.html")
 
-    def _prepCommandlineReport(self):
+    def _prepCommandlineReport(self) -> str:
         "Create the command line input to run dials programs"
         # Input basic parameters
         params = [
@@ -613,7 +613,7 @@ class HtmlBase(EdBaseProtocol):
 
 
 class PhilBase(EdBaseProtocol):
-    def _definePhilParams(self, form):
+    def _definePhilParams(self, form) -> None:
         # Allow an easy way to import a phil file with parameters
         form.addParam(
             "extraPhilPath",
@@ -626,7 +626,7 @@ class PhilBase(EdBaseProtocol):
             "to add to include.",
         )
 
-    def _addPhilPath(self):
+    def _addPhilPath(self) -> str:
         if self.extraPhilPath.get():
             return f" {self.extraPhilPath.get('').strip()}"
         else:
@@ -634,7 +634,9 @@ class PhilBase(EdBaseProtocol):
 
 
 class ImageExclusions(DialsProtBase):
-    def _defineExcludeParams(self, form, inputsetsLabel="the input set"):
+    def _defineExcludeParams(
+        self, form, inputsetsLabel="the input set"
+    ) -> None:
         group = form.addGroup("Selections")
 
         group.addParam(

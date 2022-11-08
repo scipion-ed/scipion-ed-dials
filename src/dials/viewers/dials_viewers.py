@@ -42,7 +42,7 @@ from . import dials_viewer_utils as dvutils
 
 
 class DialsImageView(pwviewer.CommandView):
-    def __init__(self, modelFile, reflectionFile=None, **kwargs):
+    def __init__(self, modelFile, reflectionFile=None, **kwargs) -> None:
 
         if reflectionFile is None:
             pwviewer.CommandView.__init__(
@@ -58,7 +58,7 @@ class DialsImageView(pwviewer.CommandView):
 
 
 class DialsReciprocalLatticeView(pwviewer.CommandView):
-    def __init__(self, modelFile, reflectionFile=None, **kwargs):
+    def __init__(self, modelFile, reflectionFile=None, **kwargs) -> None:
         pwviewer.CommandView.__init__(
             self,
             f"dials.reciprocal_lattice_viewer "
@@ -84,7 +84,7 @@ class DialsFoundSpotsViewer(pwviewer.ProtocolViewer):
         dialsProt.DialsProtIntegrateSpots,
     ]
 
-    def _defineParams(self, form):
+    def _defineParams(self, form) -> None:
         form.addSection(label="Pick viewer")
 
         form.addParam(
@@ -112,20 +112,20 @@ class DialsFoundSpotsViewer(pwviewer.ProtocolViewer):
         visualizeDict = {"viewSelection": self._viewerSelection}
         return visualizeDict
 
-    def _viewerSelection(self, paramName=None):
+    def _viewerSelection(self, paramName=None) -> None:
         if self.viewSelection == IMAGE_VIEWER:
             return self._viewImages()
         elif self.viewSelection == RECIPROCAL_VIEWER:
             return self._viewReciprocal()
 
-    def _viewImages(self, reflFn=None, **kwargs):
+    def _viewImages(self, reflFn=None, **kwargs) -> None:
         if self.viewSpotsOnImage:
             reflFn = dvutils._getRefls(self.protocol)
         DialsImageView(
             dvutils._getModel(self.protocol), reflectionFile=reflFn
         ).show()
 
-    def _viewReciprocal(self, **kwargs):
+    def _viewReciprocal(self, **kwargs) -> None:
         DialsReciprocalLatticeView(
             dvutils._getModel(self.protocol),
             reflectionFile=dvutils._getRefls(self.protocol),
@@ -147,7 +147,7 @@ class DialsResultsViewer(pwviewer.Viewer):
         dialsProt.DialsProtExport,
     ]
 
-    def visualize(self, obj, **kwargs):
+    def visualize(self, obj, **kwargs) -> None:
         self.resultsWindow = self.tkWindow(
             ResultsWindow, title="Results", protocol=obj
         )
@@ -155,7 +155,7 @@ class DialsResultsViewer(pwviewer.Viewer):
 
 
 class ResultsWindow(pwgui.Window):
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> None:
         pwgui.Window.__init__(self, **kwargs)
 
         self.protocol = kwargs.get("protocol")
@@ -165,7 +165,7 @@ class ResultsWindow(pwgui.Window):
         content.grid(row=0, column=0, sticky="news")
         content.columnconfigure(0, weight=1)
 
-    def _createContent(self, content):
+    def _createContent(self, content) -> None:
         topFrame = tk.Frame(content)
         content.columnconfigure(0, weight=1)
         topFrame.grid(row=0, column=0, sticky="new", padx=5, pady=5)
@@ -184,7 +184,7 @@ class ResultsWindow(pwgui.Window):
         self._fillResultsFrame(resultsFrame)
         self._fillButtonsFrame(buttonsFrame)
 
-    def _fillTopFrame(self, frame):
+    def _fillTopFrame(self, frame) -> None:
         p1 = tk.Label(frame, text="Project: ")
         p1.grid(row=0, column=0, sticky="nw", padx=5, pady=5)
         projName = self.protocol.getProject().getShortName()
@@ -199,7 +199,7 @@ class ResultsWindow(pwgui.Window):
         p4 = tk.Label(frame, text=source)
         p4.grid(row=1, column=1, sticky="nw", padx=5, pady=5)
 
-    def _fillResultsFrame(self, frame):
+    def _fillResultsFrame(self, frame) -> None:
         try:
             results = self.protocol.getLogOutput()
         except Exception as e:
@@ -211,7 +211,7 @@ class ResultsWindow(pwgui.Window):
         s.configure(state="disabled")
         s.grid(row=0, column=0, sticky="news")
 
-    def _fillButtonsFrame(self, frame):
+    def _fillButtonsFrame(self, frame) -> None:
         subframe = tk.Frame(frame)
         subframe.grid(row=0, column=0, sticky="nw")
         frame.columnconfigure(1, weight=1)
@@ -255,24 +255,24 @@ class ResultsWindow(pwgui.Window):
         closeBtn = self.createCloseButton(frame)
         closeBtn.grid(row=0, column=1, sticky="ne")
 
-    def _viewPlainImages(self, e=None):
+    def _viewPlainImages(self, e=None) -> None:
         DialsImageView(
             dvutils._getModel(self.protocol), reflectionFile=None
         ).show()
 
-    def _viewOverlaidImages(self, e=None):
+    def _viewOverlaidImages(self, e=None) -> None:
         DialsImageView(
             dvutils._getModel(self.protocol),
             reflectionFile=dvutils._getRefls(self.protocol),
         ).show()
 
-    def _viewReciprocal(self, e=None):
+    def _viewReciprocal(self, e=None) -> None:
         DialsReciprocalLatticeView(
             dvutils._getModel(self.protocol),
             reflectionFile=dvutils._getRefls(self.protocol),
         ).show()
 
-    def _openHTML(self, e=None):
+    def _openHTML(self, e=None) -> None:
         if dvutils._getHtml(self.protocol) is not None:
             dutils._showHtmlReport(dvutils._getHtml(self.protocol))
         else:

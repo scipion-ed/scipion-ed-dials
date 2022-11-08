@@ -26,5 +26,5 @@
 # *
 # **************************************************************************
 
-from .dials_viewer_utils import *
+from .dials_viewer_utils import _getHtml, _getModel, _getRefls
 from .dials_viewers import DialsResultsViewer
