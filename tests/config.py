@@ -1,10 +1,7 @@
 # **************************************************************************
 # *
-# * Authors:     J.M. De la Rosa Trevin (delarosatrevin@scilifelab.se) [1]
-# *              Viktor E. G. Bengtsson (viktor.bengtsson@mmk.su.se)   [2]
+# * Author:      Viktor E. G. Bengtsson (viktor.e.g.bengtsson@gmail.com)
 # *
-# * [1] SciLifeLab, Stockholm University
-# * [2] MMK, Stockholm University
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
@@ -26,6 +23,14 @@
 # *
 # **************************************************************************
 
-from .config import *
-from .constants_cases import *
-from .utils import *
+
+class Toggles:
+    # Create toggles for skipping some tests
+    SKIP_PIPELINES = True
+    SKIP_LYSO = False
+    SKIP_GARNET = False
+    if SKIP_LYSO and SKIP_GARNET:
+        SKIP_PIPELINES = True
+    SKIP_UTILS = False
+    KEEP_PROTOCOL_TEST_OUTPUT = True
+    KEEP_UTILS_TEST_OUTPUT = False

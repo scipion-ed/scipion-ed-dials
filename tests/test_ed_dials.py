@@ -34,9 +34,10 @@ import pyworkflow.tests as pwtests
 
 import dials.constants as dconst
 import tests.constants_cases as cc
-import tests.testing_utils as tutils
+import tests.utils as tutils
 from dials.convert import writeRestraintsPhil
 from dials.objects import MissingPathException
+from tests.config import Toggles
 
 pw.Config.setDomain(pwed)
 if not pw.Config.debugOn():
@@ -46,7 +47,7 @@ if not pw.Config.debugOn():
 class TestEdDialsProtocols(tutils.ProtocolRunner, tutils.HelperCollection):
     @classmethod
     def setUpClass(cls):
-        if cc.SKIP_PIPELINES:
+        if Toggles.SKIP_PIPELINES:
             cls.skipTest(cls, "Skipping pipelines")
         pwtests.setupTestProject(cls, writeLocalConfig=True)
         pwtests.setupTestOutput(cls)
@@ -60,13 +61,13 @@ class TestEdDialsProtocols(tutils.ProtocolRunner, tutils.HelperCollection):
 
     @classmethod
     def tearDownClass(cls):
-        if not cc.KEEP_PROTOCOL_TEST_OUTPUT:
+        if not Toggles.KEEP_PROTOCOL_TEST_OUTPUT:
             # Clean up all output files from the test
             pw.utils.cleanPath(cls.getOutputPath())
 
     # Pipelines
     def test_lyso_pipeline(self):
-        if cc.SKIP_LYSO:
+        if Toggles.SKIP_LYSO:
             self.skipTest("Skipping lyso pipeline test")
 
         scaledSets = []
@@ -557,7 +558,7 @@ class TestEdDialsProtocols(tutils.ProtocolRunner, tutils.HelperCollection):
             )
 
     def test_garnet_pipeline(self):
-        if cc.SKIP_GARNET:
+        if Toggles.SKIP_GARNET:
             self.skipTest("Skipping garnet pipeline test")
 
         # Define all experiment variables in one place
@@ -850,7 +851,7 @@ class TestEdDialsProtocols(tutils.ProtocolRunner, tutils.HelperCollection):
 class TestEdDialsUtils(pwtests.BaseTest):
     @classmethod
     def setUpClass(cls):
-        if cc.SKIP_UTILS:
+        if Toggles.SKIP_UTILS:
             cls.skipTest(cls, "Skipping utils")
         pwtests.setupTestOutput(cls)
         cls.dataPath = os.environ.get("SCIPION_ED_TESTDATA")
@@ -862,7 +863,7 @@ class TestEdDialsUtils(pwtests.BaseTest):
 
     @classmethod
     def tearDownClass(cls):
-        if not cc.KEEP_UTILS_TEST_OUTPUT:
+        if not Toggles.KEEP_UTILS_TEST_OUTPUT:
             # Clean up all output files from the test
             pw.utils.cleanPath(cls.getOutputPath())
 

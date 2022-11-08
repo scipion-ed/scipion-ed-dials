@@ -23,17 +23,7 @@
 # **************************************************************************
 from __future__ import annotations
 
-import tests.testing_utils as tutils
-
-# Create toggles for skipping some tests
-SKIP_PIPELINES = False
-SKIP_LYSO = False
-SKIP_GARNET = False
-if SKIP_LYSO and SKIP_GARNET:
-    SKIP_PIPELINES = True
-SKIP_UTILS = False
-KEEP_PROTOCOL_TEST_OUTPUT = True
-KEEP_UTILS_TEST_OUTPUT = False
+import tests.utils as tutils
 
 # -------------------------- Test case dictionaries --------------------------
 
