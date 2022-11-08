@@ -26,7 +26,9 @@
 # *
 # **************************************************************************
 
+from typing import List, Union
 
+import pwed.objects as po
 import pyworkflow.protocol as pwprot
 from pwed.protocols import EdBaseProtocol
 
@@ -38,12 +40,12 @@ class DialsProtBase(EdBaseProtocol):
     """Base protocol for DIALS"""
 
     # Define default filenames
-    INPUT_EXPT_FILENAME = "input.expt"
-    OUTPUT_EXPT_FILENAME = "output.expt"
-    INPUT_REFL_FILENAME = "input.refl"
-    OUTPUT_REFL_FILENAME = "output.refl"
-    OUTPUT_HTML_FILENAME = "dials.report.html"
-    OUTPUT_JSON_FILENAME = "dials.program.json"
+    INPUT_EXPT_FILENAME: str = "input.expt"
+    OUTPUT_EXPT_FILENAME: str = "output.expt"
+    INPUT_REFL_FILENAME: str = "input.refl"
+    OUTPUT_REFL_FILENAME: str = "output.refl"
+    OUTPUT_HTML_FILENAME: str = "dials.report.html"
+    OUTPUT_JSON_FILENAME: str = "dials.program.json"
 
     # -------------------------- STEPS functions -----------------------------
 
@@ -59,13 +61,23 @@ class DialsProtBase(EdBaseProtocol):
 
     # -------------------------- UTILS functions -----------------------------
 
-    def getInputModelFile(self, inputSource=None):
+    def getInputModelFile(
+        self,
+        inputSource: Union[
+            po.SetOfDiffractionImages, po.SetOfSpots, None
+        ] = None,
+    ) -> str:
         if self.getSetModel(inputSource):
             return self.getSetModel(inputSource)
         else:
             return self._getExtraPath(self.INPUT_EXPT_FILENAME)
 
-    def getInputReflFile(self, inputSource=None):
+    def getInputReflFile(
+        self,
+        inputSource: Union[
+            po.SetOfDiffractionImages, po.SetOfSpots, None
+        ] = None,
+    ) -> str:
         if self.getSetRefl(inputSource):
             return self.getSetRefl(inputSource)
         else:
@@ -74,16 +86,16 @@ class DialsProtBase(EdBaseProtocol):
     def getDatasets(self):
         return dutils.getDatasets(self.getInputModelFile())
 
-    def getOutputModelFile(self):
+    def getOutputModelFile(self) -> str:
         return self._getExtraPath(self.OUTPUT_EXPT_FILENAME)
 
-    def getOutputReflFile(self):
+    def getOutputReflFile(self) -> str:
         return self._getExtraPath(self.OUTPUT_REFL_FILENAME)
 
-    def getOutputJsonFile(self):
+    def getOutputJsonFile(self) -> str:
         return self._getExtraPath(self.OUTPUT_JSON_FILENAME)
 
-    def getProjectName(self, newProjectName=None):
+    def getProjectName(self, newProjectName: Union[str, None] = None) -> str:
         # Function to get the name of the overall project.
         # Useful for the metadata of exported files. Could also be used
         # in summaries.
@@ -92,7 +104,7 @@ class DialsProtBase(EdBaseProtocol):
         else:
             return self.getProject().getShortName()
 
-    def getCrystalName(self, newCrystalName=None):
+    def getCrystalName(self, newCrystalName: Union[str, None] = None) -> str:
         # Function to return crystal name. Can be connected to pwed.objects
         # properties at a later point to define a name during import and use
         # it throughout the processing. Until then it provides "XTAL" as
@@ -102,7 +114,9 @@ class DialsProtBase(EdBaseProtocol):
         else:
             return "XTAL"
 
-    def _getModelSources(self, inputSource=None):
+    def _getModelSources(
+        self, inputSource: Union[po.EdBaseSet, None] = None
+    ) -> List[Union[po.SetOfDiffractionImages, po.SetOfSpots]]:
         sources = []
         if inputSource is not None:
             sources.append(inputSource)
@@ -121,7 +135,12 @@ class DialsProtBase(EdBaseProtocol):
 
         return sources
 
-    def getSetModel(self, inputSource=None):
+    def getSetModel(
+        self,
+        inputSource: Union[
+            po.SetOfDiffractionImages, po.SetOfSpots, None
+        ] = None,
+    ) -> str:
         for source in self._getModelSources(inputSource):
             try:
                 if dutils.existsPath(source.getDialsModel()):
@@ -129,7 +148,12 @@ class DialsProtBase(EdBaseProtocol):
             except TypeError:
                 pass
 
-    def getSetRefl(self, inputSource=None):
+    def getSetRefl(
+        self,
+        inputSource: Union[
+            po.SetOfDiffractionImages, po.SetOfSpots, None
+        ] = None,
+    ) -> str:
         for source in self._getModelSources(inputSource):
             try:
                 if dutils.existsPath(source.getDialsRefl()):
@@ -137,24 +161,34 @@ class DialsProtBase(EdBaseProtocol):
             except TypeError:
                 pass
 
-    def getLogFilePath(self, program="dials.*"):
+    def getLogFilePath(self, program: str = "dials.*") -> str:
         logPath = f"{self._getLogsPath()}/{program}.log"
         return logPath
 
-    def getLogOutput(self):
+    def getLogOutput(self) -> str:
         return ""
 
-    def _checkWriteModel(self, inputSource=None):
+    def _checkWriteModel(
+        self,
+        inputSource: Union[
+            po.SetOfDiffractionImages, po.SetOfSpots, None
+        ] = None,
+    ) -> bool:
         return self.getSetModel(inputSource) != self.getInputModelFile(
             inputSource
         )
 
-    def _checkWriteRefl(self, inputSource=None):
+    def _checkWriteRefl(
+        self,
+        inputSource: Union[
+            po.SetOfDiffractionImages, po.SetOfSpots, None
+        ] = None,
+    ) -> bool:
         return self.getSetRefl(inputSource) != self.getInputReflFile(
             inputSource
         )
 
-    def _initialParams(self, program):
+    def _initialParams(self, program: str) -> str:
         # Base method that can more easily be overridden when needed
         params = (
             f"{self.getInputModelFile()} {self.getInputReflFile()} "
@@ -165,7 +199,7 @@ class DialsProtBase(EdBaseProtocol):
 
         return params
 
-    def _extraParams(self):
+    def _extraParams(self) -> str:
         params = ""
         return params
 
@@ -175,22 +209,22 @@ class DialsProtBase(EdBaseProtocol):
     def _getCLI(self):
         return CliBase._getCommandLineInput(self).rstrip()
 
-    def _prepareCommandline(self, program=None):
+    def _prepareCommandline(self, program: str):
         """Create the command line input to run dials programs"""
 
         # Input basic parameters
         self.info(f"Program is {program}")
-        params = self._initialParams(program)
+        params = [self._initialParams(program)]
 
         # Update the command line with additional parameters
 
-        params += self._extraParams()
+        params.append(self._extraParams())
 
-        params += self._getExtraPhilsPath()
+        params.append(self._getExtraPhilsPath())
 
-        params += self._getCLI()
+        params.append(self._getCLI())
 
-        return params
+        return "".join(params)
 
 
 class CliBase(EdBaseProtocol):
@@ -376,83 +410,85 @@ class RefineParamsBase(EdBaseProtocol):
             "two orthogonal directions.",
         )
 
-    def getBeamFixParams(self):
+    def getBeamFixParams(self) -> str:
         beamfix = []
         if (
             self.beamFixInSpindlePlane
             and self.beamFixOutSpindlePlane
             and self.beamFixWavelength
         ):
-            beamfix += "'*all in_spindle_plane out_spindle_plane wavelength'"
+            beamfix.append(
+                "'*all in_spindle_plane out_spindle_plane wavelength'"
+            )
         else:
-            beamfix += "'all "
+            beamfix.append("'all ")
             if self.beamFixInSpindlePlane:
-                beamfix += "*"
-            beamfix += "in_spindle_plane "
+                beamfix.append("*")
+            beamfix.append("in_spindle_plane ")
             if self.beamFixOutSpindlePlane:
-                beamfix += "*"
-            beamfix += "out_spindle_plane "
+                beamfix.append("*")
+            beamfix.append("out_spindle_plane ")
             if self.beamFixWavelength:
-                beamfix += "*"
-            beamfix += "wavelength'"
+                beamfix.append("*")
+            beamfix.append("wavelength'")
         beamfixparams = (
             f" refinement.parameterisation.beam.fix={''.join(beamfix)}"
         )
         return beamfixparams
 
-    def getCrystalFixParams(self):
+    def getCrystalFixParams(self) -> str:
         crystalfix = []
         if self.crystalFixCell and self.crystalFixOrientation:
-            crystalfix += "'*all cell orientation'"
+            crystalfix.append("'*all cell orientation'")
         else:
-            crystalfix += "'all "
+            crystalfix.append("'all ")
             if self.crystalFixCell:
-                crystalfix += "*"
-            crystalfix += "cell "
+                crystalfix.append("*")
+            crystalfix.append("cell ")
             if self.crystalFixOrientation:
-                crystalfix += "*"
-            crystalfix += "orientation'"
+                crystalfix.append("*")
+            crystalfix.append("orientation'")
         crystalfixparams = (
             f" refinement.parameterisation.crystal.fix={''.join(crystalfix)}"
         )
         return crystalfixparams
 
-    def getDetectorFixParams(self):
+    def getDetectorFixParams(self) -> str:
         detectorfix = []
         if self.detectorFixAll or (
             self.detectorFixPosition
             and self.detectorFixOrientation
             and self.detectorFixDistance
         ):
-            detectorfix += "'*all position orientation distance'"
+            detectorfix.append("'*all position orientation distance'")
         else:
-            detectorfix += "'all "
+            detectorfix.append("'all ")
             if self.detectorFixPosition:
-                detectorfix += "*"
-            detectorfix += "position "
+                detectorfix.append("*")
+            detectorfix.append("position ")
             if self.detectorFixOrientation:
-                detectorfix += "*"
-            detectorfix += "orientation "
+                detectorfix.append("*")
+            detectorfix.append("orientation ")
             if self.detectorFixDistance:
-                detectorfix += "*"
-            detectorfix += "distance'"
+                detectorfix.append("*")
+            detectorfix.append("distance'")
         detectorfixparams = (
             f" refinement.parameterisation.detector.fix={''.join(detectorfix)}"
         )
         return detectorfixparams
 
-    def getGonioFixParams(self):
+    def getGonioFixParams(self) -> str:
         goniofix = []
         if self.goniometerFixInBeamPlane and self.goniometerFixOutBeamPlane:
-            goniofix += "'*all in_beam_plane out_beam_plane'"
+            goniofix.append("'*all in_beam_plane out_beam_plane'")
         else:
-            goniofix += "'all "
+            goniofix.append("'all ")
             if self.goniometerFixInBeamPlane:
-                goniofix += "*"
-            goniofix += "in_beam_plane "
+                goniofix.append("*")
+            goniofix.append("in_beam_plane ")
             if self.goniometerFixOutBeamPlane:
-                goniofix += "*"
-            goniofix += "out_beam_plane'"
+                goniofix.append("*")
+            goniofix.append("out_beam_plane'")
         goniofixparams = (
             f" refinement.parameterisation.goniometer.fix={''.join(goniofix)}"
         )
@@ -545,7 +581,7 @@ class HtmlBase(EdBaseProtocol):
             dutils._showHtmlReport(HtmlBase.getOutputHtmlFile(self))
 
     # -------------------------- UTILS functions ------------------------------
-    def getOutputHtmlFile(self):
+    def getOutputHtmlFile(self) -> str:
         if self.OUTPUT_HTML_FILENAME:
             return self._getExtraPath(self.OUTPUT_HTML_FILENAME)
         else:
@@ -554,24 +590,26 @@ class HtmlBase(EdBaseProtocol):
     def _prepCommandlineReport(self):
         "Create the command line input to run dials programs"
         # Input basic parameters
-        params = (
-            f"{DialsProtBase.getOutputModelFile(self)} "
-            f"{DialsProtBase.getOutputReflFile(self)} "
-            f"output.html={HtmlBase.getOutputHtmlFile(self)} "
-            f"output.external_dependencies="
-            f"{self.extDepOptions[self.externalDependencies.get()]}"
-        )
+        params = [
+            (
+                f"{DialsProtBase.getOutputModelFile(self)} "
+                f"{DialsProtBase.getOutputReflFile(self)} "
+                f"output.html={HtmlBase.getOutputHtmlFile(self)} "
+                f"output.external_dependencies="
+                f"{self.extDepOptions[self.externalDependencies.get()]}"
+            )
+        ]
 
         if self.pixelsPerBin.get():
-            params += f" pixels_per_bin={self.pixelsPerBin.get()}"
+            params.append(f" pixels_per_bin={self.pixelsPerBin.get()}")
 
         if self.centroidDiffMax.get():
-            params += f" centroid_diff_max={self.centroidDiffMax.get()}"
+            params.append(f" centroid_diff_max={self.centroidDiffMax.get()}")
 
         if self.commandLineInputReport.get() not in (None, ""):
-            params += f" {self.commandLineInputReport.get()}"
+            params.append(f" {self.commandLineInputReport.get()}")
 
-        return params
+        return "".join(params)
 
 
 class PhilBase(EdBaseProtocol):
@@ -978,7 +1016,7 @@ class ImageExclusions(DialsProtBase):
             f"listed, the syntax is 1:22:24.",
         )
 
-    def getExclusions(self):
+    def getExclusions(self) -> int:
         return self.numberOfExclusions.get()
 
     def getImageExclusions(self):

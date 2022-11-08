@@ -31,12 +31,12 @@ import os
 import pwed
 import pyworkflow as pw
 import pyworkflow.tests as pwtests
-from pwed.objects import *
 
+import dials.constants as dconst
 import dials.tests.constants_cases as cc
 import dials.tests.testing_utils as tutils
-from dials.constants import *
 from dials.convert import writeRestraintsPhil
+from dials.objects import MissingPathException
 
 pw.Config.setDomain(pwed)
 if not pw.Config.debugOn():
@@ -54,7 +54,7 @@ class TestEdDialsProtocols(tutils.ProtocolRunner, tutils.HelperCollection):
         cls.PROJECT_NAME = cls.__name__
 
         if not os.path.exists(cls.dataPath):
-            raise Exception(
+            raise MissingPathException(
                 f"Can not run DIALS tests, missing file:\n  {cls.dataPath}"
             )
 
@@ -117,7 +117,7 @@ class TestEdDialsProtocols(tutils.ProtocolRunner, tutils.HelperCollection):
                 untrustedAreas=True,
                 untrustedRectangle_1="0,516,255,261",
                 untrustedRectangle_2="255,261,0,516",
-                thresholdAlgorithm=DISPERSION_EXTENDED,
+                thresholdAlgorithm=dconst.DISPERSION_EXTENDED,
             )
             inputModel = protFindSpots.getInputModelFile()
             self.assertFileExists(inputModel)
@@ -233,7 +233,7 @@ class TestEdDialsProtocols(tutils.ProtocolRunner, tutils.HelperCollection):
                 protRefinePhil = self._runRefine(
                     objLabel="dials - static refinement with restraints",
                     inputSet=protIndexPhil.outputIndexedSpots,
-                    scanVaryingNew=STATIC,
+                    scanVaryingNew=dconst.STATIC,
                     detectorFixDistance=False,
                     useRestraint=True,
                     targetUnitCell=experiment["unit_cell"],
@@ -274,7 +274,7 @@ class TestEdDialsProtocols(tutils.ProtocolRunner, tutils.HelperCollection):
             protRefine = self._runRefine(
                 objLabel="dials - static refinement",
                 inputSet=protIndex.outputIndexedSpots,
-                scanVaryingNew=UNSET,
+                scanVaryingNew=dconst.UNSET,
                 detectorFixAll=True,
             )
             self.assertCommand(
@@ -296,7 +296,7 @@ class TestEdDialsProtocols(tutils.ProtocolRunner, tutils.HelperCollection):
             protSvRefine = self._runRefine(
                 objLabel="dials - scan-varying refinement",
                 inputSet=protRefine.outputRefinedSpots,
-                scanVaryingNew=SCAN_VARYING,
+                scanVaryingNew=dconst.SCAN_VARYING,
                 beamFixAll=False,
                 beamFixInSpindlePlane=False,
                 beamFixOutSpindlePlane=False,
@@ -507,7 +507,7 @@ class TestEdDialsProtocols(tutils.ProtocolRunner, tutils.HelperCollection):
             # Test export of output scaled together
             protExportMtz = self._runExport(
                 inputSet=protMultiScaling.outputScaledSpots,
-                exportFormat=MTZ,
+                exportFormat=dconst.MTZ,
             )
             self.assertCommand(
                 protExportMtz,
@@ -606,7 +606,7 @@ class TestEdDialsProtocols(tutils.ProtocolRunner, tutils.HelperCollection):
             dMin=experiment["d_min"],
             dMax=experiment["d_max"],
             sigmaBackground=experiment["sigma_background"],
-            thresholdAlgorithm=DISPERSION,
+            thresholdAlgorithm=dconst.DISPERSION,
         )
         inputModel = protFindSpots.getInputModelFile()
         self.assertFileExists(inputModel)
@@ -708,7 +708,7 @@ class TestEdDialsProtocols(tutils.ProtocolRunner, tutils.HelperCollection):
         # Run refinement
         protRefine = self._runRefine(
             inputSet=protIndex.outputIndexedSpots,
-            scanVaryingNew=UNSET,
+            scanVaryingNew=dconst.UNSET,
         )
         self.assertCommand(
             protRefine,
@@ -825,7 +825,7 @@ class TestEdDialsProtocols(tutils.ProtocolRunner, tutils.HelperCollection):
         crystalName = "Garnet"
         protExportMtz = self._runExport(
             inputSet=protScaling.outputScaledSpots,
-            exportFormat=MTZ,
+            exportFormat=dconst.MTZ,
             mtzCrystalName=crystalName,
         )
         self.assertCommand(
@@ -856,7 +856,7 @@ class TestEdDialsUtils(pwtests.BaseTest):
         cls.dataPath = os.environ.get("SCIPION_ED_TESTDATA")
 
         if not os.path.exists(cls.dataPath):
-            raise Exception(
+            raise MissingPathException(
                 f"Can not run utils tests, missing file:\n  {cls.dataPath}"
             )
 

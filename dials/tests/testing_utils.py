@@ -25,8 +25,9 @@
 # **************************************************************************
 
 import os
-from typing import Union
+from typing import List, Union
 
+import pwed.objects as po
 import pyworkflow.tests as pwtests
 from pwed.protocols import ProtImportDiffractionImages
 
@@ -46,12 +47,16 @@ from dials.protocols import (
 
 
 def makePathList(
-    scanRange,
-    digits=3,
-    location=None,
-    pattern="SMV/data/00{TI}.img",
-    wildcard="{TI}",
-) -> list:
+    scanRange: str,
+    digits: int = 3,
+    location: Union[str, None] = None,
+    pattern: str = "SMV/data/00{TI}.img",
+    wildcard: str = "{TI}",
+) -> List[str]:
+    """
+    Define a list of paths to images based on the first and last image in a
+    range and the file path pattern.
+    """
     first, last = scanRange.split(",")
     numbers = range(int(first), int(last) + 1)
     replacements = [str(num).zfill(digits) for num in numbers]
@@ -69,7 +74,10 @@ class ProtocolRunner(pwtests.BaseTest):
     """
 
     def _runImportImages(
-        self, filesPath, filesPattern="SMV/data/00{TI}.img", **kwargs
+        self,
+        filesPath: str,
+        filesPattern: str = "SMV/data/00{TI}.img",
+        **kwargs,
     ) -> ProtImportDiffractionImages:
         protImport = self.newProtocol(
             ProtImportDiffractionImages,
@@ -81,7 +89,10 @@ class ProtocolRunner(pwtests.BaseTest):
         return protImport
 
     def _runDialsImportImages(
-        self, filesPath, filesPattern="SMV/data/00{TI}.img", **kwargs
+        self,
+        filesPath: str,
+        filesPattern: str = "SMV/data/00{TI}.img",
+        **kwargs,
     ) -> DialsProtImportDiffractionImages:
         protImport = self.newProtocol(
             DialsProtImportDiffractionImages,
@@ -92,7 +103,9 @@ class ProtocolRunner(pwtests.BaseTest):
         self.launchProtocol(protImport)
         return protImport
 
-    def _runFindSpots(self, inputImages, **kwargs) -> DialsProtFindSpots:
+    def _runFindSpots(
+        self, inputImages: po.SetOfDiffractionImages, **kwargs
+    ) -> DialsProtFindSpots:
         protFindSpots = self.newProtocol(
             DialsProtFindSpots, inputImages=inputImages, **kwargs
         )
@@ -100,7 +113,10 @@ class ProtocolRunner(pwtests.BaseTest):
         return protFindSpots
 
     def _runIndex(
-        self, inputImages, inputSpots, **kwargs
+        self,
+        inputImages: po.SetOfDiffractionImages,
+        inputSpots: po.SetOfSpots,
+        **kwargs,
     ) -> DialsProtIndexSpots:
         protIndex = self.newProtocol(
             DialsProtIndexSpots,
@@ -111,42 +127,54 @@ class ProtocolRunner(pwtests.BaseTest):
         self.launchProtocol(protIndex)
         return protIndex
 
-    def _runRefine(self, inputSet, **kwargs) -> DialsProtRefineSpots:
+    def _runRefine(
+        self, inputSet: po.SetOfIndexedSpots, **kwargs
+    ) -> DialsProtRefineSpots:
         protRefine = self.newProtocol(
             DialsProtRefineSpots, inputSet=inputSet, **kwargs
         )
         self.launchProtocol(protRefine)
         return protRefine
 
-    def _runIntegrate(self, inputSet, **kwargs) -> DialsProtIntegrateSpots:
+    def _runIntegrate(
+        self, inputSet: po.SetOfIndexedSpots, **kwargs
+    ) -> DialsProtIntegrateSpots:
         protIntegrate = self.newProtocol(
             DialsProtIntegrateSpots, inputSet=inputSet, **kwargs
         )
         self.launchProtocol(protIntegrate)
         return protIntegrate
 
-    def _runSymmetry(self, inputSet, **kwargs) -> DialsProtSymmetry:
+    def _runSymmetry(
+        self, inputSet: po.SetOfIndexedSpots, **kwargs
+    ) -> DialsProtSymmetry:
         protSymmetry = self.newProtocol(
             DialsProtSymmetry, inputSet=inputSet, **kwargs
         )
         self.launchProtocol(protSymmetry)
         return protSymmetry
 
-    def _runScaling(self, inputSets, **kwargs) -> DialsProtScaling:
+    def _runScaling(
+        self, inputSets: po.SetOfIndexedSpots, **kwargs
+    ) -> DialsProtScaling:
         protScaling = self.newProtocol(
             DialsProtScaling, inputSets=inputSets, **kwargs
         )
         self.launchProtocol(protScaling)
         return protScaling
 
-    def _runMerging(self, inputSet, **kwargs) -> DialsProtMerge:
+    def _runMerging(
+        self, inputSet: po.SetOfIndexedSpots, **kwargs
+    ) -> DialsProtMerge:
         protMerging = self.newProtocol(
             DialsProtMerge, inputSet=inputSet, **kwargs
         )
         self.launchProtocol(protMerging)
         return protMerging
 
-    def _runExport(self, inputSet, **kwargs) -> DialsProtExport:
+    def _runExport(
+        self, inputSet: po.SetOfIndexedSpots, **kwargs
+    ) -> DialsProtExport:
         protExport = self.newProtocol(
             DialsProtExport, inputSet=inputSet, **kwargs
         )
@@ -156,7 +184,10 @@ class ProtocolRunner(pwtests.BaseTest):
 
 class HelperCollection(pwtests.BaseTest):
     def checkLogDataset(
-        self, protocol: DialsProtBase, dataset, logOutput=""
+        self,
+        protocol: DialsProtBase,
+        dataset: str,
+        logOutput="",
     ) -> None:
         datasetString = (
             f"Source of data:\n" f"{os.path.join(dataset, 'SMV/data')}"
@@ -168,7 +199,7 @@ class HelperCollection(pwtests.BaseTest):
     def _getCommand(
         self,
         protocol: Union[DialsProtBase, DialsProtRefineSpots, HtmlBase],
-        program=None,
+        program: str,
     ) -> str:
         try:
             return protocol._prepareCommandline(program)
@@ -183,16 +214,15 @@ class HelperCollection(pwtests.BaseTest):
         self,
         protocol: DialsProtBase,
         commandString: str,
-        program: Union[str, None] = None,
+        program: str,
     ):
         CL = self._getCommand(protocol, program)
         self.assertEqual(CL, commandString)
 
-    def assertFileExists(self, file):
+    def assertFileExists(self, file: str):
         self.assertTrue(os.path.exists(file))
 
-    def comparePhils(self, goodPhil="restraints.phil", testPhil=None):
-        self.assertIsNotNone(goodPhil)
+    def comparePhils(self, goodPhil="restraints.phil", testPhil: str = None):
         self.assertIsNotNone(testPhil)
         with open(goodPhil) as f1:
             with open(testPhil) as f2:

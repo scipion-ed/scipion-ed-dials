@@ -346,7 +346,7 @@ class DialsProtRefineSpots(EdProtRefineSpots, DialsProtBase):
     def _checkWriteRefl(self):
         return self.getSetRefl() != self.getInputReflFile()
 
-    def _prepCommandline(self, program):
+    def _prepCommandline(self, program: str):
         "Create the command line input to run dials programs"
 
         # Input basic parameters
