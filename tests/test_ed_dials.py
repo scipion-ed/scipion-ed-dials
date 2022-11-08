@@ -26,6 +26,7 @@
 # **************************************************************************
 
 import os
+import unittest
 
 import pwed
 import pyworkflow as pw
@@ -87,9 +88,8 @@ class TestEdDialsProtocols(ProtocolRunner, HelperCollection):
             pw.utils.cleanPath(cls.getOutputPath())
 
     # Pipelines
+    @unittest.skipIf(Toggles.SKIP_LYSO, "Skipping lyso pipeline test")
     def test_lyso_pipeline(self):
-        if Toggles.SKIP_LYSO:
-            self.skipTest("Skipping lyso pipeline test")
 
         scaledSets = []
         scaleProt = []
@@ -576,9 +576,8 @@ class TestEdDialsProtocols(ProtocolRunner, HelperCollection):
                 "Space group being used during scaling is P 4",
             )
 
+    @unittest.skipIf(Toggles.SKIP_GARNET, "Skipping garnet pipeline test")
     def test_garnet_pipeline(self):
-        if Toggles.SKIP_GARNET:
-            self.skipTest("Skipping garnet pipeline test")
 
         # Define all experiment variables in one place
         experiment = garnet_experiment
