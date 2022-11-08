@@ -7,5 +7,3 @@ per-file-ignores =
     __init__.py: F401
     __main__.py: F401
     dials/protocols/protocol_dials_base.py: F401
-    # defined from star imports
-    dials/tests/test_ed_dials.py: F405

@@ -23,7 +23,7 @@
 # **************************************************************************
 from __future__ import annotations
 
-import dials.tests.testing_utils as tutils
+import tests.testing_utils as tutils
 
 # Create toggles for skipping some tests
 SKIP_PIPELINES = False

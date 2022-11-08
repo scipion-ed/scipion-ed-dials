@@ -33,8 +33,8 @@ import pyworkflow as pw
 import pyworkflow.tests as pwtests
 
 import dials.constants as dconst
-import dials.tests.constants_cases as cc
-import dials.tests.testing_utils as tutils
+import tests.constants_cases as cc
+import tests.testing_utils as tutils
 from dials.convert import writeRestraintsPhil
 from dials.objects import MissingPathException
 
